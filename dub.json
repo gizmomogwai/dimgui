@@ -27,7 +27,7 @@
 
     "libs-posix": [
         "dl",
-        "glfw"
+        "glfw3"
     ],
 
     "libs-linux": [
