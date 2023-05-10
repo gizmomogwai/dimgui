@@ -44,12 +44,12 @@ __gshared GuiState g_state;
 /** Globals end. */
 
 enum GFXCMD_QUEUE_SIZE   = 5000;
-enum BUTTON_HEIGHT       = 20;
-enum SLIDER_HEIGHT       = 20;
+enum BUTTON_HEIGHT       = 60;
+enum SLIDER_HEIGHT       = 40;
 enum SLIDER_MARKER_WIDTH = 10;
 enum CHECK_SIZE          = 8;
 enum DEFAULT_SPACING     = 4;
-enum TEXT_HEIGHT         = 8;
+enum TEXT_HEIGHT         = 35;
 enum SCROLL_AREA_PADDING = 6;
 enum INDENT_SIZE         = 16;
 enum AREA_HEADER         = 28;

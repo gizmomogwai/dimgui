@@ -408,7 +408,7 @@ bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
         return false;
     }
 
-    const result = stbtt_BakeFontBitmap(ttfBuffer, 0, 15.0f, bmap,
+    const result = stbtt_BakeFontBitmap(ttfBuffer, 0, 35.0f, bmap,
                                         g_font_texture_size, g_font_texture_size,
                                         FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
     // If result is negative, we baked less than max characters so update the max
