@@ -16,28 +16,11 @@ import std.functional : toDelegate;
 import std.stdio : stderr;
 import std.string : format;
 
-import deimos.glfw.glfw3;
-
-import glad.gl.enums;
-import glad.gl.ext;
-import glad.gl.funcs;
-import glad.gl.loader;
-import glad.gl.types;
+import bindbc.opengl;
+import bindbc.glfw;
 
 import glwtf.input;
 import glwtf.window;
-
-/// init
-shared static this()
-{
-    enforce(glfwInit());
-}
-
-/// uninit
-shared static ~this()
-{
-    glfwTerminate();
-}
 
 ///
 enum WindowMode
@@ -52,6 +35,8 @@ enum WindowMode
 */
 Window createWindow(string windowName, WindowMode windowMode = WindowMode.windowed, int width = 1024, int height = 768)
 {
+    loadGLFW();
+    glfwInit();
     auto vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // constrain the window size so it isn't larger than the desktop size.
@@ -78,13 +63,7 @@ Window createWindow(string windowName, WindowMode windowMode = WindowMode.window
     // activate an opengl context.
     window.make_context_current();
 
-    // load all OpenGL function pointers via glad.
-    enforce(gladLoadGL());
-
-    enforce(glGenBuffers !is null);
-
-    // only interested in GL 3.x
-    enforce(GLVersion.major >= 3);
+    loadOpenGL();
 
     // turn v-sync off.
     glfwSwapInterval(0);

@@ -6,13 +6,8 @@ import std.path;
 import std.stdio;
 import std.string;
 
-import deimos.glfw.glfw3;
-
-import glad.gl.enums;
-import glad.gl.ext;
-import glad.gl.funcs;
-import glad.gl.loader;
-import glad.gl.types;
+import bindbc.opengl;
+import bindbc.glfw;
 
 import glwtf.input;
 import glwtf.window;
@@ -235,12 +230,12 @@ struct GUI
         mouseScroll = -cast(int)vOffset;
     }
 
-    extern(C) static void getUnicode(GLFWwindow* w, uint unicode)
+    extern(C) static void getUnicode(GLFWwindow* w, uint unicode) nothrow
     {
         staticUnicode = unicode;
     }
 
-    extern(C) static void getKey(GLFWwindow* w, int key, int scancode, int action, int mods)
+    extern(C) static void getKey(GLFWwindow* w, int key, int scancode, int action, int mods) nothrow
     {
         if(action != GLFW_PRESS) { return; }
         if(key == GLFW_KEY_ENTER)          { staticUnicode = 0x0D; }

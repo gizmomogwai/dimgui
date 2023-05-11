@@ -10,27 +10,40 @@ import std.functional : toDelegate;
 import std.stdio : stderr;
 import std.string : format;
 
-import deimos.glfw.glfw3;
-
-import glad.gl.enums;
-import glad.gl.ext;
-import glad.gl.funcs;
-import glad.gl.loader;
-import glad.gl.types;
+import bindbc.opengl;
+import bindbc.glfw;
 
 import glwtf.input;
 import glwtf.window;
 
+void loadBindBCGlfw()
+{
+    import bindbc.loader.sharedlib;
+    const result = loadGLFW();
+    import std.stdio : writeln;
+    writeln(result);
+    if (result != glfwSupport)
+    {
+        foreach (info; bindbc.loader.sharedlib.errors)
+        {
+            writeln("error: ", info.message);
+        }
+        throw new Exception("Cannot load glfw");
+    } else
+    {
+        writeln("glfw ok");
+    }
+}
+
 /// init
 shared static this()
 {
-    enforce(glfwInit());
 }
 
 /// uninit
 shared static ~this()
 {
-    glfwTerminate();
+    //glfwTerminate();
 }
 
 ///
@@ -46,11 +59,15 @@ enum WindowMode
 */
 Window createWindow(string windowName, WindowMode windowMode = WindowMode.windowed, int width = 1024, int height = 768)
 {
-    auto vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    import std.stdio : writeln;
+    loadBindBCGlfw();
+    glfwInit();
 
+    auto vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    writeln("vidMode: ", vidMode);
     // constrain the window size so it isn't larger than the desktop size.
-    width = min(width, vidMode.width);
-    height = min(height, vidMode.height);
+    //width = min(width, vidMode.width);
+    //height = min(height, vidMode.height);
 
     // set the window to be initially inivisible since we're repositioning it.
     glfwWindowHint(GLFW_VISIBLE, 0);
@@ -61,7 +78,7 @@ Window createWindow(string windowName, WindowMode windowMode = WindowMode.window
     Window window = createWindowContext(windowName, WindowMode.windowed, width, height);
 
     // center the window on the screen
-    glfwSetWindowPos(window.window, (vidMode.width - width) / 2, (vidMode.height - height) / 2);
+    //glfwSetWindowPos(window.window, (vidMode.width - width) / 2, (vidMode.height - height) / 2);
 
     // glfw-specific error routine (not a generic GL error handler)
     register_glfw_error_callback(&glfwErrorCallback);
@@ -72,13 +89,24 @@ Window createWindow(string windowName, WindowMode windowMode = WindowMode.window
     // activate an opengl context.
     window.make_context_current();
 
-    // load all OpenGL function pointers via glad.
-    enforce(gladLoadGL());
+    void loadBindBCOpenGL()
+    {
+        const result = loadOpenGL();
+        import std.stdio : writeln;
+        writeln(result);
+        version (Default)
+        {
+            (result == GLSupport.gl21).enforce("need opengl 2.1 support");
+        }
+        version (GL_33)
+        {
+            if (result == GLSupport.gl33)
+                .enforce("need opengl 3.3 support");
+        }
+    }
+    loadBindBCOpenGL();
 
     enforce(glGenBuffers !is null);
-
-    // only interested in GL 3.x
-    enforce(GLVersion.major >= 3);
 
     // turn v-sync off.
     glfwSwapInterval(0);

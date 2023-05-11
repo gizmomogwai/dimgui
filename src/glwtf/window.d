@@ -2,7 +2,7 @@ module glwtf.window;
 
 
 private {
-    import glwtf.glfw;
+    import bindbc.glfw;
     import glwtf.input : BaseGLFWEventHandler;
     import glwtf.exception : WindowException;
 

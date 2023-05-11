@@ -1,4 +1,9 @@
 {
 	"fileVersion": 1,
-	"versions": {}
+	"versions": {
+		"bindbc-glfw": "1.0.2",
+		"bindbc-loader": "1.0.3",
+		"bindbc-opengl": "1.0.5",
+		"dimgui": {"path":"../../"}
+	}
 }

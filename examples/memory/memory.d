@@ -11,13 +11,8 @@ import std.path;
 import std.stdio;
 import std.string;
 
-import deimos.glfw.glfw3;
-
-import glad.gl.enums;
-import glad.gl.ext;
-import glad.gl.funcs;
-import glad.gl.loader;
-import glad.gl.types;
+import bindbc.opengl;
+import bindbc.glfw;
 
 import glwtf.input;
 import glwtf.window;
@@ -130,7 +125,7 @@ struct GUI
         /// is called. 'imguiRender' is only called after 'displayArea1' returns,
         /// after which 'buffer' will not be usable (it's memory allocated on the stack!).
         /// Result: Random text being displayed or even crashes are possible.
-        char[128] buffer;
+        static char[128] buffer;
         auto text = buffer.sformat("This is my text: %s", "more text");
         imguiLabel(text);
 

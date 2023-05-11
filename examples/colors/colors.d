@@ -13,13 +13,8 @@ import std.range;
 import std.stdio;
 import std.string;
 
-import deimos.glfw.glfw3;
-
-import glad.gl.enums;
-import glad.gl.ext;
-import glad.gl.funcs;
-import glad.gl.loader;
-import glad.gl.types;
+import bindbc.opengl;
+import bindbc.glfw;
 
 import glwtf.input;
 import glwtf.window;

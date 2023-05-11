@@ -25,10 +25,10 @@
         "src"
     ],
 
-    "libs-posix": [
-        "dl",
-        "glfw3"
-    ],
+    "dependencies": {
+        "bindbc-opengl": "~>1.0.0",
+        "bindbc-glfw": "~>1.0.0"
+    },
 
     "libs-linux": [
         "GL",
@@ -50,5 +50,7 @@
         "examples/colors",
         "examples/demo",
         "examples/memory"
-    ]
+    ],
+
+    "versions": ["GL_33"]
 }

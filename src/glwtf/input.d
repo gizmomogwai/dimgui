@@ -1,6 +1,5 @@
 module glwtf.input;
 
-
 private {
     import glwtf.glfw;
     import glwtf.signals;
@@ -26,13 +25,20 @@ void register_glfw_error_callback(void function(int, string) cb) {
 
 extern(C) {
     // window events //
-    void window_resize_callback(GLFWwindow* window, int width, int height) {
+    void window_resize_callback(GLFWwindow* window, int width, int height) nothrow {
+                try {
+
         AEventHandler ae = cast_userptr(window);
 
         ae.on_resize.emit(width, height);
-    }
+        } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+    } 
 
-    void window_close_callback(GLFWwindow* window) {
+    void window_close_callback(GLFWwindow* window) nothrow {
+        try {
         AEventHandler ae = cast_userptr(window);
 
         bool close = cast(int)ae._on_close();
@@ -41,28 +47,50 @@ extern(C) {
         } else {
             glfwSetWindowShouldClose(window, 0);
         }
+        } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
     }
 
-    void window_refresh_callback(GLFWwindow* window) {
+    void window_refresh_callback(GLFWwindow* window) nothrow {
+        try {
         AEventHandler ae = cast_userptr(window);
 
         ae.on_refresh.emit();
+        } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
     }
 
-    void window_focus_callback(GLFWwindow* window, int focused) {
+    void window_focus_callback(GLFWwindow* window, int focused) nothrow{
+        try {
         AEventHandler ae = cast_userptr(window);
 
         ae.on_focus.emit(focused == 1);
+                } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
     }
 
-    void window_iconify_callback(GLFWwindow* window, int iconified) {
+    void window_iconify_callback(GLFWwindow* window, int iconified) nothrow{
+        try {
         AEventHandler ae = cast_userptr(window);
 
         ae.on_iconify.emit(iconified == 1);
+                } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
     }
 
     // user input //
-    void key_callback(GLFWwindow* window, int key, int scancode, int state, int modifier) {
+    void key_callback(GLFWwindow* window, int key, int scancode, int state, int modifier) nothrow{
+        try {
         AEventHandler ae = cast_userptr(window);
 
         if(state == GLFW_PRESS) {
@@ -72,15 +100,27 @@ extern(C) {
         } else {
             ae.on_key_up.emit(key, scancode, modifier);
         }
+                } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
     }
 
-    void char_callback(GLFWwindow* window, uint c) {
-        AEventHandler ae = cast_userptr(window);
+    void char_callback(GLFWwindow* window, uint c) nothrow{
+        try {
+            AEventHandler ae = cast_userptr(window);
 
         ae.on_char.emit(cast(dchar)c);
+                } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
     }
 
-    void mouse_button_callback(GLFWwindow* window, int button, int state, int modifier) {
+    void mouse_button_callback(GLFWwindow* window, int button, int state, int modifier) nothrow{
+        try {
         AEventHandler ae = cast_userptr(window);
 
         if(state == GLFW_PRESS) {
@@ -88,23 +128,47 @@ extern(C) {
         } else {
             ae.on_mouse_button_up.emit(button, modifier);
         }
+                } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
     }
 
-    void cursor_pos_callback(GLFWwindow* window, double x, double y) {
+    void cursor_pos_callback(GLFWwindow* window, double x, double y) nothrow{
+        try {
         AEventHandler ae = cast_userptr(window);
 
         ae.on_mouse_pos.emit(x, y);
+                } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
     }
 
-    void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) nothrow{
+        try {
         AEventHandler ae = cast_userptr(window);
 
         ae.on_scroll.emit(xoffset, yoffset);
+                } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
     }
 
     // misc //
-    void error_callback(int errno, const(char)* error) {
-        glfw_error_callback(errno, to!string(error));
+    void error_callback(int errno, const(char)* errorMsg)  nothrow {
+        try {
+        glfw_error_callback(errno, to!string(errorMsg));
+                        } catch (Exception e)
+        {
+            assert(0, "window close callback");
+        }
+
+
     }
 }
 

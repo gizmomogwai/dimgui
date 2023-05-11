@@ -23,8 +23,8 @@ import core.stdc.string;
 import std.math;
 import std.stdio;
 
-import glad.gl.all;
-import glad.gl.loader;
+import bindbc.opengl;
+import bindbc.glfw;
 
 import imgui.api;
 import imgui.engine;
@@ -369,8 +369,18 @@ void drawLine(float x0, float y0, float x1, float y1, float r, float fth, uint c
     drawPolygon(verts.ptr, 4, fth, col);
 }
 
+void loadBindBCOpenGL()
+{
+    const result = loadOpenGL();
+    writeln(result);
+    import std.exception : enforce;
+    (result == GLSupport.gl33).enforce("need opengl 3.3 support");
+}
+
 bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
 {
+    import bindbc.opengl;
+    loadBindBCOpenGL();
     for (int i = 0; i < CIRCLE_VERTS; ++i)
     {
         float a = cast(float)i / cast(float)CIRCLE_VERTS * PI * 2;
