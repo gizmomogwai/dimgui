@@ -602,7 +602,7 @@ bool imguiButton(string label, Enabled enabled = Enabled.yes, const ref ColorSch
     bool over = enabled && inRect(x, y, w, h);
     bool res  = buttonLogic(id, over);
 
-    addGfxCmdRoundedRect(cast(float)x, cast(float)y, cast(float)w, cast(float)h, cast(float)BUTTON_HEIGHT / 2 - 1,
+    addGfxCmdRoundedRect(cast(float)x, cast(float)y, cast(float)w, cast(float)h, 10,
                          isActive(id) ? colorScheme.button.backPress : colorScheme.button.back);
 
     auto color = enabled ? (isHot(id) ? colorScheme.button.textHover : colorScheme.button.text) : colorScheme.button.textDisabled;
