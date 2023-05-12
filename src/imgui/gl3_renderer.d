@@ -20,6 +20,7 @@ module imgui.gl3_renderer;
 import core.stdc.stdlib;
 import core.stdc.string;
 
+import std.file : read;
 import std.math;
 import std.stdio;
 
@@ -389,36 +390,10 @@ bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
     }
 
     // Load font.
-    auto file = File(cast(string)fontpath, "rb");
-    g_font_texture_size = fontTextureSize;
-    FILE* fp = file.getFP();
+    ubyte[] ttfBuffer = cast(ubyte[])fontpath.read;
+    ubyte[] bmap = new ubyte[g_font_texture_size * g_font_texture_size];
 
-    if (!fp)
-        return false;
-    fseek(fp, 0, SEEK_END);
-    size_t size = cast(size_t)ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    ubyte* ttfBuffer = cast(ubyte*)malloc(size);
-
-    if (!ttfBuffer)
-    {
-        return false;
-    }
-
-    fread(ttfBuffer, 1, size, fp);
-    // fclose(fp);
-    fp = null;
-
-    ubyte* bmap = cast(ubyte*)malloc(g_font_texture_size * g_font_texture_size);
-
-    if (!bmap)
-    {
-        free(ttfBuffer);
-        return false;
-    }
-
-    const result = stbtt_BakeFontBitmap(ttfBuffer, 0, 35.0f, bmap,
+    const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, TEXT_HEIGHT, bmap.ptr,
                                         g_font_texture_size, g_font_texture_size,
                                         FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
     // If result is negative, we baked less than max characters so update the max
@@ -433,7 +408,7 @@ bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
     glBindTexture(GL_TEXTURE_2D, g_ftex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED,
                  g_font_texture_size, g_font_texture_size,
-                 0, GL_RED, GL_UNSIGNED_BYTE, bmap);
+                 0, GL_RED, GL_UNSIGNED_BYTE, bmap.ptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -515,9 +490,6 @@ bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
     g_programTextureLocation  = glGetUniformLocation(g_program, "Texture");
 
     glUseProgram(0);
-
-    free(ttfBuffer);
-    free(bmap);
 
     return true;
 }
