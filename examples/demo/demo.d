@@ -164,7 +164,7 @@ struct GUI
         imguiSeparator();
 
         foreach (i; 0 .. 100)
-            imguiLabel("A wall of text");
+            imguiLabel("A wall of text %s".format(i));
 
         imguiEndScrollArea();
 

@@ -249,7 +249,7 @@ struct RestrictedSignal(Args...)
     {
         assert(obj);
     }
-    body
+    do
     {
         _impl.addSlot(obj, cast(void delegate())mixin("&obj."~method));
     }
@@ -285,7 +285,7 @@ struct RestrictedSignal(Args...)
         assert(dg);
         assert(cast(void*)obj !is dg.ptr);
     }
-    body
+    do
     {
         _impl.addSlot(obj, cast(void delegate()) dg);
     }
@@ -310,7 +310,7 @@ struct RestrictedSignal(Args...)
     {
         assert(dg);
     }
-    body
+    do
     {
         _impl.addSlot(null, cast(void delegate()) dg);
     }
@@ -329,7 +329,7 @@ struct RestrictedSignal(Args...)
     {
         assert(obj);
     }
-    body
+    do
     {
         void delegate(Args) dg = mixin("&obj."~method);
         _impl.removeSlot(obj, cast(void delegate()) dg);
@@ -352,7 +352,7 @@ struct RestrictedSignal(Args...)
         assert(obj);
         assert(dg);
     }
-    body
+    do
     {
         _impl.removeSlot(obj, cast(void delegate())dg);
     }
@@ -367,7 +367,7 @@ struct RestrictedSignal(Args...)
     {
         assert(obj);
     }
-    body
+    do
     {
         _impl.removeSlot(obj);
     }
@@ -382,7 +382,7 @@ struct RestrictedSignal(Args...)
     {
         assert(dg);
     }
-    body
+    do
     {
         _impl.removeSlot(null, cast(void delegate()) dg);
     }
@@ -539,7 +539,7 @@ private struct SlotImpl
     /// dg.funcptr must not point to heap memory.
     void construct(Object o, void delegate() dg)
     in { assert(this is SlotImpl.init); }
-    body
+    do
     {
         _obj.construct(o);
         _dataPtr = dg.ptr;
@@ -568,7 +568,7 @@ private struct SlotImpl
      */
     void moveFrom(ref SlotImpl other)
     in { assert(this is SlotImpl.init); }
-    body
+    do
     {
         auto o = other.obj;
         _obj.construct(o);
@@ -683,7 +683,7 @@ private struct WeakRef
     @disable void opAssign(WeakRef other);
     void construct(Object o)
     in { assert(this is WeakRef.init); }
-    body
+    do
     {
         debug (signal) createdThis=&this;
         debug (signal) { import std.stdio; writefln("WeakRef.construct for %s and object: %s", &this, o); }
@@ -773,14 +773,14 @@ version(D_LP64)
             this(void* o)
             {
                 _addr = ~cast(ptrdiff_t)(o);
-                debug (signal) debug (3) { import std.stdio; writeln("Constructor _addr: ", _addr);}
-                debug (signal) debug (3) { import std.stdio; writeln("Constructor ~_addr: ", ~_addr);}
+                debug (signal) { import std.stdio; writeln("Constructor _addr: ", _addr);}
+                debug (signal) { import std.stdio; writeln("Constructor ~_addr: ", ~_addr);}
             }
         }
         void* address() @property const
         {
-            debug (signal) debug (3) { import std.stdio; writeln("_addr: ", _addr);}
-            debug (signal) debug (3) { import std.stdio; writeln("~_addr: ", ~_addr);}
+            debug (signal) { import std.stdio; writeln("_addr: ", _addr);}
+            debug (signal) { import std.stdio; writeln("~_addr: ", ~_addr);}
             return cast(void*) ~ _addr;
         }
         debug(signal)        string toString()

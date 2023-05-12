@@ -9,7 +9,8 @@ private {
 
 AEventHandler cast_userptr(GLFWwindow* window)
     out (result) { assert(result !is null, "glfwGetWindowUserPointer returned null"); }
-    body {
+    do
+    {
         void* user_ptr = glfwGetWindowUserPointer(window);
         return cast(AEventHandler)user_ptr;
     }
