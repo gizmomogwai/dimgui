@@ -50,6 +50,7 @@ enum SLIDER_MARKER_WIDTH = 10;
 enum CHECK_SIZE          = 8;
 enum DEFAULT_SPACING     = 4;
 enum TEXT_HEIGHT         = 35;
+enum TEXT_BASELINE         = 5;
 enum SCROLL_AREA_PADDING = 6;
 enum INDENT_SIZE         = 16;
 enum AREA_HEADER         = 28;

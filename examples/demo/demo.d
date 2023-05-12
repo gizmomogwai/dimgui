@@ -99,7 +99,10 @@ struct GUI
         imguiSeparatorLine();
         imguiSeparator();
 
-        imguiButton("Button");
+        if (imguiButton("Button"))
+        {
+            writeln("button pressed");
+        }
 
         imguiButton("Disabled button", Enabled.no);
         imguiItem("Item");

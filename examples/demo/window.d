@@ -66,8 +66,8 @@ Window createWindow(string windowName, WindowMode windowMode = WindowMode.window
     auto vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     writeln("vidMode: ", vidMode);
     // constrain the window size so it isn't larger than the desktop size.
-    //width = min(width, vidMode.width);
-    //height = min(height, vidMode.height);
+    width = min(width, vidMode.width);
+    height = min(height, vidMode.height);
 
     // set the window to be initially inivisible since we're repositioning it.
     glfwWindowHint(GLFW_VISIBLE, 0);
@@ -78,7 +78,7 @@ Window createWindow(string windowName, WindowMode windowMode = WindowMode.window
     Window window = createWindowContext(windowName, WindowMode.windowed, width, height);
 
     // center the window on the screen
-    //glfwSetWindowPos(window.window, (vidMode.width - width) / 2, (vidMode.height - height) / 2);
+    glfwSetWindowPos(window.window, (vidMode.width - width) / 2, (vidMode.height - height) / 2);
 
     // glfw-specific error routine (not a generic GL error handler)
     register_glfw_error_callback(&glfwErrorCallback);
@@ -105,8 +105,6 @@ Window createWindow(string windowName, WindowMode windowMode = WindowMode.window
         }
     }
     loadBindBCOpenGL();
-
-    enforce(glGenBuffers !is null);
 
     // turn v-sync off.
     glfwSwapInterval(0);
