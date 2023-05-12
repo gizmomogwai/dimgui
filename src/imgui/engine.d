@@ -87,7 +87,7 @@ struct imguiGfxCmd
     char type;
     char flags;
     byte[2] pad;
-    uint col;
+    uint color;
 
     union
     {
@@ -109,7 +109,7 @@ public void addGfxCmdScissor(int x, int y, int w, int h)
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
     cmd.type   = IMGUI_GFXCMD_SCISSOR;
     cmd.flags  = x < 0 ? 0 : 1;         // on/off flag.
-    cmd.col    = 0;
+    cmd.color  = 0;
     cmd.rect.x = cast(short)x;
     cmd.rect.y = cast(short)y;
     cmd.rect.w = cast(short)w;
@@ -123,7 +123,7 @@ public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
     cmd.type   = IMGUI_GFXCMD_RECT;
     cmd.flags  = 0;
-    cmd.col    = color.toPackedRGBA();
+    cmd.color  = color.toPackedRGBA();
     cmd.rect.x = cast(short)(x * 8.0f);
     cmd.rect.y = cast(short)(y * 8.0f);
     cmd.rect.w = cast(short)(w * 8.0f);
@@ -138,7 +138,7 @@ public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA 
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
     cmd.type    = IMGUI_GFXCMD_LINE;
     cmd.flags   = 0;
-    cmd.col     = color.toPackedRGBA();
+    cmd.color   = color.toPackedRGBA();
     cmd.line.x0 = cast(short)(x0 * 8.0f);
     cmd.line.y0 = cast(short)(y0 * 8.0f);
     cmd.line.x1 = cast(short)(x1 * 8.0f);
@@ -153,7 +153,7 @@ public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RG
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
     cmd.type   = IMGUI_GFXCMD_RECT;
     cmd.flags  = 0;
-    cmd.col    = color.toPackedRGBA();
+    cmd.color  = color.toPackedRGBA();
     cmd.rect.x = cast(short)(x * 8.0f);
     cmd.rect.y = cast(short)(y * 8.0f);
     cmd.rect.w = cast(short)(w * 8.0f);
@@ -168,7 +168,7 @@ public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
     cmd.type   = IMGUI_GFXCMD_TRIANGLE;
     cmd.flags  = cast(byte)flags;
-    cmd.col    = color.toPackedRGBA();
+    cmd.color  = color.toPackedRGBA();
     cmd.rect.x = cast(short)(x * 8.0f);
     cmd.rect.y = cast(short)(y * 8.0f);
     cmd.rect.w = cast(short)(w * 8.0f);
@@ -182,7 +182,7 @@ public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA col
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
     cmd.type       = IMGUI_GFXCMD_TEXT;
     cmd.flags      = 0;
-    cmd.col        = color.toPackedRGBA();
+    cmd.color      = color.toPackedRGBA();
     cmd.text.x     = cast(short)x;
     cmd.text.y     = cast(short)y;
     cmd.text.align_ = cast(short)align_;

@@ -680,18 +680,18 @@ void imguiRenderGLDraw(int width, int height)
             {
                 drawRect(cast(float)cmd.rect.x * s + 0.5f, cast(float)cmd.rect.y * s + 0.5f,
                          cast(float)cmd.rect.w * s - 1, cast(float)cmd.rect.h * s - 1,
-                         1.0f, cmd.col);
+                         1.0f, cmd.color);
             }
             else
             {
                 drawRoundedRect(cast(float)cmd.rect.x * s + 0.5f, cast(float)cmd.rect.y * s + 0.5f,
                                 cast(float)cmd.rect.w * s - 1, cast(float)cmd.rect.h * s - 1,
-                                cast(float)cmd.rect.r * s, 1.0f, cmd.col);
+                                cast(float)cmd.rect.r * s, 1.0f, cmd.color);
             }
         }
         else if (cmd.type == IMGUI_GFXCMD_LINE)
         {
-            drawLine(cmd.line.x0 * s, cmd.line.y0 * s, cmd.line.x1 * s, cmd.line.y1 * s, cmd.line.r * s, 1.0f, cmd.col);
+            drawLine(cmd.line.x0 * s, cmd.line.y0 * s, cmd.line.x1 * s, cmd.line.y1 * s, cmd.line.r * s, 1.0f, cmd.color);
         }
         else if (cmd.type == IMGUI_GFXCMD_TRIANGLE)
         {
@@ -703,7 +703,7 @@ void imguiRenderGLDraw(int width, int height)
                     cast(float)cmd.rect.x * s + 0.5f + cast(float)cmd.rect.w * s - 1, cast(float)cmd.rect.y * s + 0.5f + cast(float)cmd.rect.h * s / 2 - 0.5f,
                     cast(float)cmd.rect.x * s + 0.5f, cast(float)cmd.rect.y * s + 0.5f + cast(float)cmd.rect.h * s - 1,
                 ];
-                drawPolygon(verts.ptr, 3, 1.0f, cmd.col);
+                drawPolygon(verts.ptr, 3, 1.0f, cmd.color);
             }
 
             if (cmd.flags == 2)
@@ -714,12 +714,12 @@ void imguiRenderGLDraw(int width, int height)
                     cast(float)cmd.rect.x * s + 0.5f + cast(float)cmd.rect.w * s / 2 - 0.5f, cast(float)cmd.rect.y * s + 0.5f,
                     cast(float)cmd.rect.x * s + 0.5f + cast(float)cmd.rect.w * s - 1, cast(float)cmd.rect.y * s + 0.5f + cast(float)cmd.rect.h * s - 1,
                 ];
-                drawPolygon(verts.ptr, 3, 1.0f, cmd.col);
+                drawPolygon(verts.ptr, 3, 1.0f, cmd.color);
             }
         }
         else if (cmd.type == IMGUI_GFXCMD_TEXT)
         {
-            drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.col);
+            drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.color);
         }
         else if (cmd.type == IMGUI_GFXCMD_SCISSOR)
         {
