@@ -23,15 +23,13 @@ module glwtf.signals;
 import core.atomic;
 import core.memory;
 
-
 // Hook into the GC to get informed about object deletions.
 private alias void delegate(Object) DisposeEvt;
-private extern (C) void  rt_attachDisposeEvent( Object obj, DisposeEvt evt );
-private extern (C) void  rt_detachDisposeEvent( Object obj, DisposeEvt evt );
+private extern (C) void rt_attachDisposeEvent(Object obj, DisposeEvt evt);
+private extern (C) void rt_detachDisposeEvent(Object obj, DisposeEvt evt);
 //debug=signal;
 // http://d.puremagic.com/issues/show_bug.cgi?id=10645
-version=bug10645;
-
+version = bug10645;
 
 /**
  * string mixin for creating a signal.
@@ -128,24 +126,29 @@ void main()
  * Globally observed msg 'setting new value' and value 7
  * </pre>
  */
-string signal(Args...)(string name, string protection="private") @safe {
-    assert(protection == "public" || protection == "private" || protection == "package" || protection == "protected" || protection == "none", "Invalid protection specified, must be either: public, private, package, protected or none");
+string signal(Args...)(string name, string protection = "private") @safe
+{
+    assert(protection == "public" || protection == "private"
+            || protection == "package" || protection == "protected" || protection == "none",
+            "Invalid protection specified, must be either: public, private, package, protected or none");
 
-     string argList="(";
-     import std.traits : fullyQualifiedName;
-     foreach (arg; Args)
-     {
-         argList~=fullyQualifiedName!(arg)~", ";
-     }
-     if (argList.length>"(".length)
-         argList = argList[0 .. $-2];
-     argList ~= ")";
+    string argList = "(";
+    import std.traits : fullyQualifiedName;
 
-     string output = (protection == "none" ? "private" : protection) ~ " Signal!" ~ argList ~ " _" ~ name ~ ";\n";
-     string rType= protection == "none" ? "Signal!" : "RestrictedSignal!";
-     output ~= "ref " ~ rType ~ argList ~ " " ~ name ~ "() { return _" ~ name ~ ";}\n";
-     return output;
- }
+    foreach (arg; Args)
+    {
+        argList ~= fullyQualifiedName!(arg) ~ ", ";
+    }
+    if (argList.length > "(".length)
+        argList = argList[0 .. $ - 2];
+    argList ~= ")";
+
+    string output = (protection == "none" ? "private" : protection)
+        ~ " Signal!" ~ argList ~ " _" ~ name ~ ";\n";
+    string rType = protection == "none" ? "Signal!" : "RestrictedSignal!";
+    output ~= "ref " ~ rType ~ argList ~ " " ~ name ~ "() { return _" ~ name ~ ";}\n";
+    return output;
+}
 
 /**
  * Full signal implementation.
@@ -201,7 +204,7 @@ struct Signal(Args...)
      * current emit() run. Note however Signal is not thread-safe, "called
      * during emit" basically means called from within a slot.
      */
-    void emit( Args args ) @trusted
+    void emit(Args args) @trusted
     {
         restricted_._impl.emit(args);
     }
@@ -214,7 +217,7 @@ struct Signal(Args...)
         return restricted_;
     }
 
-    private:
+private:
     RestrictedSignal!(Args) restricted_;
 }
 
@@ -244,14 +247,16 @@ struct RestrictedSignal(Args...)
       *     compatible with this signal.
       */
     void connect(string method, ClassType)(ClassType obj) @trusted
-        if (is(ClassType == class) && __traits(compiles, {void delegate(Args) dg = mixin("&obj."~method);}))
+            if (is(ClassType == class) && __traits(compiles, {
+                    void delegate(Args) dg = mixin("&obj." ~ method);
+                }))
     in
     {
         assert(obj);
     }
     do
     {
-        _impl.addSlot(obj, cast(void delegate())mixin("&obj."~method));
+        _impl.addSlot(obj, cast(void delegate()) mixin("&obj." ~ method));
     }
     /**
       * Indirect connection to an object.
@@ -278,12 +283,12 @@ struct RestrictedSignal(Args...)
       *     necessary.
      */
     void connect(ClassType)(ClassType obj, void delegate(ClassType obj, Args) dg) @trusted
-        if (is(ClassType == class))
+            if (is(ClassType == class))
     in
     {
         assert(obj);
         assert(dg);
-        assert(cast(void*)obj !is dg.ptr);
+        assert(cast(void*) obj !is dg.ptr);
     }
     do
     {
@@ -315,7 +320,6 @@ struct RestrictedSignal(Args...)
         _impl.addSlot(null, cast(void delegate()) dg);
     }
 
-
     /**
       * Disconnect a direct connection.
       *
@@ -324,14 +328,16 @@ struct RestrictedSignal(Args...)
       * Preconditions: Same as for direct connect.
       */
     void disconnect(string method, ClassType)(ClassType obj) @trusted
-        if (is(ClassType == class) && __traits(compiles, {void delegate(Args) dg = mixin("&obj."~method);}))
+            if (is(ClassType == class) && __traits(compiles, {
+                    void delegate(Args) dg = mixin("&obj." ~ method);
+                }))
     in
     {
         assert(obj);
     }
     do
     {
-        void delegate(Args) dg = mixin("&obj."~method);
+        void delegate(Args) dg = mixin("&obj." ~ method);
         _impl.removeSlot(obj, cast(void delegate()) dg);
     }
 
@@ -346,7 +352,7 @@ struct RestrictedSignal(Args...)
       * takes an object paramter.
      */
     void disconnect(ClassType)(ClassType obj, void delegate(ClassType, T1) dg) @trusted
-        if (is(ClassType == class))
+            if (is(ClassType == class))
     in
     {
         assert(obj);
@@ -354,7 +360,7 @@ struct RestrictedSignal(Args...)
     }
     do
     {
-        _impl.removeSlot(obj, cast(void delegate())dg);
+        _impl.removeSlot(obj, cast(void delegate()) dg);
     }
 
     /**
@@ -386,7 +392,8 @@ struct RestrictedSignal(Args...)
     {
         _impl.removeSlot(null, cast(void delegate()) dg);
     }
-    private:
+
+private:
     SignalImpl _impl;
 }
 
@@ -404,20 +411,21 @@ private struct SignalImpl
     /// Forbit copying
     @disable void opAssign(SignalImpl other);
 
-    void emit(Args...)( Args args )
+    void emit(Args...)(Args args)
     {
         int emptyCount = 0;
         if (!_slots.emitInProgress)
         {
             _slots.emitInProgress = true;
-            scope (exit) _slots.emitInProgress = false;
+            scope (exit)
+                _slots.emitInProgress = false;
         }
         else
             emptyCount = -1;
         doEmit(0, emptyCount, args);
         if (emptyCount > 0)
         {
-            _slots.slots = _slots.slots[0 .. $-emptyCount];
+            _slots.slots = _slots.slots[0 .. $ - emptyCount];
             _slots.slots.assumeSafeAppend();
         }
     }
@@ -427,21 +435,23 @@ private struct SignalImpl
         auto oldSlots = _slots.slots;
         if (oldSlots.capacity <= oldSlots.length)
         {
-            auto buf = new SlotImpl[oldSlots.length+1]; // TODO: This growing strategy might be inefficient.
-            foreach (i, ref slot ; oldSlots)
+            auto buf = new SlotImpl[oldSlots.length + 1]; // TODO: This growing strategy might be inefficient.
+            foreach (i, ref slot; oldSlots)
                 buf[i].moveFrom(slot);
             oldSlots = buf;
         }
         else
             oldSlots.length = oldSlots.length + 1;
 
-        oldSlots[$-1].construct(obj, dg);
+        oldSlots[$ - 1].construct(obj, dg);
         _slots.slots = oldSlots;
     }
+
     void removeSlot(Object obj, void delegate() dg)
     {
         removeSlot((const ref SlotImpl item) => item.wasConstructedFrom(obj, dg));
     }
+
     void removeSlot(Object obj)
     {
         removeSlot((const ref SlotImpl item) => item.obj is obj);
@@ -451,19 +461,25 @@ private struct SignalImpl
     {
         foreach (ref slot; _slots.slots)
         {
-            debug (signal) { import std.stdio; stderr.writefln("Destruction, removing some slot(%s, weakref: %s), signal: ", &slot, &slot._obj, &this); }
+            debug (signal)
+            {
+                import std.stdio;
+
+                stderr.writefln("Destruction, removing some slot(%s, weakref: %s), signal: ",
+                        &slot, &slot._obj, &this);
+            }
             slot.reset(); // This is needed because ATM the GC won't trigger struct
-                        // destructors to be run when within a GC managed array.
+            // destructors to be run when within a GC managed array.
         }
     }
-/// Little helper functions:
+    /// Little helper functions:
 
     /**
      * Find and make invalid any slot for which isRemoved returns true.
      */
     void removeSlot(bool delegate(const ref SlotImpl) isRemoved)
     {
-        if(_slots.emitInProgress)
+        if (_slots.emitInProgress)
         {
             foreach (ref slot; _slots.slots)
                 if (isRemoved(slot))
@@ -473,19 +489,18 @@ private struct SignalImpl
         {
             int emptyCount = 0;
             auto mslots = _slots.slots;
-            foreach (i, ref slot; mslots)
-            // We are retrieving obj twice which is quite expensive because of GC lock:
-                if(!slot.isValid || isRemoved(slot))
+            foreach (i, ref slot; mslots) // We are retrieving obj twice which is quite expensive because of GC lock:
+                if (!slot.isValid || isRemoved(slot))
                 {
                     emptyCount++;
                     slot.reset();
                 }
-                else if(emptyCount)
-                    mslots[i-emptyCount].moveFrom(slot);
+                else if (emptyCount)
+                    mslots[i - emptyCount].moveFrom(slot);
 
             if (emptyCount > 0)
             {
-                mslots = mslots[0..$-emptyCount];
+                mslots = mslots[0 .. $ - emptyCount];
                 mslots.assumeSafeAppend();
                 _slots.slots = mslots;
             }
@@ -497,35 +512,36 @@ private struct SignalImpl
      * All exceptions that occur will be chained.
      * Any invalid slots (GC collected or removed) will be dropped.
      */
-    void doEmit(Args...)(int offset, ref int emptyCount, Args args )
+    void doEmit(Args...)(int offset, ref int emptyCount, Args args)
     {
-        int i=offset;
+        int i = offset;
         auto myslots = _slots.slots;
-        scope (exit) if (i+1<myslots.length) doEmit(i+1, emptyCount, args); // Carry on.
+        scope (exit)
+            if (i + 1 < myslots.length)
+                doEmit(i + 1, emptyCount, args); // Carry on.
         if (emptyCount == -1)
-            for (; i<myslots.length; i++)
+            for (; i < myslots.length; i++)
             {
                 myslots[i](args);
                 myslots = _slots.slots; // Refresh because addSlot might have been called.
             }
         else
-            for (; i<myslots.length; i++)
+            for (; i < myslots.length; i++)
             {
                 bool result = myslots[i](args);
                 myslots = _slots.slots; // Refresh because addSlot might have been called.
                 if (!result)
                     emptyCount++;
-                else if (emptyCount>0)
+                else if (emptyCount > 0)
                 {
-                    myslots[i-emptyCount].reset();
-                    myslots[i-emptyCount].moveFrom(myslots[i]);
+                    myslots[i - emptyCount].reset();
+                    myslots[i - emptyCount].moveFrom(myslots[i]);
                 }
             }
     }
 
     SlotArray _slots;
 }
-
 
 // Simple convenience struct for signal implementation.
 // Its is inherently unsafe. It is not a template so SignalImpl does
@@ -538,13 +554,17 @@ private struct SlotImpl
     /// Pass null for o if you have a strong ref delegate.
     /// dg.funcptr must not point to heap memory.
     void construct(Object o, void delegate() dg)
-    in { assert(this is SlotImpl.init); }
+    in
+    {
+        assert(this is SlotImpl.init);
+    }
     do
     {
         _obj.construct(o);
         _dataPtr = dg.ptr;
         _funcPtr = dg.funcptr;
-        assert(GC.addrOf(_funcPtr) is null, "Your function is implemented on the heap? Such dirty tricks are not supported with std.signal!");
+        assert(GC.addrOf(_funcPtr) is null,
+                "Your function is implemented on the heap? Such dirty tricks are not supported with std.signal!");
         if (o)
         {
             if (_dataPtr is cast(void*) o)
@@ -558,7 +578,7 @@ private struct SlotImpl
      */
     bool wasConstructedFrom(Object o, void delegate() dg) const
     {
-        if ( o && dg.ptr is cast(void*) o)
+        if (o && dg.ptr is cast(void*) o)
             return obj is o && _dataPtr is directPtrFlag && funcPtr is dg.funcptr;
         else
             return obj is o && _dataPtr is dg.ptr && funcPtr is dg.funcptr;
@@ -567,7 +587,10 @@ private struct SlotImpl
      * Implement proper explict move.
      */
     void moveFrom(ref SlotImpl other)
-    in { assert(this is SlotImpl.init); }
+    in
+    {
+        assert(this is SlotImpl.init);
+    }
     do
     {
         auto o = other.obj;
@@ -577,6 +600,7 @@ private struct SlotImpl
         other.reset(); // Destroy original!
 
     }
+
     @property Object obj() const
     {
         return _obj.obj;
@@ -614,9 +638,15 @@ private struct SlotImpl
         if (_dataPtr is directPtrFlag || !hasObject)
         {
             void delegate(Args) mdg;
-            mdg.funcptr=cast(void function(Args)) funcPtr;
-            debug (signal) { import std.stdio; writefln("hasObject: %s, o_addr: %s, dataPtr: %s", hasObject, o_addr, _dataPtr);}
-            assert((hasObject && _dataPtr is directPtrFlag) || (!hasObject && _dataPtr !is directPtrFlag));
+            mdg.funcptr = cast(void function(Args)) funcPtr;
+            debug (signal)
+            {
+                import std.stdio;
+
+                writefln("hasObject: %s, o_addr: %s, dataPtr: %s", hasObject, o_addr, _dataPtr);
+            }
+            assert((hasObject && _dataPtr is directPtrFlag) || (!hasObject
+                    && _dataPtr !is directPtrFlag));
             if (hasObject)
                 mdg.ptr = o_addr;
             else
@@ -635,31 +665,33 @@ private struct SlotImpl
     /**
      * Reset this instance to its intial value.
      */
-    void reset() {
+    void reset()
+    {
         _funcPtr = SlotImpl.init._funcPtr;
         _dataPtr = SlotImpl.init._dataPtr;
         _obj.reset();
     }
+
 private:
     void* funcPtr() @property const
     {
-        return cast(void*)( cast(ptrdiff_t)_funcPtr & ~cast(ptrdiff_t)1);
+        return cast(void*)(cast(ptrdiff_t) _funcPtr & ~cast(ptrdiff_t) 1);
     }
+
     void hasObject(bool yes) @property
     {
         if (yes)
             _funcPtr = cast(void*)(cast(ptrdiff_t) _funcPtr | 1);
         else
-            _funcPtr = cast(void*)(cast(ptrdiff_t) _funcPtr & ~cast(ptrdiff_t)1);
+            _funcPtr = cast(void*)(cast(ptrdiff_t) _funcPtr & ~cast(ptrdiff_t) 1);
     }
+
     void* _funcPtr;
     void* _dataPtr;
     WeakRef _obj;
 
-
     enum directPtrFlag = cast(void*)(~0);
 }
-
 
 // Provides a way of holding a reference to an object, without the GC seeing it.
 private struct WeakRef
@@ -682,16 +714,26 @@ private struct WeakRef
     @disable this(this);
     @disable void opAssign(WeakRef other);
     void construct(Object o)
-    in { assert(this is WeakRef.init); }
+    in
+    {
+        assert(this is WeakRef.init);
+    }
     do
     {
-        debug (signal) createdThis=&this;
-        debug (signal) { import std.stdio; writefln("WeakRef.construct for %s and object: %s", &this, o); }
+        debug (signal)
+            createdThis = &this;
+        debug (signal)
+        {
+            import std.stdio;
+
+            writefln("WeakRef.construct for %s and object: %s", &this, o);
+        }
         if (!o)
             return;
-        _obj = InvisibleAddress.construct(cast(void*)o);
+        _obj = InvisibleAddress.construct(cast(void*) o);
         rt_attachDisposeEvent(o, &unhook);
     }
+
     Object obj() @property const
     {
         void* o = null;
@@ -703,49 +745,66 @@ private struct WeakRef
         // any segfault with test/testheisenbug.d. The assertion in
         // Observer.watch never triggered anyways with this
         // implementation.
-        foreach ( i ; 0..2)
+        foreach (i; 0 .. 2)
         {
-            auto tmp =  atomicLoad(_obj); // Does not work with constructor
-            debug (signal) { import std.stdio; writefln("Loaded %s, should be: %s", tmp, cast(InvisibleAddress)_obj); }
+            auto tmp = atomicLoad(_obj); // Does not work with constructor
+            debug (signal)
+            {
+                import std.stdio;
+
+                writefln("Loaded %s, should be: %s", tmp, cast(InvisibleAddress) _obj);
+            }
             o = tmp.address;
-            if ( o is null)
+            if (o is null)
                 return null; // Nothing to do then.
             o = GC.addrOf(tmp.address);
         }
         if (o)
         {
             assert(GC.addrOf(o), "Not possible!");
-            return cast(Object)o;
+            return cast(Object) o;
         }
         return null;
     }
     /**
      * Reset this instance to its intial value.
      */
-    void reset() {
+    void reset()
+    {
         auto o = obj;
-        debug (signal) { import std.stdio; writefln("WeakRef.reset for %s and object: %s", &this, o); }
+        debug (signal)
+        {
+            import std.stdio;
+
+            writefln("WeakRef.reset for %s and object: %s", &this, o);
+        }
         if (o)
         {
             rt_detachDisposeEvent(o, &unhook);
             unhook(o);
         }
-        debug (signal) createdThis = null;
+        debug (signal)
+            createdThis = null;
     }
 
     ~this()
     {
         reset();
     }
-    private:
+
+private:
     debug (signal)
     {
-    invariant()
-    {
-        import std.conv : text;
-        assert(createdThis is null || &this is createdThis, text("We changed address! This should really not happen! Orig address: ", cast(void*)createdThis, " new address: ", cast(void*)&this));
-    }
-    WeakRef* createdThis;
+        invariant ()
+        {
+            import std.conv : text;
+
+            assert(createdThis is null || &this is createdThis,
+                    text("We changed address! This should really not happen! Orig address: ",
+                        cast(void*) createdThis, " new address: ", cast(void*)&this));
+        }
+
+        WeakRef* createdThis;
     }
     void unhook(Object o)
     {
@@ -754,18 +813,19 @@ private struct WeakRef
         else
             _obj = InvisibleAddress(null);
     }
+
     shared(InvisibleAddress) _obj;
 }
 
-version(D_LP64)
+version (D_LP64)
 {
     struct InvisibleAddress
     {
-        version(bug10645)
+        version (bug10645)
         {
             static InvisibleAddress construct(void* o)
             {
-                return InvisibleAddress(~cast(ptrdiff_t)o);
+                return InvisibleAddress(~cast(ptrdiff_t) o);
             }
         }
         else
@@ -773,36 +833,59 @@ version(D_LP64)
             this(void* o)
             {
                 _addr = ~cast(ptrdiff_t)(o);
-                debug (signal) { import std.stdio; writeln("Constructor _addr: ", _addr);}
-                debug (signal) { import std.stdio; writeln("Constructor ~_addr: ", ~_addr);}
+                debug (signal)
+                {
+                    import std.stdio;
+
+                    writeln("Constructor _addr: ", _addr);
+                }
+                debug (signal)
+                {
+                    import std.stdio;
+
+                    writeln("Constructor ~_addr: ", ~_addr);
+                }
             }
         }
         void* address() @property const
         {
-            debug (signal) { import std.stdio; writeln("_addr: ", _addr);}
-            debug (signal) { import std.stdio; writeln("~_addr: ", ~_addr);}
-            return cast(void*) ~ _addr;
+            debug (signal)
+            {
+                import std.stdio;
+
+                writeln("_addr: ", _addr);
+            }
+            debug (signal)
+            {
+                import std.stdio;
+
+                writeln("~_addr: ", ~_addr);
+            }
+            return cast(void*)~_addr;
         }
-        debug(signal)        string toString()
+
+        debug (signal) string toString()
         {
             import std.conv : text;
+
             return text(address);
         }
+
     private:
-        ptrdiff_t _addr = ~ cast(ptrdiff_t) 0;
+        ptrdiff_t _addr = ~cast(ptrdiff_t) 0;
     }
 }
 else
 {
     struct InvisibleAddress
     {
-        version(bug10645)
+        version (bug10645)
         {
             static InvisibleAddress construct(void* o)
             {
                 auto tmp = cast(ptrdiff_t) cast(void*) o;
-                auto addrHigh = (tmp>>16)&0x0000ffff | 0xffff0000; // Address relies in kernel space
-                auto addrLow = tmp&0x0000ffff | 0xffff0000;
+                auto addrHigh = (tmp >> 16) & 0x0000ffff | 0xffff0000; // Address relies in kernel space
+                auto addrLow = tmp & 0x0000ffff | 0xffff0000;
                 return InvisibleAddress(addrHigh, addrLow);
             }
         }
@@ -811,19 +894,22 @@ else
             this(void* o)
             {
                 auto tmp = cast(ptrdiff_t) cast(void*) o;
-                _addrHigh = (tmp>>16)&0x0000ffff | 0xffff0000; // Address relies in kernel space
-                _addrLow = tmp&0x0000ffff | 0xffff0000;
+                _addrHigh = (tmp >> 16) & 0x0000ffff | 0xffff0000; // Address relies in kernel space
+                _addrLow = tmp & 0x0000ffff | 0xffff0000;
             }
         }
         void* address() @property const
         {
-            return cast(void*) (_addrHigh<<16 | (_addrLow & 0x0000ffff));
+            return cast(void*)(_addrHigh << 16 | (_addrLow & 0x0000ffff));
         }
-        debug(signal)        string toString()
+
+        debug (signal) string toString()
         {
             import std.conv : text;
+
             return text(address);
         }
+
     private:
         ptrdiff_t _addrHigh = 0xffff0000;
         ptrdiff_t _addrLow = 0xffff0000;
@@ -835,27 +921,33 @@ else
  *
  * By unused I mean the highest bits of the length (We don't need to support 4 billion slots per signal with int or 10^19 if length gets changed to 64 bits.)
  */
-private struct SlotArray {
+private struct SlotArray
+{
     // Choose int for now, this saves 4 bytes on 64 bits.
     alias int lengthType;
     import std.bitmanip : bitfields;
+
     enum reservedBitsCount = 3;
     enum maxSlotCount = lengthType.max >> reservedBitsCount;
     SlotImpl[] slots() @property
     {
         return _ptr[0 .. length];
     }
+
     void slots(SlotImpl[] newSlots) @property
     {
         _ptr = newSlots.ptr;
-        version(assert)
+        version (assert)
         {
             import std.conv : text;
-            assert(newSlots.length <= maxSlotCount, text("Maximum slots per signal exceeded: ", newSlots.length, "/", maxSlotCount));
+
+            assert(newSlots.length <= maxSlotCount, text("Maximum slots per signal exceeded: ",
+                    newSlots.length, "/", maxSlotCount));
         }
         _blength.length &= ~maxSlotCount;
         _blength.length |= newSlots.length;
     }
+
     size_t length() @property
     {
         return _blength.length & maxSlotCount;
@@ -865,22 +957,25 @@ private struct SlotArray {
     {
         return _blength.emitInProgress;
     }
+
     void emitInProgress(bool val) @property
     {
         _blength.emitInProgress = val;
     }
+
 private:
     SlotImpl* _ptr;
-    union BitsLength {
-        mixin(bitfields!(
-                  bool, "", lengthType.sizeof*8-1,
-                  bool, "emitInProgress", 1
-                  ));
+    union BitsLength
+    {
+        mixin(bitfields!(bool, "", lengthType.sizeof * 8 - 1, bool, "emitInProgress", 1));
         lengthType length;
     }
+
     BitsLength _blength;
 }
-unittest {
+
+unittest
+{
     SlotArray arr;
     auto tmp = new SlotImpl[10];
     arr.slots = tmp;
@@ -894,18 +989,27 @@ unittest {
     assert(arr.emitInProgress);
     assert(arr.length == 10);
     assert(arr.slots is tmp);
-    debug (signal){ import std.stdio;
+    debug (signal)
+    {
+        import std.stdio;
+
         writeln("Slot array tests passed!");
     }
 }
+
 unittest
 { // Check that above example really works ...
     debug (signal) import std.stdio;
+
     class MyObject
     {
         mixin(signal!(string, int)("valueChanged"));
 
-        int value() @property { return _value; }
+        int value() @property
+        {
+            return _value;
+        }
+
         int value(int v) @property
         {
             if (v != _value)
@@ -916,73 +1020,84 @@ unittest
             }
             return v;
         }
+
     private:
         int _value;
     }
 
     class Observer
-    {   // our slot
+    { // our slot
         void watch(string msg, int i)
         {
-            debug (signal) writefln("Observed msg '%s' and value %s", msg, i);
+            debug (signal)
+                writefln("Observed msg '%s' and value %s", msg, i);
         }
     }
 
     void watch(string msg, int i)
     {
-            debug (signal) writefln("Globally observed msg '%s' and value %s", msg, i);
+        debug (signal)
+            writefln("Globally observed msg '%s' and value %s", msg, i);
     }
+
     auto a = new MyObject;
     Observer o = new Observer;
 
-    a.value = 3;                // should not call o.watch()
-    a.valueChanged.connect!"watch"(o);        // o.watch is the slot
-    a.value = 4;                // should call o.watch()
-    a.valueChanged.disconnect!"watch"(o);     // o.watch is no longer a slot
-    a.value = 5;                // so should not call o.watch()
-    a.valueChanged.connect!"watch"(o);        // connect again
+    a.value = 3; // should not call o.watch()
+    a.valueChanged.connect!"watch"(o); // o.watch is the slot
+    a.value = 4; // should call o.watch()
+    a.valueChanged.disconnect!"watch"(o); // o.watch is no longer a slot
+    a.value = 5; // so should not call o.watch()
+    a.valueChanged.connect!"watch"(o); // connect again
     // Do some fancy stuff:
-    a.valueChanged.connect!Observer(o, (obj, msg, i) =>  obj.watch("Some other text I made up", i+1));
+    a.valueChanged.connect!Observer(o, (obj, msg,
+            i) => obj.watch("Some other text I made up", i + 1));
     a.valueChanged.strongConnect(&watch);
-    a.value = 6;                // should call o.watch()
-    destroy(o);                 // destroying o should automatically disconnect it
-    a.value = 7;                // should not call o.watch()
+    a.value = 6; // should call o.watch()
+    destroy(o); // destroying o should automatically disconnect it
+    a.value = 7; // should not call o.watch()
 
 }
 
 unittest
 {
     debug (signal) import std.stdio;
+
     class Observer
     {
         void watch(string msg, int i)
         {
             //writefln("Observed msg '%s' and value %s", msg, i);
             captured_value = i;
-            captured_msg   = msg;
+            captured_msg = msg;
         }
 
-
-        int    captured_value;
+        int captured_value;
         string captured_msg;
     }
 
     class SimpleObserver
     {
-        void watchOnlyInt(int i) {
+        void watchOnlyInt(int i)
+        {
             captured_value = i;
         }
+
         int captured_value;
     }
 
     class Foo
     {
-        @property int value() { return _value; }
+        @property int value()
+        {
+            return _value;
+        }
 
         @property int value(int v)
         {
             if (v != _value)
-            {   _value = v;
+            {
+                _value = v;
                 _extendedSig.emit("setting new value", v);
                 //_simpleSig.emit(v);
             }
@@ -992,7 +1107,7 @@ unittest
         mixin(signal!(string, int)("extendedSig"));
         //Signal!(int) simpleSig;
 
-        private:
+    private:
         int _value;
     }
 
@@ -1020,10 +1135,11 @@ unittest
     assert(o.captured_value == 4);
     assert(o.captured_msg == "setting new value");
     //a.extendedSig.connect!Observer(o, (obj, msg, i) { obj.watch("Hahah", i); });
-    a.extendedSig.connect!Observer(o, (obj, msg, i) => obj.watch("Hahah", i) );
+    a.extendedSig.connect!Observer(o, (obj, msg, i) => obj.watch("Hahah", i));
 
     a.value = 7;
-    debug (signal) stderr.writeln("After asignment!");
+    debug (signal)
+        stderr.writeln("After asignment!");
     assert(o.captured_value == 7);
     assert(o.captured_msg == "Hahah");
     a.extendedSig.disconnect(o); // Simply disconnect o, otherwise we would have to store the lamda somewhere if we want to disconnect later on.
@@ -1035,17 +1151,20 @@ unittest
 
     // destroy the underlying object and make sure it doesn't cause
     // a crash or other problems
-    debug (signal) stderr.writefln("Disposing");
+    debug (signal)
+        stderr.writefln("Disposing");
     destroy(o);
-    debug (signal) stderr.writefln("Disposed");
+    debug (signal)
+        stderr.writefln("Disposed");
     a.value = 7;
 }
 
-unittest {
+unittest
+{
     class Observer
     {
-        int    i;
-        long   l;
+        int i;
+        long l;
         string str;
 
         void watchInt(string str, int i)
@@ -1063,12 +1182,23 @@ unittest {
 
     class Bar
     {
-        @property void value1(int v)  { _s1.emit("str1", v); }
-        @property void value2(int v)  { _s2.emit("str2", v); }
-        @property void value3(long v) { _s3.emit("str3", v); }
+        @property void value1(int v)
+        {
+            _s1.emit("str1", v);
+        }
 
-        mixin(signal!(string, int) ("s1"));
-        mixin(signal!(string, int) ("s2"));
+        @property void value2(int v)
+        {
+            _s2.emit("str2", v);
+        }
+
+        @property void value3(long v)
+        {
+            _s3.emit("str3", v);
+        }
+
+        mixin(signal!(string, int)("s1"));
+        mixin(signal!(string, int)("s2"));
         mixin(signal!(string, long)("s3"));
     }
 
@@ -1091,19 +1221,22 @@ unittest {
         assert(o1.i == 11 && !o1.l && o1.str == "str1");
         assert(!o2.i && !o2.l && !o2.str);
         assert(!o3.i && !o3.l && !o3.str);
-        o1.i = -11; o1.str = "x1";
+        o1.i = -11;
+        o1.str = "x1";
 
         a.value2 = 12;
         assert(o1.i == -11 && !o1.l && o1.str == "x1");
         assert(o2.i == 12 && !o2.l && o2.str == "str2");
         assert(!o3.i && !o3.l && !o3.str);
-        o2.i = -12; o2.str = "x2";
+        o2.i = -12;
+        o2.str = "x2";
 
         a.value3 = 13;
         assert(o1.i == -11 && !o1.l && o1.str == "x1");
         assert(o2.i == -12 && !o1.l && o2.str == "x2");
         assert(!o3.i && o3.l == 13 && o3.str == "str3");
-        o3.l = -13; o3.str = "x3";
+        o3.l = -13;
+        o3.str = "x3";
 
         // disconnect the watchers and make sure it doesn't trigger
         a.s1.disconnect!"watchInt"(o1);
@@ -1140,14 +1273,25 @@ unittest {
 
     test(new Bar);
 
-    class BarDerived: Bar
+    class BarDerived : Bar
     {
-        @property void value4(int v)  { _s4.emit("str4", v); }
-        @property void value5(int v)  { _s5.emit("str5", v); }
-        @property void value6(long v) { _s6.emit("str6", v); }
+        @property void value4(int v)
+        {
+            _s4.emit("str4", v);
+        }
 
-        mixin(signal!(string, int) ("s4"));
-        mixin(signal!(string, int) ("s5"));
+        @property void value5(int v)
+        {
+            _s5.emit("str5", v);
+        }
+
+        @property void value6(long v)
+        {
+            _s6.emit("str6", v);
+        }
+
+        mixin(signal!(string, int)("s4"));
+        mixin(signal!(string, int)("s5"));
         mixin(signal!(string, long)("s6"));
     }
 
@@ -1173,19 +1317,22 @@ unittest {
     assert(o4.i == 44 && !o4.l && o4.str == "str4");
     assert(!o5.i && !o5.l && !o5.str);
     assert(!o6.i && !o6.l && !o6.str);
-    o4.i = -44; o4.str = "x4";
+    o4.i = -44;
+    o4.str = "x4";
 
     a.value5 = 45;
     assert(o4.i == -44 && !o4.l && o4.str == "x4");
     assert(o5.i == 45 && !o5.l && o5.str == "str5");
     assert(!o6.i && !o6.l && !o6.str);
-    o5.i = -45; o5.str = "x5";
+    o5.i = -45;
+    o5.str = "x5";
 
     a.value6 = 46;
     assert(o4.i == -44 && !o4.l && o4.str == "x4");
     assert(o5.i == -45 && !o4.l && o5.str == "x5");
     assert(!o6.i && o6.l == 46 && o6.str == "str6");
-    o6.l = -46; o6.str = "x6";
+    o6.l = -46;
+    o6.str = "x6";
 
     // disconnect the watchers and make sure it doesn't trigger
     a.s4.disconnect!"watchInt"(o4);
@@ -1232,74 +1379,88 @@ unittest
         {
             return value_;
         }
+
         ref Property opAssign(int val)
         {
-            debug (signal) writeln("Assigning int to property with signal: ", &this);
+            debug (signal)
+                writeln("Assigning int to property with signal: ", &this);
             value_ = val;
             _signal.emit(val);
             return this;
         }
-        private:
+
+    private:
         int value_;
     }
 
     void observe(int val)
     {
-        debug (signal) writefln("observe: Wow! The value changed: %s", val);
+        debug (signal)
+            writefln("observe: Wow! The value changed: %s", val);
     }
 
     class Observer
     {
         void observe(int val)
         {
-            debug (signal) writefln("Observer: Wow! The value changed: %s", val);
-            debug (signal) writefln("Really! I must know I am an observer (old value was: %s)!", observed);
+            debug (signal)
+                writefln("Observer: Wow! The value changed: %s", val);
+            debug (signal)
+                writefln("Really! I must know I am an observer (old value was: %s)!", observed);
             observed = val;
             count++;
         }
+
         int observed;
         int count;
     }
+
     Property prop;
     void delegate(int) dg = (val) => observe(val);
     prop.signal.strongConnect(dg);
-    assert(prop.signal._impl._slots.length==1);
-    Observer o=new Observer;
+    assert(prop.signal._impl._slots.length == 1);
+    Observer o = new Observer;
     prop.signal.connect!"observe"(o);
-    assert(prop.signal._impl._slots.length==2);
-    debug (signal) writeln("Triggering on original property with value 8 ...");
-    prop=8;
-    assert(o.count==1);
-    assert(o.observed==prop);
+    assert(prop.signal._impl._slots.length == 2);
+    debug (signal)
+        writeln("Triggering on original property with value 8 ...");
+    prop = 8;
+    assert(o.count == 1);
+    assert(o.observed == prop);
 }
 
 unittest
 {
     debug (signal) import std.stdio;
     import std.conv;
+
     Signal!() s1;
     void testfunc(int id)
     {
         throw new Exception(to!string(id));
     }
+
     s1.strongConnect(() => testfunc(0));
     s1.strongConnect(() => testfunc(1));
     s1.strongConnect(() => testfunc(2));
-    try s1.emit();
-    catch(Exception e)
+    try
+        s1.emit();
+    catch (Exception e)
     {
-        Throwable t=e;
-        int i=0;
+        Throwable t = e;
+        int i = 0;
         while (t)
         {
-            debug (signal) stderr.writefln("Caught exception (this is fine)");
-            assert(to!int(t.msg)==i);
-            t=t.next;
+            debug (signal)
+                stderr.writefln("Caught exception (this is fine)");
+            assert(to!int(t.msg) == i);
+            t = t.next;
             i++;
         }
-        assert(i==3);
+        assert(i == 3);
     }
 }
+
 unittest
 {
     class A
@@ -1322,6 +1483,7 @@ unittest
         mixin(signal!int("app", "protected"));
         mixin(signal!int("an", "none"));
     }
+
     debug (signal)
     {
         pragma(msg, signal!int("a", "public"));
@@ -1331,7 +1493,7 @@ unittest
     }
 }
 
-unittest // Test nested emit/removal/addition ...
+unittest  // Test nested emit/removal/addition ...
 {
     Signal!() sig;
     bool doEmit = true;
@@ -1341,35 +1503,45 @@ unittest // Test nested emit/removal/addition ...
     void slot1()
     {
         doEmit = !doEmit;
-        if(!doEmit)
+        if (!doEmit)
             sig.emit();
     }
+
     void slot3()
     {
         slot3called++;
     }
+
     void slot2()
     {
-        debug (signal) { import std.stdio; writefln("\nCALLED: %s, should called: %s", slot3called, slot3shouldcalled);}
-        assert (slot3called == slot3shouldcalled);
-        if ( ++counter < 100)
+        debug (signal)
+        {
+            import std.stdio;
+
+            writefln("\nCALLED: %s, should called: %s", slot3called, slot3shouldcalled);
+        }
+        assert(slot3called == slot3shouldcalled);
+        if (++counter < 100)
             slot3shouldcalled += counter;
-        if ( counter < 100 )
+        if (counter < 100)
             sig.strongConnect(&slot3);
     }
+
     void slot4()
     {
-        if ( counter == 100 )
+        if (counter == 100)
             sig.strongDisconnect(&slot3); // All connections dropped
     }
+
     sig.strongConnect(&slot1);
     sig.strongConnect(&slot2);
     sig.strongConnect(&slot4);
-    for(int i=0; i<1000; i++)
+    for (int i = 0; i < 1000; i++)
         sig.emit();
     debug (signal)
     {
         import std.stdio;
+
         writeln("slot3called: ", slot3called);
     }
 }

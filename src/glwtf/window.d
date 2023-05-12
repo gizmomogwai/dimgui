@@ -1,7 +1,7 @@
 module glwtf.window;
 
-
-private {
+private
+{
     import bindbc.glfw;
     import glwtf.input : BaseGLFWEventHandler;
     import glwtf.exception : WindowException;
@@ -11,19 +11,21 @@ private {
     import std.typecons : Tuple;
 }
 
-
-struct Rect {
+struct Rect
+{
     int x;
     int y;
 }
 
-private string set_hint_property(string target, string name, bool getter=false) {
+private string set_hint_property(string target, string name, bool getter = false)
+{
     string ret = `@property void ` ~ name ~ `(int hint) {
                       set_hint(` ~ target ~ `, hint);
                   }`;
 
-    if(getter) {
-        ret ~=   `@property int ` ~ name ~ `() {
+    if (getter)
+    {
+        ret ~= `@property int ` ~ name ~ `() {
                       return get_attrib(` ~ target ~ `);
                   }`;
     }
@@ -31,38 +33,49 @@ private string set_hint_property(string target, string name, bool getter=false) 
     return ret;
 }
 
-
 alias Tuple!(int, "major", int, "minor") OGLVT;
-immutable OGLVT[] OGLVTS = [OGLVT(4, 3), OGLVT(4, 2), OGLVT(4, 1), OGLVT(4, 0),
-                            OGLVT(3, 3), OGLVT(3, 2), OGLVT(3, 1), OGLVT(3, 0)];
+immutable OGLVT[] OGLVTS = [
+    OGLVT(4, 3), OGLVT(4, 2), OGLVT(4, 1), OGLVT(4, 0), OGLVT(3, 3), OGLVT(3,
+            2), OGLVT(3, 1), OGLVT(3, 0)
+];
 
-class Window : BaseGLFWEventHandler {
-    debug {
+class Window : BaseGLFWEventHandler
+{
+    debug
+    {
         private GLFWwindow* _window;
 
-        @property GLFWwindow* window() {
+        @property GLFWwindow* window()
+        {
             assert(_window !is null, "no window created yet!");
             return _window;
         }
-        @property void window(GLFWwindow* window) {
+
+        @property void window(GLFWwindow* window)
+        {
             _window = window;
         }
-    } else {
+    }
+    else
+    {
         GLFWwindow* window;
     }
 
-    this() {
+    this()
+    {
         super();
     }
 
-    this(GLFWwindow* window) {
+    this(GLFWwindow* window)
+    {
         super();
 
         this.window = window;
         register_callbacks(window);
     }
 
-    void set_hint(int target, int hint) {
+    void set_hint(int target, int hint)
+    {
         glfwWindowHint(target, hint);
     }
 
@@ -91,17 +104,22 @@ class Window : BaseGLFWEventHandler {
     mixin(set_hint_property("GLFW_RESIZABLE", "resizable", true));
     mixin(set_hint_property("GLFW_VISIBLE", "visible", true));
 
-    void create(int width, int height, string title, GLFWmonitor* monitor = null, GLFWwindow* share = null) {
+    void create(int width, int height, string title, GLFWmonitor* monitor = null,
+            GLFWwindow* share = null)
+    {
         window = glfwCreateWindow(width, height, title.toStringz(), monitor, share);
         enforce!WindowException(window !is null, "Failed to create GLFW Window");
         register_callbacks(window);
     }
 
-    auto create_highest_available_context(int width, int height, string title, GLFWmonitor* monitor = null, GLFWwindow* share = null,
-                                          int opengl_profile = GLFW_OPENGL_CORE_PROFILE, bool forward_compat = true) {
+    auto create_highest_available_context(int width, int height, string title, GLFWmonitor* monitor = null,
+            GLFWwindow* share = null, int opengl_profile = GLFW_OPENGL_CORE_PROFILE,
+            bool forward_compat = true)
+    {
         GLFWwindow* win = null;
 
-        foreach(oglvt; OGLVTS) {
+        foreach (oglvt; OGLVTS)
+        {
             this.context_version_major = oglvt.major;
             this.context_version_minor = oglvt.minor;
             this.opengl_profile = opengl_profile;
@@ -109,75 +127,90 @@ class Window : BaseGLFWEventHandler {
 
             win = glfwCreateWindow(width, height, title.toStringz(), monitor, share);
 
-            if(win !is null) {
+            if (win !is null)
+            {
                 window = win;
                 register_callbacks(window);
                 return oglvt;
             }
         }
 
-        throw new WindowException("Unable to initialize OpenGL forward compatible context (Version >= 3.0).");
+        throw new WindowException(
+                "Unable to initialize OpenGL forward compatible context (Version >= 3.0).");
     }
 
-    void destroy() {
+    void destroy()
+    {
         glfwDestroyWindow(window);
     }
 
-    @property void title(string title) {
+    @property void title(string title)
+    {
         glfwSetWindowTitle(window, title.toStringz());
     }
 
-    @property void size(Rect rect) {
+    @property void size(Rect rect)
+    {
         glfwSetWindowSize(window, rect.x, rect.y);
     }
 
-    @property Rect size() {
+    @property Rect size()
+    {
         Rect rect;
         glfwGetWindowSize(window, &rect.x, &rect.y);
         return rect;
     }
 
-    @property int width() {
+    @property int width()
+    {
         return size.x;
     }
 
-    @property int height() {
+    @property int height()
+    {
         return size.y;
     }
 
-    void iconify() {
+    void iconify()
+    {
         glfwIconifyWindow(window);
     }
 
-    void restore() {
+    void restore()
+    {
         glfwRestoreWindow(window);
     }
 
-//     void show() {
-//         glfwShowWindow(window);
-//     }
-//
-//     void hide() {
-//         glfwHideWindow(window);
-//     }
+    //     void show() {
+    //         glfwShowWindow(window);
+    //     }
+    //
+    //     void hide() {
+    //         glfwHideWindow(window);
+    //     }
 
-    int get_attrib(int attrib) {
+    int get_attrib(int attrib)
+    {
         return glfwGetWindowAttrib(window, attrib);
     }
 
-    void set_input_mode(int mode, int value) {
+    void set_input_mode(int mode, int value)
+    {
         glfwSetInputMode(window, mode, value);
     }
 
-    int get_input_mode(int mode) {
+    int get_input_mode(int mode)
+    {
         return glfwGetInputMode(window, mode);
     }
 
-    void make_context_current() {
+    void make_context_current()
+    {
         glfwMakeContextCurrent(window);
     }
 
-    void swap_buffers() {
+    void swap_buffers()
+    {
         glfwSwapBuffers(window);
     }
 
@@ -185,8 +218,10 @@ class Window : BaseGLFWEventHandler {
     // window
     bool delegate() on_close;
 
-    override bool _on_close() {
-        if(on_close !is null) {
+    override bool _on_close()
+    {
+        if (on_close !is null)
+        {
             return on_close();
         }
 

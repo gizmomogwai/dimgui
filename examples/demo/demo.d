@@ -16,10 +16,8 @@ import imgui;
 
 import window;
 
-version (OSX)
-    version = MaybeHighResolutionDisplay;
-version (iOS)
-    version = MaybeHighResolutionDisplay;
+version (OSX) version = MaybeHighResolutionDisplay;
+version (iOS) version = MaybeHighResolutionDisplay;
 
 struct GUI
 {
@@ -44,6 +42,7 @@ struct GUI
         glfwSetCharCallback(window.window, &getUnicode);
         glfwSetKeyCallback(window.window, &getKey);
     }
+
     string lastInfo;
 
     void render()
@@ -78,12 +77,12 @@ struct GUI
         const scrollAreaWidth = windowWidth / 4;
         const scrollAreaHeight = windowHeight - 20;
 
-        int mousex = cast(int)mouseX;
-        int mousey = cast(int)mouseY;
+        int mousex = cast(int) mouseX;
+        int mousey = cast(int) mouseY;
 
         mousey = windowHeight - mousey;
-        int leftButton   = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT);
-        int rightButton  = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT);
+        int leftButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT);
+        int rightButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT);
         int middleButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_MIDDLE);
 
         if (leftButton == GLFW_PRESS)
@@ -95,7 +94,8 @@ struct GUI
         if (mouseScroll != 0)
             mouseScroll = 0;
 
-        imguiBeginScrollArea("Scroll area 1", 10, 10, scrollAreaWidth, scrollAreaHeight, &scrollArea1);
+        imguiBeginScrollArea("Scroll area 1", 10, 10, scrollAreaWidth,
+                scrollAreaHeight, &scrollArea1);
 
         imguiSeparatorLine();
         imguiSeparator();
@@ -117,7 +117,7 @@ struct GUI
 
         enforce(!imguiCheck("Inactive enabled checkbox", &checkState3, Enabled.no));
 
-        if(imguiTextInput("Text input:", textInputBuffer, textEntered))
+        if (imguiTextInput("Text input:", textInputBuffer, textEntered))
         {
             lastTextEntered = textEntered.idup;
             textEntered = textInputBuffer[0 .. 0];
@@ -159,16 +159,20 @@ struct GUI
 
         imguiEndScrollArea();
 
-        imguiBeginScrollArea("Scroll area 2", 20 + (1 * scrollAreaWidth), 10, scrollAreaWidth, scrollAreaHeight, &scrollArea2);
+        imguiBeginScrollArea("Scroll area 2", 20 + (1 * scrollAreaWidth), 10,
+                scrollAreaWidth, scrollAreaHeight, &scrollArea2);
         imguiSeparatorLine();
         imguiSeparator();
 
         foreach (i; 0 .. 100)
+        {
             imguiLabel("A wall of text %s".format(i));
+        }
 
         imguiEndScrollArea();
 
-        imguiBeginScrollArea("Scroll area 3", 30 + (2 * scrollAreaWidth), 10, scrollAreaWidth, scrollAreaHeight, &scrollArea3);
+        imguiBeginScrollArea("Scroll area 3", 30 + (2 * scrollAreaWidth), 10,
+                scrollAreaWidth, scrollAreaHeight, &scrollArea3);
         imguiLabel(lastInfo);
         imguiEndScrollArea();
 
@@ -176,17 +180,26 @@ struct GUI
 
         const graphicsXPos = 40 + (3 * scrollAreaWidth);
 
-        imguiDrawText(graphicsXPos, scrollAreaHeight, TextAlign.left, "Free text", RGBA(32, 192, 32, 192));
-        imguiDrawText(graphicsXPos + 100, windowHeight - 40, TextAlign.right, "Free text", RGBA(32, 32, 192, 192));
-        imguiDrawText(graphicsXPos + 50, windowHeight - 60, TextAlign.center, "Free text", RGBA(192, 32, 32, 192));
+        imguiDrawText(graphicsXPos, scrollAreaHeight, TextAlign.left,
+                "Free text", RGBA(32, 192, 32, 192));
+        imguiDrawText(graphicsXPos + 100, windowHeight - 40, TextAlign.right,
+                "Free text", RGBA(32, 32, 192, 192));
+        imguiDrawText(graphicsXPos + 50, windowHeight - 60, TextAlign.center,
+                "Free text", RGBA(192, 32, 32, 192));
 
-        imguiDrawLine(graphicsXPos, windowHeight - 80, graphicsXPos + 100, windowHeight - 60, 1.0f, RGBA(32, 192, 32, 192));
-        imguiDrawLine(graphicsXPos, windowHeight - 100, graphicsXPos + 100, windowHeight - 80, 2.0, RGBA(32, 32, 192, 192));
-        imguiDrawLine(graphicsXPos, windowHeight - 120, graphicsXPos + 100, windowHeight - 100, 3.0, RGBA(192, 32, 32, 192));
+        imguiDrawLine(graphicsXPos, windowHeight - 80, graphicsXPos + 100,
+                windowHeight - 60, 1.0f, RGBA(32, 192, 32, 192));
+        imguiDrawLine(graphicsXPos, windowHeight - 100, graphicsXPos + 100,
+                windowHeight - 80, 2.0, RGBA(32, 32, 192, 192));
+        imguiDrawLine(graphicsXPos, windowHeight - 120, graphicsXPos + 100,
+                windowHeight - 100, 3.0, RGBA(192, 32, 32, 192));
 
-        imguiDrawRoundedRect(graphicsXPos, windowHeight - 240, 100, 100, 5.0, RGBA(32, 192, 32, 192));
-        imguiDrawRoundedRect(graphicsXPos, windowHeight - 350, 100, 100, 10.0, RGBA(32, 32, 192, 192));
-        imguiDrawRoundedRect(graphicsXPos, windowHeight - 470, 100, 100, 20.0, RGBA(192, 32, 32, 192));
+        imguiDrawRoundedRect(graphicsXPos, windowHeight - 240, 100, 100, 5.0,
+                RGBA(32, 192, 32, 192));
+        imguiDrawRoundedRect(graphicsXPos, windowHeight - 350, 100, 100, 10.0,
+                RGBA(32, 32, 192, 192));
+        imguiDrawRoundedRect(graphicsXPos, windowHeight - 470, 100, 100, 20.0,
+                RGBA(192, 32, 32, 192));
 
         imguiDrawRect(graphicsXPos, windowHeight - 590, 100, 100, RGBA(32, 192, 32, 192));
         imguiDrawRect(graphicsXPos, windowHeight - 710, 100, 100, RGBA(32, 32, 192, 192));
@@ -231,30 +244,39 @@ struct GUI
 
     void onScroll(double hOffset, double vOffset)
     {
-        mouseScroll = -cast(int)vOffset;
+        mouseScroll = -cast(int) vOffset;
     }
 
-    extern(C) static void getUnicode(GLFWwindow* w, uint unicode) nothrow
+    extern (C) static void getUnicode(GLFWwindow* w, uint unicode) nothrow
     {
         staticUnicode = unicode;
     }
 
-    extern(C) static void getKey(GLFWwindow* w, int key, int scancode, int action, int mods) nothrow
+    extern (C) static void getKey(GLFWwindow* w, int key, int scancode, int action, int mods) nothrow
     {
-        if(action != GLFW_PRESS) { return; }
-        if(key == GLFW_KEY_ENTER)          { staticUnicode = 0x0D; }
-        else if(key == GLFW_KEY_BACKSPACE) { staticUnicode = 0x08; }
+        if (action != GLFW_PRESS)
+        {
+            return;
+        }
+        if (key == GLFW_KEY_ENTER)
+        {
+            staticUnicode = 0x0D;
+        }
+        else if (key == GLFW_KEY_BACKSPACE)
+        {
+            staticUnicode = 0x08;
+        }
     }
 
 private:
     Window window;
     int windowWidth;
     int windowHeight;
-version (MaybeHighResolutionDisplay)
-{
-    double mouseXToWindowFactor = 0;
-    double mouseYToWindowFactor = 0;
-}
+    version (MaybeHighResolutionDisplay)
+    {
+        double mouseXToWindowFactor = 0;
+        double mouseYToWindowFactor = 0;
+    }
     bool checkState1 = false;
     bool checkState2 = false;
     bool checkState3 = true;
@@ -281,7 +303,8 @@ int main(string[] args)
     int width = 1024, height = 768;
 
     auto window = createWindow("imgui", WindowMode.windowed, width, height);
-    scope (exit) destroy(window);
+    scope (exit)
+        destroy(window);
 
     GUI gui = GUI(window);
 

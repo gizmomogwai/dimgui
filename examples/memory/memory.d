@@ -21,10 +21,8 @@ import imgui;
 
 import window;
 
-version (OSX)
-    version = MaybeHighResolutionDisplay;
-version (iOS)
-    version = MaybeHighResolutionDisplay;
+version (OSX) version = MaybeHighResolutionDisplay;
+version (iOS) version = MaybeHighResolutionDisplay;
 
 struct GUI
 {
@@ -73,15 +71,15 @@ struct GUI
             mouseY *= mouseYToWindowFactor;
         }
 
-        const scrollAreaWidth = (windowWidth / 4) - 10;  // -10 to allow room for the scrollbar
+        const scrollAreaWidth = (windowWidth / 4) - 10; // -10 to allow room for the scrollbar
         const scrollAreaHeight = windowHeight - 20;
 
-        int mousex = cast(int)mouseX;
-        int mousey = cast(int)mouseY;
+        int mousex = cast(int) mouseX;
+        int mousey = cast(int) mouseY;
 
         mousey = windowHeight - mousey;
-        int leftButton   = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT);
-        int rightButton  = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT);
+        int leftButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT);
+        int rightButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT);
         int middleButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_MIDDLE);
 
         if (leftButton == GLFW_PRESS)
@@ -115,7 +113,8 @@ struct GUI
 
     void displayArea1(int scrollAreaWidth, int scrollAreaHeight)
     {
-        imguiBeginScrollArea("Improper memory management 1", 10, 10, scrollAreaWidth, scrollAreaHeight, &scrollArea1);
+        imguiBeginScrollArea("Improper memory management 1", 10, 10,
+                scrollAreaWidth, scrollAreaHeight, &scrollArea1);
 
         imguiSeparatorLine();
         imguiSeparator();
@@ -134,7 +133,8 @@ struct GUI
 
     void displayArea2(int scrollAreaWidth, int scrollAreaHeight, ref char[128] buffer)
     {
-        imguiBeginScrollArea("Improper memory management 2", 20 + (1 * scrollAreaWidth), 10, scrollAreaWidth, scrollAreaHeight, &scrollArea2);
+        imguiBeginScrollArea("Improper memory management 2", 20 + (1 * scrollAreaWidth),
+                10, scrollAreaWidth, scrollAreaHeight, &scrollArea2);
 
         imguiSeparatorLine();
         imguiSeparator();
@@ -154,7 +154,8 @@ struct GUI
 
     void displayArea3(int scrollAreaWidth, int scrollAreaHeight, ref char[128][100] buffers)
     {
-        imguiBeginScrollArea("Proper memory management 1", 30 + (2 * scrollAreaWidth), 10, scrollAreaWidth, scrollAreaHeight, &scrollArea3);
+        imguiBeginScrollArea("Proper memory management 1", 30 + (2 * scrollAreaWidth),
+                10, scrollAreaWidth, scrollAreaHeight, &scrollArea3);
 
         imguiSeparatorLine();
         imguiSeparator();
@@ -174,7 +175,8 @@ struct GUI
 
     void displayArea4(int scrollAreaWidth, int scrollAreaHeight)
     {
-        imguiBeginScrollArea("Proper memory management 2", 40 + (3 * scrollAreaWidth), 10, scrollAreaWidth, scrollAreaHeight, &scrollArea4);
+        imguiBeginScrollArea("Proper memory management 2", 40 + (3 * scrollAreaWidth),
+                10, scrollAreaWidth, scrollAreaHeight, &scrollArea4);
 
         imguiSeparatorLine();
         imguiSeparator();
@@ -227,18 +229,18 @@ struct GUI
 
     void onScroll(double hOffset, double vOffset)
     {
-        mouseScroll = -cast(int)vOffset;
+        mouseScroll = -cast(int) vOffset;
     }
 
 private:
     Window window;
     int windowWidth;
     int windowHeight;
-version (MaybeHighResolutionDisplay)
-{
-    double mouseXToWindowFactor = 0;
-    double mouseYToWindowFactor = 0;
-}
+    version (MaybeHighResolutionDisplay)
+    {
+        double mouseXToWindowFactor = 0;
+        double mouseYToWindowFactor = 0;
+    }
 
     int scrollArea1 = 0;
     int scrollArea2 = 0;
@@ -252,7 +254,8 @@ int main(string[] args)
     int width = 1024, height = 768;
 
     auto window = createWindow("imgui", WindowMode.windowed, width, height);
-    scope (exit) destroy(window);
+    scope (exit)
+        destroy(window);
 
     GUI gui = GUI(window);
 

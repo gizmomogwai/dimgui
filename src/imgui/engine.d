@@ -30,30 +30,30 @@ package:
 
 __gshared imguiGfxCmd[GFXCMD_QUEUE_SIZE] g_gfxCmdQueue;
 __gshared uint g_gfxCmdQueueSize = 0;
-__gshared int  g_scrollTop        = 0;
-__gshared int  g_scrollBottom     = 0;
-__gshared int  g_scrollRight      = 0;
-__gshared int  g_scrollAreaTop    = 0;
-__gshared int* g_scrollVal        = null;
-__gshared int  g_focusTop         = 0;
-__gshared int  g_focusBottom      = 0;
+__gshared int g_scrollTop = 0;
+__gshared int g_scrollBottom = 0;
+__gshared int g_scrollRight = 0;
+__gshared int g_scrollAreaTop = 0;
+__gshared int* g_scrollVal = null;
+__gshared int g_focusTop = 0;
+__gshared int g_focusBottom = 0;
 __gshared uint g_scrollId = 0;
 __gshared bool g_insideScrollArea = false;
 __gshared GuiState g_state;
 
 /** Globals end. */
 
-enum GFXCMD_QUEUE_SIZE   = 5000;
-enum BUTTON_HEIGHT       = 60;
-enum SLIDER_HEIGHT       = 40;
+enum GFXCMD_QUEUE_SIZE = 5000;
+enum BUTTON_HEIGHT = 60;
+enum SLIDER_HEIGHT = 40;
 enum SLIDER_MARKER_WIDTH = 10;
-enum CHECK_SIZE          = 8;
-enum DEFAULT_SPACING     = 4;
-enum TEXT_HEIGHT         = 35;
-enum TEXT_BASELINE         = 5;
+enum CHECK_SIZE = 8;
+enum DEFAULT_SPACING = 4;
+enum TEXT_HEIGHT = 35;
+enum TEXT_BASELINE = 5;
 enum SCROLL_AREA_PADDING = 6;
-enum INDENT_SIZE         = 16;
-enum AREA_HEADER         = 28;
+enum INDENT_SIZE = 16;
+enum AREA_HEADER = 28;
 
 // Pull render interface.
 alias imguiGfxCmdType = int;
@@ -107,13 +107,13 @@ public void addGfxCmdScissor(int x, int y, int w, int h)
     if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
         return;
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type   = IMGUI_GFXCMD_SCISSOR;
-    cmd.flags  = x < 0 ? 0 : 1;         // on/off flag.
-    cmd.color  = 0;
-    cmd.rect.x = cast(short)x;
-    cmd.rect.y = cast(short)y;
-    cmd.rect.w = cast(short)w;
-    cmd.rect.h = cast(short)h;
+    cmd.type = IMGUI_GFXCMD_SCISSOR;
+    cmd.flags = x < 0 ? 0 : 1; // on/off flag.
+    cmd.color = 0;
+    cmd.rect.x = cast(short) x;
+    cmd.rect.y = cast(short) y;
+    cmd.rect.w = cast(short) w;
+    cmd.rect.h = cast(short) h;
 }
 
 public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
@@ -121,9 +121,9 @@ public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
     if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
         return;
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type   = IMGUI_GFXCMD_RECT;
-    cmd.flags  = 0;
-    cmd.color  = color.toPackedRGBA();
+    cmd.type = IMGUI_GFXCMD_RECT;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
     cmd.rect.x = cast(short)(x * 8.0f);
     cmd.rect.y = cast(short)(y * 8.0f);
     cmd.rect.w = cast(short)(w * 8.0f);
@@ -136,14 +136,14 @@ public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA 
     if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
         return;
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type    = IMGUI_GFXCMD_LINE;
-    cmd.flags   = 0;
-    cmd.color   = color.toPackedRGBA();
+    cmd.type = IMGUI_GFXCMD_LINE;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
     cmd.line.x0 = cast(short)(x0 * 8.0f);
     cmd.line.y0 = cast(short)(y0 * 8.0f);
     cmd.line.x1 = cast(short)(x1 * 8.0f);
     cmd.line.y1 = cast(short)(y1 * 8.0f);
-    cmd.line.r  = cast(short)(r * 8.0f);
+    cmd.line.r = cast(short)(r * 8.0f);
 }
 
 public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RGBA color)
@@ -151,9 +151,9 @@ public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RG
     if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
         return;
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type   = IMGUI_GFXCMD_RECT;
-    cmd.flags  = 0;
-    cmd.color  = color.toPackedRGBA();
+    cmd.type = IMGUI_GFXCMD_RECT;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
     cmd.rect.x = cast(short)(x * 8.0f);
     cmd.rect.y = cast(short)(y * 8.0f);
     cmd.rect.w = cast(short)(w * 8.0f);
@@ -166,9 +166,9 @@ public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
     if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
         return;
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type   = IMGUI_GFXCMD_TRIANGLE;
-    cmd.flags  = cast(byte)flags;
-    cmd.color  = color.toPackedRGBA();
+    cmd.type = IMGUI_GFXCMD_TRIANGLE;
+    cmd.flags = cast(byte) flags;
+    cmd.color = color.toPackedRGBA();
     cmd.rect.x = cast(short)(x * 8.0f);
     cmd.rect.y = cast(short)(y * 8.0f);
     cmd.rect.w = cast(short)(w * 8.0f);
@@ -180,13 +180,13 @@ public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA col
     if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
         return;
     auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type       = IMGUI_GFXCMD_TEXT;
-    cmd.flags      = 0;
-    cmd.color      = color.toPackedRGBA();
-    cmd.text.x     = cast(short)x;
-    cmd.text.y     = cast(short)y;
-    cmd.text.align_ = cast(short)align_;
-    cmd.text.text  = text;
+    cmd.type = IMGUI_GFXCMD_TEXT;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
+    cmd.text.x = cast(short) x;
+    cmd.text.y = cast(short) y;
+    cmd.text.align_ = cast(short) align_;
+    cmd.text.text = text;
 }
 
 struct GuiState
@@ -251,14 +251,15 @@ bool isHot(uint id)
 
 bool inRect(int x, int y, int w, int h, bool checkScroll = true)
 {
-    return (!checkScroll || g_state.insideCurrentScroll) && g_state.mx >= x && g_state.mx <= x + w && g_state.my >= y && g_state.my <= y + h;
+    return (!checkScroll || g_state.insideCurrentScroll) && g_state.mx >= x
+        && g_state.mx <= x + w && g_state.my >= y && g_state.my <= y + h;
 }
 
 void clearInput()
 {
-    g_state.leftPressed  = false;
+    g_state.leftPressed = false;
     g_state.leftReleased = false;
-    g_state.scroll       = 0;
+    g_state.scroll = 0;
 }
 
 void clearActive()
@@ -271,8 +272,8 @@ void clearActive()
 
 void setActive(uint id)
 {
-    g_state.active     = id;
-    g_state.inputable  = 0;
+    g_state.active = id;
+    g_state.inputable = 0;
     g_state.wentActive = true;
 }
 
@@ -343,11 +344,20 @@ void textInputLogic(uint id, bool over, bool forceInputable)
     // next frame, and if both hot and LMB is pressed (or forced), make it inputable.
     if (!anyActive())
     {
-        if (over)                                               { setHot(id); }
-        if (forceInputable || isHot(id) && g_state.leftPressed) { setInputable(id); }
+        if (over)
+        {
+            setHot(id);
+        }
+        if (forceInputable || isHot(id) && g_state.leftPressed)
+        {
+            setInputable(id);
+        }
     }
     // Not sure if this does anything (g_state.isHot doesn't seem to be used).
-    if (isHot(id)) { g_state.isHot = true; }
+    if (isHot(id))
+    {
+        g_state.isHot = true;
+    }
 }
 
 /* Update user input on the beginning of a frame.
@@ -367,16 +377,19 @@ void updateInput(int mx, int my, ubyte mbut, int scroll, dchar unicodeChar)
 
     g_state.mx = mx;
     g_state.my = my;
-    g_state.leftPressed  = !g_state.left && left;
+    g_state.leftPressed = !g_state.left && left;
     g_state.leftReleased = g_state.left && !left;
-    g_state.left         = left;
+    g_state.left = left;
 
     g_state.scroll = scroll;
 
     // Ignore characters we can't draw
-    if(unicodeChar > maxCharacterCount()) { unicodeChar = 0; }
+    if (unicodeChar > maxCharacterCount())
+    {
+        unicodeChar = 0;
+    }
     g_state.lastUnicode = g_state.unicode;
-    g_state.unicode     = unicodeChar;
+    g_state.unicode = unicodeChar;
 }
 
 // Separate from gl3_renderer.getTextLength so api doesn't directly call renderer.

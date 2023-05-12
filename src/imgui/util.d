@@ -24,8 +24,7 @@ auto ref fieldRange(S, T)(auto ref T sym)
 
 auto ref fieldRange(S, T...)(auto ref T syms) if (T.length > 1)
 {
-    return chain(fieldRange!S(syms[0]),
-                 fieldRange!S(syms[1 .. $]));
+    return chain(fieldRange!S(syms[0]), fieldRange!S(syms[1 .. $]));
 }
 
 auto addrFieldRange(S, T)(ref T sym)
@@ -38,15 +37,18 @@ auto addrFieldRange(S, T)(ref T sym)
 
 auto addrFieldRange(S, T...)(ref T syms) if (T.length > 1)
 {
-    return chain(addrFieldRange!S(syms[0]),
-                 addrFieldRange!S(syms[1 .. $]));
+    return chain(addrFieldRange!S(syms[0]), addrFieldRange!S(syms[1 .. $]));
 }
 
 auto refFieldRange(S, T)(ref T sym)
 {
     alias Type = typeof(sym.fieldRange!S.front);
 
-    static ref Type getRef(Type* elem) { return *elem; }
+    static ref Type getRef(Type* elem)
+    {
+        return *elem;
+    }
 
-    return sym.addrFieldRange!S.map!getRef;
+    return sym.addrFieldRange!S
+        .map!getRef;
 }

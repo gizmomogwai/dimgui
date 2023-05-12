@@ -23,10 +23,8 @@ import imgui;
 
 import window;
 
-version (OSX)
-    version = MaybeHighResolutionDisplay;
-version (iOS)
-    version = MaybeHighResolutionDisplay;
+version (OSX) version = MaybeHighResolutionDisplay;
+version (iOS) version = MaybeHighResolutionDisplay;
 
 struct RGBAF
 {
@@ -47,23 +45,21 @@ struct RGBAF
 
 auto clamp(T1, T2, T3)(T1 value, T2 min, T3 max)
 {
-    return (((value) >(max)) ? (max) : (((value) <(min)) ? (min) : (value)));
+    return (((value) > (max)) ? (max) : (((value) < (min)) ? (min) : (value)));
 }
 
 RGBA toRGBA(RGBAF c)
 {
     return RGBA(cast(ubyte)(255.0f * clamp(c.r, 0.0, 1.0)),
-                cast(ubyte)(255.0f * clamp(c.g, 0.0, 1.0)),
-                cast(ubyte)(255.0f * clamp(c.b, 0.0, 1.0)),
-                cast(ubyte)(255.0f * clamp(c.a, 0.0, 1.0)));
+            cast(ubyte)(255.0f * clamp(c.g, 0.0, 1.0)), cast(ubyte)(255.0f * clamp(c.b,
+                0.0, 1.0)), cast(ubyte)(255.0f * clamp(c.a, 0.0, 1.0)));
 }
 
 RGBAF toRGBAF(RGBA c)
 {
-    return RGBAF(clamp((cast(float)c.r) / 255.0, 0.0, 1.0),
-                 clamp((cast(float)c.g) / 255.0, 0.0, 1.0),
-                 clamp((cast(float)c.b) / 255.0, 0.0, 1.0),
-                 clamp((cast(float)c.a) / 255.0, 0.0, 1.0));
+    return RGBAF(clamp((cast(float) c.r) / 255.0, 0.0, 1.0),
+            clamp((cast(float) c.g) / 255.0, 0.0, 1.0),
+            clamp((cast(float) c.b) / 255.0, 0.0, 1.0), clamp((cast(float) c.a) / 255.0, 0.0, 1.0));
 }
 
 struct GUI
@@ -93,7 +89,8 @@ struct GUI
     {
         auto rgbaBright = RGBAF(brightness, brightness, brightness, 0);
 
-        foreach (ref outColor, oldColor; zip(defaultColorScheme.walkColors, oldColorScheme.walkColors))
+        foreach (ref outColor, oldColor; zip(defaultColorScheme.walkColors,
+                oldColorScheme.walkColors))
         {
             auto oldRGBAF = toRGBAF(*oldColor);
             auto res = oldRGBAF + color + rgbaBright;
@@ -133,12 +130,12 @@ struct GUI
         const scrollAreaWidth = windowWidth / 4;
         const scrollAreaHeight = windowHeight - 20;
 
-        int mousex = cast(int)mouseX;
-        int mousey = cast(int)mouseY;
+        int mousex = cast(int) mouseX;
+        int mousey = cast(int) mouseY;
 
         mousey = windowHeight - mousey;
-        int leftButton   = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT);
-        int rightButton  = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT);
+        int leftButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT);
+        int rightButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT);
         int middleButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_MIDDLE);
 
         if (leftButton == GLFW_PRESS)
@@ -149,7 +146,8 @@ struct GUI
         if (mouseScroll != 0)
             mouseScroll = 0;
 
-        imguiBeginScrollArea("Scroll area 1", 10, 10, scrollAreaWidth, scrollAreaHeight, &scrollArea1);
+        imguiBeginScrollArea("Scroll area 1", 10, 10, scrollAreaWidth,
+                scrollAreaHeight, &scrollArea1);
 
         imguiSeparatorLine();
         imguiSeparator();
@@ -170,7 +168,8 @@ struct GUI
             updateColorScheme();
 
         // should not be clickable
-        enforce(!imguiSlider("Disabled slider", &disabledSliderValue, 0.0, 100.0, 1.0f, Enabled.no));
+        enforce(!imguiSlider("Disabled slider", &disabledSliderValue, 0.0,
+                100.0, 1.0f, Enabled.no));
 
         imguiIndent();
         imguiLabel("Indented");
@@ -179,7 +178,8 @@ struct GUI
 
         imguiEndScrollArea();
 
-        imguiBeginScrollArea("Scroll area 2", 20 + (1 * scrollAreaWidth), 10, scrollAreaWidth, scrollAreaHeight, &scrollArea2);
+        imguiBeginScrollArea("Scroll area 2", 20 + (1 * scrollAreaWidth), 10,
+                scrollAreaWidth, scrollAreaHeight, &scrollArea2);
         imguiSeparatorLine();
         imguiSeparator();
 
@@ -188,7 +188,8 @@ struct GUI
 
         imguiEndScrollArea();
 
-        imguiBeginScrollArea("Scroll area 3", 30 + (2 * scrollAreaWidth), 10, scrollAreaWidth, scrollAreaHeight, &scrollArea3);
+        imguiBeginScrollArea("Scroll area 3", 30 + (2 * scrollAreaWidth), 10,
+                scrollAreaWidth, scrollAreaHeight, &scrollArea3);
         imguiLabel(lastInfo);
         imguiEndScrollArea();
 
@@ -196,17 +197,26 @@ struct GUI
 
         const graphicsXPos = 40 + (3 * scrollAreaWidth);
 
-        imguiDrawText(graphicsXPos, scrollAreaHeight, TextAlign.left, "Free text", RGBA(32, 192, 32, 192));
-        imguiDrawText(graphicsXPos + 100, windowHeight - 40, TextAlign.right, "Free text", RGBA(32, 32, 192, 192));
-        imguiDrawText(graphicsXPos + 50, windowHeight - 60, TextAlign.center, "Free text", RGBA(192, 32, 32, 192));
+        imguiDrawText(graphicsXPos, scrollAreaHeight, TextAlign.left,
+                "Free text", RGBA(32, 192, 32, 192));
+        imguiDrawText(graphicsXPos + 100, windowHeight - 40, TextAlign.right,
+                "Free text", RGBA(32, 32, 192, 192));
+        imguiDrawText(graphicsXPos + 50, windowHeight - 60, TextAlign.center,
+                "Free text", RGBA(192, 32, 32, 192));
 
-        imguiDrawLine(graphicsXPos, windowHeight - 80, graphicsXPos + 100, windowHeight - 60, 1.0f, RGBA(32, 192, 32, 192));
-        imguiDrawLine(graphicsXPos, windowHeight - 100, graphicsXPos + 100, windowHeight - 80, 2.0, RGBA(32, 32, 192, 192));
-        imguiDrawLine(graphicsXPos, windowHeight - 120, graphicsXPos + 100, windowHeight - 100, 3.0, RGBA(192, 32, 32, 192));
+        imguiDrawLine(graphicsXPos, windowHeight - 80, graphicsXPos + 100,
+                windowHeight - 60, 1.0f, RGBA(32, 192, 32, 192));
+        imguiDrawLine(graphicsXPos, windowHeight - 100, graphicsXPos + 100,
+                windowHeight - 80, 2.0, RGBA(32, 32, 192, 192));
+        imguiDrawLine(graphicsXPos, windowHeight - 120, graphicsXPos + 100,
+                windowHeight - 100, 3.0, RGBA(192, 32, 32, 192));
 
-        imguiDrawRoundedRect(graphicsXPos, windowHeight - 240, 100, 100, 5.0, RGBA(32, 192, 32, 192));
-        imguiDrawRoundedRect(graphicsXPos, windowHeight - 350, 100, 100, 10.0, RGBA(32, 32, 192, 192));
-        imguiDrawRoundedRect(graphicsXPos, windowHeight - 470, 100, 100, 20.0, RGBA(192, 32, 32, 192));
+        imguiDrawRoundedRect(graphicsXPos, windowHeight - 240, 100, 100, 5.0,
+                RGBA(32, 192, 32, 192));
+        imguiDrawRoundedRect(graphicsXPos, windowHeight - 350, 100, 100, 10.0,
+                RGBA(32, 32, 192, 192));
+        imguiDrawRoundedRect(graphicsXPos, windowHeight - 470, 100, 100, 20.0,
+                RGBA(192, 32, 32, 192));
 
         imguiDrawRect(graphicsXPos, windowHeight - 590, 100, 100, RGBA(32, 192, 32, 192));
         imguiDrawRect(graphicsXPos, windowHeight - 710, 100, 100, RGBA(32, 32, 192, 192));
@@ -251,18 +261,18 @@ struct GUI
 
     void onScroll(double hOffset, double vOffset)
     {
-        mouseScroll = -cast(int)vOffset;
+        mouseScroll = -cast(int) vOffset;
     }
 
 private:
     Window window;
     int windowWidth;
     int windowHeight;
-version (MaybeHighResolutionDisplay)
-{
-    double mouseXToWindowFactor = 0;
-    double mouseYToWindowFactor = 0;
-}
+    version (MaybeHighResolutionDisplay)
+    {
+        double mouseXToWindowFactor = 0;
+        double mouseYToWindowFactor = 0;
+    }
 
     bool checkState1 = false;
     bool checkState2 = false;
@@ -279,7 +289,7 @@ version (MaybeHighResolutionDisplay)
     int scrollArea3 = 0;
     int mouseScroll = 0;
 
-    char[] lastInfo;  // last clicked element information
+    char[] lastInfo; // last clicked element information
 }
 
 int main(string[] args)
@@ -287,7 +297,8 @@ int main(string[] args)
     int width = 1024, height = 768;
 
     auto window = createWindow("imgui", WindowMode.windowed, width, height);
-    scope (exit) destroy(window);
+    scope (exit)
+        destroy(window);
 
     GUI gui = GUI(window);
 

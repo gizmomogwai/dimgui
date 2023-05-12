@@ -33,7 +33,8 @@ enum WindowMode
     Create a window, an OpenGL 3.x context, and set up some other
     common routines for error handling, window resizing, etc.
 */
-Window createWindow(string windowName, WindowMode windowMode = WindowMode.windowed, int width = 1024, int height = 768)
+Window createWindow(string windowName,
+        WindowMode windowMode = WindowMode.windowed, int width = 1024, int height = 768)
 {
     loadGLFW();
     glfwInit();
@@ -78,9 +79,8 @@ Window createWindow(string windowName, WindowMode windowMode = WindowMode.window
         enforce(GL_ARB_debug_output || GL_KHR_debug);
 
         // cast: workaround for 'nothrow' propagation bug (haven't been able to reduce it)
-        auto hookDebugCallback = GL_ARB_debug_output ? glDebugMessageCallbackARB
-                                                     : cast(typeof(glDebugMessageCallbackARB))glDebugMessageCallback;
-
+        auto hookDebugCallback = GL_ARB_debug_output ? glDebugMessageCallbackARB : cast(
+                typeof(glDebugMessageCallbackARB)) glDebugMessageCallback;
 
         // hook the debug callback
         // cast: when using derelict it assumes its nothrow
@@ -101,7 +101,8 @@ Window createWindowContext(string windowName, WindowMode windowMode, int width, 
 {
     auto window = new Window();
     auto monitor = windowMode == WindowMode.fullscreen ? glfwGetPrimaryMonitor() : null;
-    auto context = window.create_highest_available_context(width, height, windowName, monitor, null, GLFW_OPENGL_CORE_PROFILE);
+    auto context = window.create_highest_available_context(width, height,
+            windowName, monitor, null, GLFW_OPENGL_CORE_PROFILE);
 
     // ensure we've loaded a proper context
     enforce(context.major >= 3);
@@ -118,12 +119,14 @@ void glfwErrorCallback(int code, string msg)
 ///
 class GLException : Exception
 {
-    @safe pure nothrow this(string msg = "", string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+    @safe pure nothrow this(string msg = "", string file = __FILE__,
+            size_t line = __LINE__, Throwable next = null)
     {
         super(msg, file, line, next);
     }
 
-    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__,
+            size_t line = __LINE__)
     {
         super(msg, file, line, next);
     }
@@ -135,8 +138,8 @@ class GLException : Exception
     Throwing exceptions across language boundaries is ok as
     long as $(B GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB) is enabled.
 */
-extern (System)
-private void glErrorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, in GLchar* message, GLvoid* userParam)
+extern (System) private void glErrorCallback(GLenum source, GLenum type, GLuint id,
+        GLenum severity, GLsizei length, in GLchar* message, GLvoid* userParam)
 {
     //string msg = format("glErrorCallback: source: %s, type: %s, id: %s, severity: %s, length: %s, message: %s, userParam: %s",
     //                     source, type, id, severity, length, message.to!string, userParam);
