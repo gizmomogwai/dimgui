@@ -705,7 +705,7 @@ bool imguiItem(const(char)[] label, Enabled enabled = Enabled.yes, const ref Col
     bool res  = buttonLogic(id, over);
 
     if (isHot(id))
-        addGfxCmdRoundedRect(cast(float)x, cast(float)y, cast(float)w, cast(float)h, 2.0f, isActive(id) ? colorScheme.item.press : colorScheme.item.hover);
+        addGfxCmdRoundedRect(cast(float)x, cast(float)y, cast(float)w, cast(float)h, 10, isActive(id) ? colorScheme.item.press : colorScheme.item.hover);
 
     addGfxCmdText(x + BUTTON_HEIGHT / 2,
                   y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
@@ -990,7 +990,10 @@ bool imguiTextInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
     uint id = (g_state.areaId << 16) | g_state.widgetId;
     int x   = g_state.widgetX;
     int y   = g_state.widgetY - BUTTON_HEIGHT;
-    addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE, TextAlign.left, label,
+    addGfxCmdText(x,
+                  y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                  TextAlign.left,
+                  label,
                   colorScheme.textInput.label);
 
     bool res = false;
@@ -1029,7 +1032,7 @@ bool imguiTextInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
     textInputLogic(id, over, forceInputable);
     addGfxCmdRoundedRect(cast(float)(x + DEFAULT_SPACING), cast(float)y,
                          cast(float)w, cast(float)h,
-                         cast(float)BUTTON_HEIGHT / 2 - 1,
+                         10,
                          isInputable(id) ? colorScheme.textInput.back
                                          : colorScheme.textInput.backDisabled);
     addGfxCmdText(x + DEFAULT_SPACING * 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,

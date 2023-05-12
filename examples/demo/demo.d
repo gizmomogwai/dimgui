@@ -44,6 +44,7 @@ struct GUI
         glfwSetCharCallback(window.window, &getUnicode);
         glfwSetKeyCallback(window.window, &getKey);
     }
+    string lastInfo;
 
     void render()
     {
@@ -108,9 +109,8 @@ struct GUI
         imguiItem("Item");
         imguiItem("Disabled item", Enabled.no);
 
-        static char[1024] buff1;
         if (imguiCheck("Checkbox", &checkState1))
-            lastInfo = sformat(buff1, "Toggled the checkbox to: '%s'", checkState1 ? "On" : "Off");
+            lastInfo = "Toggled the checkbox to: '%s'".format(checkState1 ? "On" : "Off");
 
         // should not be clickable
         enforce(!imguiCheck("Inactive disabled checkbox", &checkState2, Enabled.no));
@@ -124,14 +124,16 @@ struct GUI
         }
         imguiLabel("Entered text: " ~ lastTextEntered);
 
-        static char[1024] buff2;
-        if (imguiCollapse("Collapse", "subtext", &collapseState1))
-            lastInfo = sformat(buff2, "subtext changed to: '%s'", collapseState1 ? "Maximized" : "Minimized");
+        if (imguiCollapse("Collapse", collapseState1 ? "max" : "min", &collapseState1))
+            lastInfo = "subtext changed to: '%s'".format(collapseState1 ? "Maximized" : "Minimized");
 
         if (collapseState1)
         {
             imguiIndent();
-            imguiLabel("Collapsable element");
+            imguiLabel("Collapsable element 1");
+            imguiLabel("Collapsable element 2");
+            imguiItem("Collapsable item 1");
+            imguiItem("Collapsable item 2");
             imguiUnindent();
         }
 
@@ -142,11 +144,10 @@ struct GUI
         imguiValue("Value");
 
         imguiLabel("Unicode characters");
-        imguiValue("한글 é ý ú í ó á š ž");
+        imguiValue("한글 é ý ú í ó á š žöäü");
 
-        static char[1024] buff3;
         if (imguiSlider("Slider", &sliderValue1, 0.0, 100.0, 1.0f))
-            lastInfo = sformat(buff3, "Slider clicked, current value is: '%s'", sliderValue1);
+            lastInfo = "Slider clicked, current value is: '%s'".format(sliderValue1);
 
         // should not be clickable
         enforce(!imguiSlider("Disabled slider", &sliderValue2, 0.0, 100.0, 1.0f, Enabled.no));
@@ -265,8 +266,6 @@ version (MaybeHighResolutionDisplay)
     int scrollArea2 = 0;
     int scrollArea3 = 0;
     int mouseScroll = 0;
-
-    char[] lastInfo;  // last clicked element information
 
     static dchar staticUnicode;
     // Buffer to store text input
