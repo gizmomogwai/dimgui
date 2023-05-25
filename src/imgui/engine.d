@@ -27,20 +27,38 @@ import imgui.gl3_renderer;
 package:
 
 /** Globals start. */
-
-__gshared imguiGfxCmd[GFXCMD_QUEUE_SIZE] g_gfxCmdQueue;
-__gshared uint g_gfxCmdQueueSize = 0;
-__gshared int g_scrollTop = 0;
-__gshared int g_scrollBottom = 0;
-__gshared int g_scrollRight = 0;
-__gshared int g_scrollAreaTop = 0;
-__gshared int* g_scrollVal = null;
-__gshared int g_focusTop = 0;
-__gshared int g_focusBottom = 0;
-__gshared uint g_scrollId = 0;
-__gshared bool g_insideScrollArea = false;
-__gshared GuiState g_state;
-
+struct Rect {
+    int x;
+    int y;
+    int w;
+    int h;
+    bool inside(bool checkScroll = true)
+    {
+        return (!checkScroll || g_state.insideCurrentScroll)
+            && g_state.mx >= x
+            && g_state.mx <= x+w
+            && g_state.my >= y
+            && g_state.my <= y+h;
+    }
+}
+imguiGfxCmd[GFXCMD_QUEUE_SIZE] g_gfxCmdQueue;
+uint g_gfxCmdQueueSize = 0;
+Rect g_verticalScrollbar;
+Rect g_horizontalScrollbar;
+int g_scrollAreaTop = 0;
+ScrollInfo* g_scrollVal = null;
+int g_focusTop = 0;
+int g_focusBottom = 0;
+//uint g_scrollId = 0;
+uint g_verticalScrollId = 0;
+uint g_horizontalScrollId = 0;
+bool g_insideScrollArea = false;
+GuiState g_state;
+Rect g_scrollAreaRect;
+Rect g_scrolledContentRect
+;
+bool g_scrollHorizontal;
+int g_scrolledHorizontalPixels;
 /** Globals end. */
 
 enum GFXCMD_QUEUE_SIZE = 5000;
@@ -52,8 +70,10 @@ enum DEFAULT_SPACING = 4;
 enum TEXT_HEIGHT = 35;
 enum TEXT_BASELINE = 5;
 enum SCROLL_AREA_PADDING = 6;
+enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING*3;
+enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING*2;
 enum INDENT_SIZE = 16;
-enum AREA_HEADER = 28;
+enum AREA_HEADER = 35;
 
 // Pull render interface.
 alias imguiGfxCmdType = int;
@@ -194,7 +214,7 @@ struct GuiState
     bool left;
     bool leftPressed, leftReleased;
     int mx = -1, my = -1;
-    int scroll;
+    ScrollInfo scrollInfo;
     // 'unicode' value passed to updateInput.
     dchar unicode;
     // 'unicode' value passed to updateInput on previous frame.
@@ -220,12 +240,15 @@ struct GuiState
 
     bool wentActive;
     int dragX, dragY;
-    float dragOrig;
+    float dragOrigX, dragOrigY;
     int widgetX, widgetY, widgetW = 100;
     bool insideCurrentScroll;
 
     uint areaId;
     uint widgetId;
+
+    bool scrollToPosActive = false;
+    int scrollToPos;
 }
 
 bool anyActive()
@@ -259,7 +282,8 @@ void clearInput()
 {
     g_state.leftPressed = false;
     g_state.leftReleased = false;
-    g_state.scroll = 0;
+    g_state.scrollInfo.dx = 0;
+    g_state.scrollInfo.dy = 0;
 }
 
 void clearActive()
@@ -371,7 +395,7 @@ void textInputLogic(uint id, bool over, bool forceInputable)
  * unicodeChar = Unicode text input from the keyboard (usually the unicode result of last
  *               keypress).
  */
-void updateInput(int mx, int my, ubyte mbut, int scroll, dchar unicodeChar)
+void updateInput(int mx, int my, ubyte mbut, ScrollInfo scrollInfo, dchar unicodeChar)
 {
     bool left = (mbut & MouseButton.left) != 0;
 
@@ -381,7 +405,7 @@ void updateInput(int mx, int my, ubyte mbut, int scroll, dchar unicodeChar)
     g_state.leftReleased = g_state.left && !left;
     g_state.left = left;
 
-    g_state.scroll = scroll;
+    g_state.scrollInfo = scrollInfo;
 
     // Ignore characters we can't draw
     if (unicodeChar > maxCharacterCount())
