@@ -27,38 +27,11 @@ import imgui.gl3_renderer;
 package:
 
 /** Globals start. */
-struct Rect {
-    int x;
-    int y;
-    int w;
-    int h;
-    bool inside(bool checkScroll = true)
-    {
-        return (!checkScroll || g_state.insideCurrentScroll)
-            && g_state.mx >= x
-            && g_state.mx <= x+w
-            && g_state.my >= y
-            && g_state.my <= y+h;
-    }
-}
 imguiGfxCmd[GFXCMD_QUEUE_SIZE] g_gfxCmdQueue;
 uint g_gfxCmdQueueSize = 0;
-Rect g_verticalScrollbar;
-Rect g_horizontalScrollbar;
-int g_scrollAreaTop = 0;
-ScrollInfo* g_scrollVal = null;
 int g_focusTop = 0;
 int g_focusBottom = 0;
-//uint g_scrollId = 0;
-uint g_verticalScrollId = 0;
-uint g_horizontalScrollId = 0;
-bool g_insideScrollArea = false;
 GuiState g_state;
-Rect g_scrollAreaRect;
-Rect g_scrolledContentRect
-;
-bool g_scrollHorizontal;
-int g_scrolledHorizontalPixels;
 /** Globals end. */
 
 enum GFXCMD_QUEUE_SIZE = 5000;
@@ -120,6 +93,11 @@ struct imguiGfxCmd
 void resetGfxCmdQueue()
 {
     g_gfxCmdQueueSize = 0;
+}
+
+public void addGfxCmdScissor(ref Rect r)
+{
+    addGfxCmdScissor(r.x, r.y, r.w, r.h);
 }
 
 public void addGfxCmdScissor(int x, int y, int w, int h)
@@ -282,8 +260,7 @@ void clearInput()
 {
     g_state.leftPressed = false;
     g_state.leftReleased = false;
-    g_state.scrollInfo.dx = 0;
-    g_state.scrollInfo.dy = 0;
+    g_state.scrollInfo.reset();
 }
 
 void clearActive()

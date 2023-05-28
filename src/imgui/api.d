@@ -317,9 +317,64 @@ void imguiDestroy()
     imguiRenderGLDestroy();
 }
 
-struct ScrollInfo {
+struct ScrollInfo
+{
     int dx;
     int dy;
+    void reset()
+    {
+        dx = 0;
+        dy = 0;
+    }
+}
+struct Rect {
+    int x;
+    int y;
+    int w;
+    int h;
+    bool inside(bool checkScroll = true)
+    {
+        return (!checkScroll || g_state.insideCurrentScroll)
+            && g_state.mx >= x
+            && g_state.mx <= x+w
+            && g_state.my >= y
+            && g_state.my <= y+h;
+    }
+}
+
+// data to store for a ScrollArea
+// some data needs to be stored between frames, some data only from a begin to a end scroll area call
+struct ScrollAreaContext
+{
+    // info for next frames:
+    int xOffset;
+    int yOffset;
+
+    // begin/end data:
+    // The total area of the scrollarea component (including scrollbars and content)
+    Rect scrollAreaRect;
+    // The area that is used to show the scrolled content
+    Rect viewport;
+    Rect verticalScrollbar;
+    Rect horizontalScrollbar;
+    uint verticalScrollId;
+    uint horizontalScrollId;
+    int scrolledHorizontalPixels; // 0 for no horizontal scrolling
+    int scrolledContentTop;
+    int scrolledContentBottom;
+    int getScrolledContentHeight()
+    {
+        return scrolledContentTop - scrolledContentBottom;
+    }
+    bool insideScrollArea;
+    // info for next frame
+    struct RevealInfo
+    {
+        bool active;
+        int yOffset;
+        float percentage;
+    }
+    RevealInfo reveal;
 }
 /**
     Begin a new frame. All batched commands after the call to
@@ -360,10 +415,12 @@ struct ScrollInfo {
                   which may not be automatically handled by your input library's text
                   input functionality (e.g. GLFW's getUnicode() does not do this).
 */
-void imguiBeginFrame(int cursorX, int cursorY, ubyte mouseButtons,
-        ScrollInfo scrollInfo, dchar unicodeChar = 0)
+void imguiBeginFrame(int cursorX, int cursorY,
+                     ubyte mouseButtons,
+                     ScrollInfo scrollAreaContext,
+                     dchar unicodeChar = 0)
 {
-    updateInput(cursorX, cursorY, mouseButtons, scrollInfo, unicodeChar);
+    updateInput(cursorX, cursorY, mouseButtons, scrollAreaContext, unicodeChar);
 
     g_state.hot = g_state.hotToBe;
     g_state.hotToBe = 0;
@@ -426,76 +483,73 @@ void imguiRender(int width, int height)
 
     $(D true) if the mouse was located inside the scrollable area.
 */
-bool imguiBeginScrollArea(const(char)[] title,
+bool imguiBeginScrollArea(ref ScrollAreaContext context,
+                          const(char)[] title,
                           int xPos, int yPos,
                           int width, int height,
-                          ScrollInfo* scroll,
                           bool scrollHorizontal=false, int scrolledHorizontalPixels=2000,
                           const ref ColorScheme colorScheme = defaultColorScheme)
 {
     g_state.areaId++;
     g_state.widgetId = 0;
-    g_verticalScrollId = (g_state.areaId << 16) | 0;
-    g_horizontalScrollId = (g_state.areaId << 16) | 1;
+    context.verticalScrollId = (g_state.areaId << 16) | 0;
+    context.horizontalScrollId = (g_state.areaId << 16) | 1;
 
-    g_scrollAreaRect = Rect(xPos, yPos, width, height);
-    // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
-    // avoiding a segfault.
-    g_scrolledContentRect = Rect(xPos + SCROLL_AREA_PADDING,
+    context.scrollAreaRect = Rect(xPos, yPos, width, height);
+    context.viewport = Rect(xPos + SCROLL_AREA_PADDING,
                                  yPos + SCROLL_BAR_SIZE,
-                                 max(1, width - SCROLL_AREA_PADDING * 4),
-                                 max(1, height - AREA_HEADER - SCROLL_BAR_SIZE));
+                                 max(1, width - SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
+                                 max(1, height - AREA_HEADER - SCROLL_BAR_SIZE));     // avoiding a segfault.
 
-    g_state.widgetX = xPos + SCROLL_AREA_PADDING - scroll.dx;
 
-    g_verticalScrollbar = Rect(xPos + width - SCROLL_BAR_SIZE,
+    g_state.widgetX = xPos + SCROLL_AREA_PADDING - context.xOffset;
+
+    context.verticalScrollbar = Rect(xPos + width - SCROLL_BAR_SIZE,
                                yPos + SCROLL_BAR_SIZE,
                                SCROLL_BAR_SIZE,
                                height - AREA_HEADER-SCROLL_BAR_SIZE);
-    g_horizontalScrollbar = Rect(g_scrollAreaRect.x, g_scrollAreaRect.y,
-                                 g_scrollAreaRect.w - SCROLL_BAR_SIZE,
-                                 SCROLL_BAR_SIZE);
-    g_scrollVal = scroll;
-
-    /+
-    if (g_state.revealActive)
+    context.horizontalScrollbar = Rect(context.scrollAreaRect.x, context.scrollAreaRect.y,
+                                       context.scrollAreaRect.w - SCROLL_BAR_SIZE, SCROLL_BAR_SIZE);
+    if (context.reveal.active)
     {
-        scroll.dy = height - AREA_HEADER - g_state.revealPos + scroll.dy;
-        g_state.revealActive = false;
+        context.yOffset = cast(int)(
+          height - SCROLL_BAR_SIZE - context.reveal.yOffset + context.yOffset - context.viewport.h*context.reveal.percentage
+        );
+        context.yOffset.clamp(0, context.getScrolledContentHeight() - context.viewport.h);
+        context.reveal.active = false;
     }
-    +/
 
-    g_state.widgetY = yPos + height - AREA_HEADER + scroll.dy;
-    g_state.widgetW = scrollHorizontal ? 2000 : width - SCROLL_AREA_PADDING * 4;
+    g_state.widgetY = yPos + height - AREA_HEADER + context.yOffset;
+    g_state.widgetW = scrollHorizontal ? scrolledHorizontalPixels : width - SCROLL_AREA_PADDING * 4;
 
+    context.scrolledHorizontalPixels = scrolledHorizontalPixels;
 
-    g_scrollHorizontal = scrollHorizontal;
-    g_scrolledHorizontalPixels = scrolledHorizontalPixels;
-
-    g_scrollAreaTop = g_state.widgetY;
+    context.scrolledContentTop = g_state.widgetY;
 
     g_focusTop = yPos - AREA_HEADER;
     g_focusBottom = yPos - AREA_HEADER + height;
 
-    g_insideScrollArea = inRect(xPos, yPos, width, height, false);
-    g_state.insideCurrentScroll = g_insideScrollArea;
+    context.insideScrollArea = inRect(xPos, yPos, width, height, false);
+    g_state.insideCurrentScroll = context.insideScrollArea;
 
-    addGfxCmdRoundedRect(cast(float) xPos, cast(float) yPos, cast(float) width,
-            cast(float) height, 6, colorScheme.scroll.area.back);
+    addGfxCmdRoundedRect(cast(float) xPos, cast(float) yPos,
+                         cast(float) width, cast(float) height, 6,
+                         colorScheme.scroll.area.back);
 
     addGfxCmdText(xPos + AREA_HEADER / 2, yPos + height - AREA_HEADER / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, title, colorScheme.scroll.area.text);
+                  TextAlign.left, title, colorScheme.scroll.area.text);
 
-    addGfxCmdScissor(g_scrolledContentRect.x, g_scrolledContentRect.y, g_scrolledContentRect.w, g_scrolledContentRect.h);
-    return g_insideScrollArea;
+    addGfxCmdScissor(context.viewport);
+    return context.insideScrollArea;
 }
-/+
-void imguiRevealNextElement()
+
+void imguiRevealNextElement(ref ScrollAreaContext context, float percentage=0.5f)
 {
-    g_state.revealActive = true;
-    g_state.revealPos = g_state.widgetY;
+    context.reveal.active = true;
+    context.reveal.yOffset = g_state.widgetY;
+    context.reveal.percentage = percentage;
 }
-+/
+
 auto verticalScrollbarRect(const ref Rect scrollbar)
 {
     return Rect(scrollbar.x + SCROLL_AREA_PADDING/2,
@@ -511,18 +565,17 @@ auto horizontalScrollbarRect(const ref Rect scrollbar)
                 SCROLL_BAR_HANDLE_SIZE);
 }
 
-auto imguiEndScrollAreaVerticalScroller(const ref ColorScheme colorScheme)
+auto imguiEndScrollAreaVerticalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
 {
-    auto scroller = g_verticalScrollbar.verticalScrollbarRect();
-    int stop = g_scrollAreaTop;
-    int sbot = g_state.widgetY;
-    int scrolledPixels = stop - sbot; // The scrollable area height. // this is the dynamically calculated height of the scrolled area
+    auto scroller = context.verticalScrollbar.verticalScrollbarRect();
+    context.scrolledContentBottom = g_state.widgetY;
+    int scrolledPixels = context.getScrolledContentHeight();
 
     float percentageVisible = cast(float)scroller.h / cast(float) scrolledPixels;
     bool visible = percentageVisible < 1;
     if (visible)
     {
-        float percentageOfStart = cast(float)(scroller.y - sbot) / cast(float) scrolledPixels;
+        float percentageOfStart = cast(float)(scroller.y - context.scrolledContentBottom) / cast(float) scrolledPixels;
         percentageOfStart.clamp(0, 1);
 
         // Handle scroll bar logic.
@@ -530,7 +583,7 @@ auto imguiEndScrollAreaVerticalScroller(const ref ColorScheme colorScheme)
                         scroller.w, cast(int)(percentageVisible*scroller.h));
 
         const int range = scroller.h - (nob.h - 1);
-        uint hid = g_verticalScrollId;
+        uint hid = context.verticalScrollId;
         buttonLogic(hid, nob.inside());
 
         if (hid.isActive())
@@ -547,7 +600,7 @@ auto imguiEndScrollAreaVerticalScroller(const ref ColorScheme colorScheme)
             {
                 float u = g_state.dragOrigY + (g_state.my - g_state.dragY) / cast(float) range;
                 u.clamp(0, 1);
-                g_scrollVal.dy = cast(int)((1 - u) * (scrolledPixels - scroller.h));
+                context.yOffset = cast(int)((1 - u) * (scrolledPixels - scroller.h));
             }
         }
 
@@ -566,25 +619,25 @@ auto imguiEndScrollAreaVerticalScroller(const ref ColorScheme colorScheme)
     return tuple!("pixels", "visible")(scrolledPixels, visible);
 }
 
-auto imguiEndScrollAreaHorizontalScroller(const ref ColorScheme colorScheme)
+auto imguiEndScrollAreaHorizontalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
 {
-    auto scroller = g_horizontalScrollbar.horizontalScrollbarRect();
+    auto scroller = context.horizontalScrollbar.horizontalScrollbarRect();
 
-    float percentageVisible = (g_scrollHorizontal ? scroller.w / g_scrolledHorizontalPixels.to!float : 1.0f);
+    float percentageVisible = (context.scrolledHorizontalPixels ? scroller.w / context.scrolledHorizontalPixels.to!float : 1.0f);
     bool visible = percentageVisible < 1;
     if (visible)
     {
-        float percentageOfStart = (g_scrollHorizontal ? g_scrollVal.dx / g_scrolledHorizontalPixels.to!float: 0.0f);
+        float percentageOfStart = (context.scrolledHorizontalPixels ? context.xOffset / context.scrolledHorizontalPixels.to!float: 0.0f);
         percentageOfStart.clamp(0, 1);
 
 
         // Handle scroll bar logic.
-        auto visibleStart = percentageOfStart * (g_scrollAreaRect.w-SCROLL_BAR_SIZE);
-        auto visibleWidth = percentageVisible * (g_scrollAreaRect.w-SCROLL_BAR_SIZE);
+        auto visibleStart = percentageOfStart * (context.scrollAreaRect.w-SCROLL_BAR_SIZE);
+        auto visibleWidth = percentageVisible * (context.scrollAreaRect.w-SCROLL_BAR_SIZE);
         auto nob = Rect(cast(int)(scroller.x+visibleStart), scroller.y, cast(int)visibleWidth, scroller.h);
 
         const int range = scroller.w - (nob.w - 1);
-        uint hid = g_horizontalScrollId;
+        uint hid = context.horizontalScrollId;
         buttonLogic(hid, nob.inside());
 
         if (hid.isActive())
@@ -601,22 +654,22 @@ auto imguiEndScrollAreaHorizontalScroller(const ref ColorScheme colorScheme)
             {
                 float u = g_state.dragOrigX + (g_state.mx - g_state.dragX) / cast(float) range;
                 u.clamp(0, 1);
-                g_scrollVal.dx = cast(int)(u * (g_scrolledHorizontalPixels - scroller.w));
+                context.xOffset = cast(int)(u * (context.scrolledHorizontalPixels - scroller.w));
             }
         }
 
         auto color = hid.isActive ? colorScheme.scroll.bar.thumbPress : (hid.isHot ? colorScheme.scroll.bar.thumbHover : colorScheme.scroll.bar.thumb);
         // horizontal bar
         // background
-        addGfxCmdRect(cast(float) g_scrollAreaRect.x, cast(float) g_scrollAreaRect.y+SCROLL_AREA_PADDING/2,
-                      cast(float) g_scrollAreaRect.w-SCROLL_BAR_SIZE, cast(float) SCROLL_BAR_HANDLE_SIZE,
+        addGfxCmdRect(cast(float) context.scrollAreaRect.x, cast(float) context.scrollAreaRect.y+SCROLL_AREA_PADDING/2,
+                      cast(float) context.scrollAreaRect.w-SCROLL_BAR_SIZE, cast(float) SCROLL_BAR_HANDLE_SIZE,
                       colorScheme.scroll.bar.back);
 
         addGfxCmdRect(cast(float) nob.x, cast(float) nob.y,
                       cast(float) nob.w, nob.h,
                       color);
     }
-    return tuple!("pixels", "visible")(g_scrolledHorizontalPixels, visible);
+    return tuple!("pixels", "visible")(context.scrolledHorizontalPixels, visible);
 }
 /**
     End the definition of the last scrollable element.
@@ -625,7 +678,7 @@ auto imguiEndScrollAreaHorizontalScroller(const ref ColorScheme colorScheme)
 
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiEndScrollArea(const ref ColorScheme colorScheme = defaultColorScheme)
+void imguiEndScrollArea(ref ScrollAreaContext context, const ref ColorScheme colorScheme = defaultColorScheme)
 {
     // scrollbars are 2 scroll_area_paddings wide, with 0.5 before and after .. totalling 3 * scroll_area_paddings
     // on top is the header
@@ -633,27 +686,27 @@ void imguiEndScrollArea(const ref ColorScheme colorScheme = defaultColorScheme)
     // Disable scissoring.
     addGfxCmdScissor(-1, -1, -1, -1);
 
-    auto vertical = imguiEndScrollAreaVerticalScroller(colorScheme);
-    auto horizontal = imguiEndScrollAreaHorizontalScroller(colorScheme);
+    auto vertical = imguiEndScrollAreaVerticalScroller(context, colorScheme);
+    auto horizontal = imguiEndScrollAreaHorizontalScroller(context, colorScheme);
 
     // Handle mouse scrolling.
-    if (g_insideScrollArea) // && !anyActive())
+    if (context.insideScrollArea) // && !anyActive())
     {
         if (vertical.visible)
         {
-        if (g_state.scrollInfo.dy)
-        {
-            g_scrollVal.dy += 20 * g_state.scrollInfo.dy;
-            g_scrollVal.dy.clamp(0, vertical.pixels - g_scrolledContentRect.h);
-        }
+            if (g_state.scrollInfo.dy)
+            {
+                context.yOffset += 20 * g_state.scrollInfo.dy;
+                context.yOffset.clamp(0, vertical.pixels - context.viewport.h);
+            }
         }
         if (horizontal.visible)
         {
-        if (g_state.scrollInfo.dx)
-        {
-            g_scrollVal.dx += 20 * g_state.scrollInfo.dx;
-            g_scrollVal.dx.clamp(0, horizontal.pixels - g_scrolledContentRect.w);
-        }
+            if (g_state.scrollInfo.dx)
+            {
+                context.xOffset += 20 * g_state.scrollInfo.dx;
+                context.xOffset.clamp(0, horizontal.pixels - context.viewport.w);
+            }
         }
     }
 
@@ -940,12 +993,8 @@ bool imguiSlider(const(char)[] label, float* sliderState, float minValue,
     const int range = w - SLIDER_MARKER_WIDTH;
 
     float u = (*sliderState - minValue) / (maxValue - minValue);
+    u.clamp(0, 1);
 
-    if (u < 0)
-        u = 0;
-
-    if (u > 1)
-        u = 1;
     int m = cast(int)(u * range);
 
     bool over = enabled && inRect(x + m, y, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
@@ -963,12 +1012,8 @@ bool imguiSlider(const(char)[] label, float* sliderState, float minValue,
         if (g_state.dragX != g_state.mx)
         {
             u = g_state.dragOrigX + cast(float)(g_state.mx - g_state.dragX) / cast(float) range;
+            u.clamp(0, 1);
 
-            if (u < 0)
-                u = 0;
-
-            if (u > 1)
-                u = 1;
             *sliderState = minValue + u * (maxValue - minValue);
             *sliderState = floor(*sliderState / stepValue + 0.5f) * stepValue; // Snap to stepValue
             m = cast(int)(u * range);

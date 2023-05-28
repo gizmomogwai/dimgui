@@ -74,7 +74,7 @@ struct GUI
             mouseY *= mouseYToWindowFactor;
         }
 
-        const scrollAreaWidth = windowWidth / 4;
+        const scrollAreaWidth = windowWidth / 5;
         const scrollAreaHeight = windowHeight - 20;
 
         int mousex = cast(int) mouseX;
@@ -87,16 +87,15 @@ struct GUI
 
         if (leftButton == GLFW_PRESS)
             mousebutton |= MouseButton.left;
-
         imguiBeginFrame(mousex, mousey, mousebutton, mouseScroll, staticUnicode);
         staticUnicode = 0;
 
-        if (mouseScroll != 0)
-            mouseScroll = 0;
+        mouseScroll.reset;
 
-        imguiBeginScrollArea("Scroll area 1", 10, 10, scrollAreaWidth,
-                scrollAreaHeight, &scrollArea1);
-
+        int xCursor = 10; // xpos to place new scrollareas to
+        imguiBeginScrollArea("Scroll area 1", xCursor, 10, scrollAreaWidth,
+                             scrollAreaHeight, &scrollArea1);
+        xCursor += scrollAreaWidth;
         imguiSeparatorLine();
         imguiSeparator();
 
@@ -159,8 +158,10 @@ struct GUI
 
         imguiEndScrollArea();
 
-        imguiBeginScrollArea("Scroll area 2", 20 + (1 * scrollAreaWidth), 10,
+        xCursor += 10;
+        imguiBeginScrollArea("Scroll area 2", xCursor, 10,
                 scrollAreaWidth, scrollAreaHeight, &scrollArea2);
+        xCursor += scrollAreaWidth;
         imguiSeparatorLine();
         imguiSeparator();
 
@@ -171,14 +172,25 @@ struct GUI
 
         imguiEndScrollArea();
 
-        imguiBeginScrollArea("Scroll area 3", 30 + (2 * scrollAreaWidth), 10,
+        xCursor += 10;
+        imguiBeginScrollArea("Scroll area 3", xCursor, 10,
                 scrollAreaWidth, scrollAreaHeight, &scrollArea3);
+        xCursor += scrollAreaWidth;
         imguiLabel(lastInfo);
         imguiEndScrollArea();
 
+        xCursor += 10;
+        imguiBeginScrollArea("Scroll area 4", xCursor, 10, scrollAreaWidth, scrollAreaHeight, &scrollArea4,
+                             true, 2000);
+        xCursor += scrollAreaWidth;
+        for (int i=0; i<100; ++i)
+        {
+            imguiLabel("long text abcdefghijklmnopqrstuvwxyz %d".format(i));
+        }
+        imguiEndScrollArea();
         imguiEndFrame();
 
-        const graphicsXPos = 40 + (3 * scrollAreaWidth);
+        const graphicsXPos = xCursor + 10;
 
         imguiDrawText(graphicsXPos, scrollAreaHeight, TextAlign.left,
                 "Free text", RGBA(32, 192, 32, 192));
@@ -244,7 +256,8 @@ struct GUI
 
     void onScroll(double hOffset, double vOffset)
     {
-        mouseScroll = -cast(int) vOffset;
+        mouseScroll.dy -= cast(int) vOffset;
+        mouseScroll.dx -= cast(int)hOffset;
     }
 
     extern (C) static void getUnicode(GLFWwindow* w, uint unicode) nothrow
@@ -284,10 +297,11 @@ private:
     bool collapseState2 = false;
     float sliderValue1 = 50.0;
     float sliderValue2 = 30.0;
-    int scrollArea1 = 0;
-    int scrollArea2 = 0;
-    int scrollArea3 = 0;
-    int mouseScroll = 0;
+    ScrollInfo scrollArea1;
+    ScrollInfo scrollArea2;
+    ScrollInfo scrollArea3;
+    ScrollInfo scrollArea4;
+    ScrollInfo mouseScroll;
 
     static dchar staticUnicode;
     // Buffer to store text input
