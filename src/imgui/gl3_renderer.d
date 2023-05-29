@@ -631,11 +631,8 @@ void drawText(float x, float y, const(char)[] text, int align_, uint col)
     // glDisable(GL_TEXTURE_2D);
 }
 
-void imguiRenderGLDraw(int width, int height)
+void renderGLDraw(GfxCmd* commands, size_t numberOfCommands, int width, int height)
 {
-    const imguiGfxCmd* q = imguiGetRenderQueue();
-    int nq = imguiGetRenderQueueSize();
-
     const float s = 1.0f / 8.0f;
 
     glViewport(0, 0, width, height);
@@ -646,10 +643,8 @@ void imguiRenderGLDraw(int width, int height)
 
     glDisable(GL_SCISSOR_TEST);
 
-    for (int i = 0; i < nq; ++i)
+    foreach (ref cmd; commands[0..numberOfCommands])
     {
-        auto cmd = &q[i];
-
         if (cmd.type == IMGUI_GFXCMD_RECT)
         {
             if (cmd.rect.r == 0)

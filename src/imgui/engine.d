@@ -26,14 +26,6 @@ import imgui.gl3_renderer;
 
 package:
 
-/** Globals start. */
-imguiGfxCmd[GFXCMD_QUEUE_SIZE] g_gfxCmdQueue;
-uint g_gfxCmdQueueSize = 0;
-int g_focusTop = 0;
-int g_focusBottom = 0;
-GuiState g_state;
-/** Globals end. */
-
 enum GFXCMD_QUEUE_SIZE = 5000;
 enum BUTTON_HEIGHT = 60;
 enum SLIDER_HEIGHT = 40;
@@ -75,7 +67,7 @@ struct imguiGfxLine
     short x0, y0, x1, y1, r;
 }
 
-struct imguiGfxCmd
+struct GfxCmd
 {
     char type;
     char flags;
@@ -90,105 +82,9 @@ struct imguiGfxCmd
     }
 }
 
-void resetGfxCmdQueue()
-{
-    g_gfxCmdQueueSize = 0;
-}
-
-public void addGfxCmdScissor(ref Rect r)
-{
-    addGfxCmdScissor(r.x, r.y, r.w, r.h);
-}
-
-public void addGfxCmdScissor(int x, int y, int w, int h)
-{
-    if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_SCISSOR;
-    cmd.flags = x < 0 ? 0 : 1; // on/off flag.
-    cmd.color = 0;
-    cmd.rect.x = cast(short) x;
-    cmd.rect.y = cast(short) y;
-    cmd.rect.w = cast(short) w;
-    cmd.rect.h = cast(short) h;
-}
-
-public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
-{
-    if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_RECT;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.rect.x = cast(short)(x * 8.0f);
-    cmd.rect.y = cast(short)(y * 8.0f);
-    cmd.rect.w = cast(short)(w * 8.0f);
-    cmd.rect.h = cast(short)(h * 8.0f);
-    cmd.rect.r = 0;
-}
-
-public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA color)
-{
-    if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_LINE;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.line.x0 = cast(short)(x0 * 8.0f);
-    cmd.line.y0 = cast(short)(y0 * 8.0f);
-    cmd.line.x1 = cast(short)(x1 * 8.0f);
-    cmd.line.y1 = cast(short)(y1 * 8.0f);
-    cmd.line.r = cast(short)(r * 8.0f);
-}
-
-public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RGBA color)
-{
-    if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_RECT;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.rect.x = cast(short)(x * 8.0f);
-    cmd.rect.y = cast(short)(y * 8.0f);
-    cmd.rect.w = cast(short)(w * 8.0f);
-    cmd.rect.h = cast(short)(h * 8.0f);
-    cmd.rect.r = cast(short)(r * 8.0f);
-}
-
-public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
-{
-    if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_TRIANGLE;
-    cmd.flags = cast(byte) flags;
-    cmd.color = color.toPackedRGBA();
-    cmd.rect.x = cast(short)(x * 8.0f);
-    cmd.rect.y = cast(short)(y * 8.0f);
-    cmd.rect.w = cast(short)(w * 8.0f);
-    cmd.rect.h = cast(short)(h * 8.0f);
-}
-
-public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
-{
-    if (g_gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &g_gfxCmdQueue[g_gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_TEXT;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.text.x = cast(short) x;
-    cmd.text.y = cast(short) y;
-    cmd.text.align_ = cast(short) align_;
-    cmd.text.text = text;
-}
-
 struct GuiState
 {
+public:
     bool left;
     bool leftPressed, leftReleased;
     int mx = -1, my = -1;
@@ -224,111 +120,105 @@ struct GuiState
 
     uint areaId;
     uint widgetId;
+    bool anyActive()
+    {
+        return active != 0;
+    }
 
-    bool scrollToPosActive = false;
-    int scrollToPos;
-}
-
-bool anyActive()
-{
-    return g_state.active != 0;
-}
-
-bool isActive(uint id)
-{
-    return g_state.active == id;
-}
+    bool isIdActive(uint id)
+    {
+        return active == id;
+    }
 
 /// Is the widget with specified ID 'inputable' for e.g. text input?
-bool isInputable(uint id)
-{
-    return g_state.inputable == id;
-}
+    bool isIdInputable(uint id)
+    {
+        return inputable == id;
+    }
 
-bool isHot(uint id)
-{
-    return g_state.hot == id;
-}
+    bool isIdHot(uint id)
+    {
+        return hot == id;
+    }
 
-bool inRect(int x, int y, int w, int h, bool checkScroll = true)
-{
-    return (!checkScroll || g_state.insideCurrentScroll) && g_state.mx >= x
-        && g_state.mx <= x + w && g_state.my >= y && g_state.my <= y + h;
-}
+    bool inRect(int x, int y, int w, int h, bool checkScroll = true)
+    {
+        return (!checkScroll || insideCurrentScroll) && mx >= x
+            && mx <= x + w && my >= y && my <= y + h;
+    }
 
-void clearInput()
-{
-    g_state.leftPressed = false;
-    g_state.leftReleased = false;
-    g_state.scrollInfo.reset();
-}
+    void clearInput()
+    {
+        leftPressed = false;
+        leftReleased = false;
+        scrollInfo.reset();
+    }
+    void clearActive()
+    {
+        active = 0;
 
-void clearActive()
-{
-    g_state.active = 0;
+        // mark all UI for this frame as processed
+        clearInput();
+    }
 
-    // mark all UI for this frame as processed
-    clearInput();
-}
-
-void setActive(uint id)
-{
-    g_state.active = id;
-    g_state.inputable = 0;
-    g_state.wentActive = true;
-}
+    void setActive(uint id)
+    {
+        active = id;
+        inputable = 0;
+        wentActive = true;
+    }
 
 // Set the inputable widget to the widget with specified ID.
 //
 // A text input becomes 'inputable' when it is 'hot' and left-clicked.
 //
 // 0 if no widget is inputable
-void setInputable(uint id)
-{
-    g_state.inputable = id;
-}
-
-void setHot(uint id)
-{
-    g_state.hotToBe = id;
-}
-
-bool buttonLogic(uint id, bool over)
-{
-    bool res = false;
-
-    // process down
-    if (!anyActive())
+    void setInputable(uint id)
     {
-        if (over)
-            setHot(id);
-
-        if (isHot(id) && g_state.leftPressed)
-            setActive(id);
+        inputable = id;
     }
 
-    // if button is active, then react on left up
-    if (isActive(id))
+    void setHot(uint id)
     {
-        g_state.isActive = true;
+        hotToBe = id;
+    }
 
-        if (over)
-            setHot(id);
+    bool buttonLogic(uint id, bool over)
+    {
+        bool res = false;
 
-        if (g_state.leftReleased)
+        // process down
+        if (!anyActive())
         {
-            if (isHot(id))
-                res = true;
-            clearActive();
+            if (over)
+                setHot(id);
+
+            if (isIdHot(id) && leftPressed)
+                setActive(id);
         }
+
+        // if button is active, then react on left up
+        if (isIdActive(id))
+        {
+            isActive = true;
+
+            if (over)
+                setHot(id);
+
+            if (leftReleased)
+            {
+                if (isIdHot(id))
+                    res = true;
+                clearActive();
+            }
+        }
+
+        // Not sure if this does anything (g_state.isHot doesn't seem to be used).
+        if (isIdHot(id))
+            isHot = true;
+
+        return res;
     }
-
-    // Not sure if this does anything (g_state.isHot doesn't seem to be used).
-    if (isHot(id))
-        g_state.isHot = true;
-
-    return res;
-}
 
 /** Input logic for text input fields.
  *
@@ -339,27 +229,27 @@ bool buttonLogic(uint id, bool over)
  * forceInputable = Force the text input widget to be inputable regardless of whether it's
  *                  hovered and clicked by the mouse or not.
  */
-void textInputLogic(uint id, bool over, bool forceInputable)
-{
-    // If nothing else is active, we check for mouse over to make the widget hot in the
-    // next frame, and if both hot and LMB is pressed (or forced), make it inputable.
-    if (!anyActive())
+    void textInputLogic(uint id, bool over, bool forceInputable)
     {
-        if (over)
+        // If nothing else is active, we check for mouse over to make the widget hot in the
+        // next frame, and if both hot and LMB is pressed (or forced), make it inputable.
+        if (!anyActive())
         {
-            setHot(id);
+            if (over)
+            {
+                setHot(id);
+            }
+            if (forceInputable || isIdHot(id) && leftPressed)
+            {
+                setInputable(id);
+            }
         }
-        if (forceInputable || isHot(id) && g_state.leftPressed)
+        // Not sure if this does anything (g_state.isHot doesn't seem to be used).
+        if (isIdHot(id))
         {
-            setInputable(id);
+            isHot = true;
         }
     }
-    // Not sure if this does anything (g_state.isHot doesn't seem to be used).
-    if (isHot(id))
-    {
-        g_state.isHot = true;
-    }
-}
 
 /* Update user input on the beginning of a frame.
  *
@@ -372,39 +262,31 @@ void textInputLogic(uint id, bool over, bool forceInputable)
  * unicodeChar = Unicode text input from the keyboard (usually the unicode result of last
  *               keypress).
  */
-void updateInput(int mx, int my, ubyte mbut, ScrollInfo scrollInfo, dchar unicodeChar)
-{
-    bool left = (mbut & MouseButton.left) != 0;
-
-    g_state.mx = mx;
-    g_state.my = my;
-    g_state.leftPressed = !g_state.left && left;
-    g_state.leftReleased = g_state.left && !left;
-    g_state.left = left;
-
-    g_state.scrollInfo = scrollInfo;
-
-    // Ignore characters we can't draw
-    if (unicodeChar > maxCharacterCount())
+    void updateInput(int mx, int my, ubyte mbut, ScrollInfo scrollInfo, dchar unicodeChar)
     {
-        unicodeChar = 0;
+        bool left = (mbut & MouseButton.left) != 0;
+
+        this.mx = mx;
+        this.my = my;
+        this.leftPressed = !this.left && left;
+        this.leftReleased = this.left && !left;
+        this.left = left;
+
+        this.scrollInfo = scrollInfo;
+
+        // Ignore characters we can't draw
+        if (unicodeChar > maxCharacterCount())
+        {
+            unicodeChar = 0;
+        }
+        this.lastUnicode = this.unicode;
+        this.unicode = unicodeChar;
     }
-    g_state.lastUnicode = g_state.unicode;
-    g_state.unicode = unicodeChar;
-}
 
 // Separate from gl3_renderer.getTextLength so api doesn't directly call renderer.
-float getTextLength(const(char)[] text)
-{
-    return imgui.gl3_renderer.getTextLength(text);
+    float getTextLength(const(char)[] text)
+    {
+        return imgui.gl3_renderer.getTextLength(text);
+    }
 }
 
-const(imguiGfxCmd*) imguiGetRenderQueue()
-{
-    return g_gfxCmdQueue.ptr;
-}
-
-int imguiGetRenderQueueSize()
-{
-    return g_gfxCmdQueueSize;
-}

@@ -33,242 +33,7 @@ import std.conv : to;
 import imgui.engine;
 import imgui.gl3_renderer;
 import std.typecons : tuple;
-/* import imgui.util; */
-
-// todo: opApply to allow changing brightness on all colors.
-// todo: check CairoD samples for brightness settingsroutines.
-
-/** A color scheme contains all the configurable GUI element colors. */
-struct ColorScheme
-{
-    /**
-        Return a range of all colors. This gives you ref access,
-        which means you can modify the values.
-    */
-    auto walkColors()
-    {
-        return chain((&generic.text).only, (&generic.line).only,
-                (&generic.rect).only, (&generic.roundRect).only,
-                (&scroll.area.back).only, (&scroll.area.text).only,
-                (&scroll.bar.back).only, (&scroll.bar.thumb).only,
-                (&scroll.bar.thumbHover).only, (&scroll.bar.thumbPress).only,
-                (&button.text).only, (&button.textHover).only,
-                (&button.textDisabled).only, (&button.back).only,
-                (&button.backPress).only, (&checkbox.back).only,
-                (&checkbox.press).only, (&checkbox.checked).only,
-                (&checkbox.doUncheck).only, (&checkbox.disabledChecked).only,
-                (&checkbox.text).only, (&checkbox.textHover).only,
-                (&checkbox.textDisabled).only, (&item.hover).only,
-                (&item.press).only, (&item.text).only, (&item.textDisabled)
-                .only, (&collapse.shown).only, (&collapse.hidden).only,
-                (&collapse.doShow).only, (&collapse.doHide).only,
-                (&collapse.textHover).only, (&collapse.text).only,
-                (&collapse.textDisabled).only, (&collapse.subtext).only,
-                (&label.text).only, (&value.text).only, (&slider.back).only,
-                (&slider.thumb).only, (&slider.thumbHover).only,
-                (&slider.thumbPress).only, (&slider.text).only,
-                (&slider.textHover).only, (&slider.textDisabled).only,
-                (&slider.value).only, (&slider.valueHover).only,
-                (&slider.valueDisabled).only, (&separator).only);
-    }
-
-    ///
-    static struct Generic
-    {
-        RGBA text; /// Used by imguiDrawText.
-        RGBA line; /// Used by imguiDrawLine.
-        RGBA rect; /// Used by imguiDrawRect.
-        RGBA roundRect; /// Used by imguiDrawRoundedRect.
-    }
-
-    ///
-    static struct Scroll
-    {
-        ///
-        static struct Area
-        {
-            RGBA back = RGBA(0, 0, 0, 192);
-            RGBA text = RGBA(255, 255, 255, 128);
-        }
-
-        ///
-        static struct Bar
-        {
-            RGBA back = RGBA(0, 0, 0, 196);
-            RGBA thumb = RGBA(255, 255, 255, 64);
-            RGBA thumbHover = RGBA(255, 196, 0, 96);
-            RGBA thumbPress = RGBA(255, 196, 0, 196);
-        }
-
-        Area area; ///
-        Bar bar; ///
-    }
-
-    ///
-    static struct Button
-    {
-        RGBA text = RGBA(255, 255, 255, 200);
-        RGBA textHover = RGBA(255, 196, 0, 255);
-        RGBA textDisabled = RGBA(128, 128, 128, 200);
-        RGBA back = RGBA(128, 128, 128, 96);
-        RGBA backPress = RGBA(128, 128, 128, 196);
-    }
-
-    ///
-    static struct TextInput
-    {
-        RGBA label = RGBA(255, 255, 255, 255);
-        RGBA text = RGBA(0, 0, 0, 255);
-        RGBA textDisabled = RGBA(255, 255, 255, 255);
-        RGBA back = RGBA(255, 196, 0, 255);
-        RGBA backDisabled = RGBA(128, 128, 128, 96);
-    }
-
-    ///
-    static struct Checkbox
-    {
-        /// Checkbox background.
-        RGBA back = RGBA(128, 128, 128, 96);
-
-        /// Checkbox background when it's pressed.
-        RGBA press = RGBA(128, 128, 128, 196);
-
-        /// An enabled and checked checkbox.
-        RGBA checked = RGBA(255, 255, 255, 255);
-
-        /// An enabled and checked checkbox which was just pressed to be disabled.
-        RGBA doUncheck = RGBA(255, 255, 255, 200);
-
-        /// A disabled but checked checkbox.
-        RGBA disabledChecked = RGBA(128, 128, 128, 200);
-
-        /// Label color of the checkbox.
-        RGBA text = RGBA(255, 255, 255, 200);
-
-        /// Label color of a hovered checkbox.
-        RGBA textHover = RGBA(255, 196, 0, 255);
-
-        /// Label color of an disabled checkbox.
-        RGBA textDisabled = RGBA(128, 128, 128, 200);
-    }
-
-    ///
-    static struct Item
-    {
-        RGBA hover = RGBA(255, 196, 0, 96);
-        RGBA press = RGBA(255, 196, 0, 196);
-        RGBA text = RGBA(255, 255, 255, 200);
-        RGBA textDisabled = RGBA(128, 128, 128, 200);
-    }
-
-    ///
-    static struct Collapse
-    {
-        RGBA shown = RGBA(255, 255, 255, 200);
-        RGBA hidden = RGBA(255, 255, 255, 200);
-
-        RGBA doShow = RGBA(255, 255, 255, 255);
-        RGBA doHide = RGBA(255, 255, 255, 255);
-
-        RGBA text = RGBA(255, 255, 255, 200);
-        RGBA textHover = RGBA(255, 196, 0, 255);
-        RGBA textDisabled = RGBA(128, 128, 128, 200);
-
-        RGBA subtext = RGBA(255, 255, 255, 128);
-    }
-
-    ///
-    static struct Label
-    {
-        RGBA text = RGBA(255, 255, 255, 255);
-    }
-
-    ///
-    static struct Value
-    {
-        RGBA text = RGBA(255, 255, 255, 200);
-    }
-
-    ///
-    static struct Slider
-    {
-        RGBA back = RGBA(0, 0, 0, 128);
-        RGBA thumb = RGBA(255, 255, 255, 64);
-        RGBA thumbHover = RGBA(255, 196, 0, 128);
-        RGBA thumbPress = RGBA(255, 255, 255, 255);
-
-        RGBA text = RGBA(255, 255, 255, 200);
-        RGBA textHover = RGBA(255, 196, 0, 255);
-        RGBA textDisabled = RGBA(128, 128, 128, 200);
-
-        RGBA value = RGBA(255, 255, 255, 200);
-        RGBA valueHover = RGBA(255, 196, 0, 255);
-        RGBA valueDisabled = RGBA(128, 128, 128, 200);
-    }
-
-    /// Colors for the generic imguiDraw* functions.
-    Generic generic;
-
-    /// Colors for the scrollable area.
-    Scroll scroll;
-
-    /// Colors for button elements.
-    Button button;
-
-    /// Colors for text input elements.
-    TextInput textInput;
-
-    /// Colors for checkbox elements.
-    Checkbox checkbox;
-
-    /// Colors for item elements.
-    Item item;
-
-    /// Colors for collapse elements.
-    Collapse collapse;
-
-    /// Colors for label elements.
-    Label label;
-
-    /// Colors for value elements.
-    Value value;
-
-    /// Colors for slider elements.
-    Slider slider;
-
-    /// Color for the separator line.
-    RGBA separator = RGBA(255, 255, 255, 32);
-}
-
-/**
-    The current default color scheme.
-
-    You can configure this scheme, it will be used by
-    default by GUI element creation functions unless
-    you explicitly pass a custom color scheme.
-*/
-__gshared ColorScheme defaultColorScheme;
-
-///
-struct RGBA
-{
-    ubyte r;
-    ubyte g;
-    ubyte b;
-    ubyte a = 255;
-
-    RGBA opBinary(string op)(RGBA rgba)
-    {
-        RGBA res = this;
-
-        mixin("res.r = cast(ubyte)res.r " ~ op ~ " rgba.r;");
-        mixin("res.g = cast(ubyte)res.g " ~ op ~ " rgba.g;");
-        mixin("res.b = cast(ubyte)res.b " ~ op ~ " rgba.b;");
-        mixin("res.a = cast(ubyte)res.a " ~ op ~ " rgba.a;");
-
-        return res;
-    }
-}
+public import imgui.colorscheme;
 
 ///
 enum TextAlign
@@ -292,21 +57,7 @@ enum Enabled : bool
     yes,
 }
 
-/** Initialize the imgui library.
-
-    Params:
-
-    fontPath        = Path to a TrueType font file to use to draw text.
-    fontTextureSize = Size of the texture to store font glyphs in. The actual texture
-                      size is a square of this value.
-
-                      A bigger texture allows to draw more Unicode characters (if the
-                      font supports them). 256 (62.5kiB) should be enough for ASCII,
-                      1024 (1MB) should be enough for most European scripts.
-
-    Returns: True on success, false on failure.
-*/
-bool imguiInit(const(char)[] fontPath, uint fontTextureSize = 1024)
+deprecated bool imguiInit(const(char)[] fontPath, uint fontTextureSize = 1024)
 {
     return imguiRenderGLInit(fontPath, fontTextureSize);
 }
@@ -327,19 +78,21 @@ struct ScrollInfo
         dy = 0;
     }
 }
+
 struct Rect {
     int x;
     int y;
     int w;
     int h;
-    bool inside(bool checkScroll = true)
+    bool inside(ref GuiState state, bool checkScroll = true)
     {
-        return (!checkScroll || g_state.insideCurrentScroll)
-            && g_state.mx >= x
-            && g_state.mx <= x+w
-            && g_state.my >= y
-            && g_state.my <= y+h;
+             return (!checkScroll || state.insideCurrentScroll)
+            && state.mx >= x
+            && state.mx <= x+w
+            && state.my >= y
+            && state.my <= y+h;
     }
+
 }
 
 // data to store for a ScrollArea
@@ -376,22 +129,48 @@ struct ScrollAreaContext
     }
     RevealInfo reveal;
 }
+
+class ImGui {
+    GuiState state;
+    
+    GfxCmd[GFXCMD_QUEUE_SIZE] gfxCmdQueue;
+    uint gfxCmdQueueSize = 0;
+    
+    /++ Initialize the imgui library.
+     Params:
+     
+     fontPath        = Path to a TrueType font file to use to draw text.
+     fontTextureSize = Size of the texture to store font glyphs in. The actual texture
+     size is a square of this value.
+     
+     A bigger texture allows to draw more Unicode characters (if the
+     font supports them). 256 (62.5kiB) should be enough for ASCII,
+     1024 (1MB) should be enough for most European scripts.
+     
+     Returns: True on success, false on failure.
+     +/
+    bool init(string fontPath, uint fontTextureSize = 1024)
+    {
+        return imguiRenderGLInit(fontPath, fontTextureSize);
+    }
+    
 /**
-    Begin a new frame. All batched commands after the call to
-    $(D imguiBeginFrame) will be rendered as a single frame once
-    $(D imguiRender) is called.
-
-    Note: You should call $(D imguiEndFrame) after batching all
-    commands to reset the input handling for the next frame.
-
-    Example:
-    -----
-    int cursorX, cursorY;
-    ubyte mouseButtons;
-    int mouseScroll;
-
-    /// start a new batch of commands for this frame (the batched commands)
-    imguiBeginFrame(cursorX, cursorY, mouseButtons, mouseScroll);
+   TODO
+       Begin a new frame. All batched commands after the call to
+       $(D imguiBeginFrame) will be rendered as a single frame once
+       $(D imguiRender) is called.
+       
+       Note: You should call $(D imguiEndFrame) after batching all
+       commands to reset the input handling for the next frame.
+       
+       Example:
+       -----
+       int cursorX, cursorY;
+       ubyte mouseButtons;
+       int mouseScroll;
+       
+       /// start a new batch of commands for this frame (the batched commands)
+       imguiBeginFrame(cursorX, cursorY, mouseButtons, mouseScroll);
 
     /// define your UI elements here
     imguiLabel("some text here");
@@ -414,56 +193,129 @@ struct ScrollAreaContext
                   and backspace must be passed (encoded as 0x0D and 0x08, respectively),
                   which may not be automatically handled by your input library's text
                   input functionality (e.g. GLFW's getUnicode() does not do this).
-*/
-void imguiBeginFrame(int cursorX, int cursorY,
-                     ubyte mouseButtons,
-                     ScrollInfo scrollAreaContext,
-                     dchar unicodeChar = 0)
-{
-    updateInput(cursorX, cursorY, mouseButtons, scrollAreaContext, unicodeChar);
-
-    g_state.hot = g_state.hotToBe;
-    g_state.hotToBe = 0;
-
-    g_state.wentActive = false;
-    g_state.isActive = false;
-    g_state.isHot = false;
-
-    g_state.widgetX = 0;
-    g_state.widgetY = 0;
-    g_state.widgetW = 0;
-
-    g_state.areaId = 1;
-    g_state.widgetId = 1;
-
-    resetGfxCmdQueue();
-}
-
-/** End the list of batched commands for the current frame. */
-void imguiEndFrame()
-{
-    clearInput();
-}
-
-void clamp(T)(ref T value, const T minValue, const T maxValue)
-{
-    if (value < minValue)
+    */
+void beginFrame(int cursorX, int cursorY,
+                    ubyte mouseButtons,
+                    ScrollInfo scrollAreaContext,
+                    dchar unicodeChar = 0)
     {
-        value = minValue;
-    }
-    else if (value > maxValue)
-    {
-        value =  maxValue;
-    }
-}
+        state.updateInput(cursorX, cursorY, mouseButtons, scrollAreaContext, unicodeChar);
+        
+        state.hot = state.hotToBe;
+        state.hotToBe = 0;
+        
+        state.wentActive = false;
+        state.isActive = false;
+        state.isHot = false;
 
-/** Render all of the batched commands for the current frame. */
-void imguiRender(int width, int height)
+        state.widgetX = 0;
+        state.widgetY = 0;
+        state.widgetW = 0;
+
+        state.areaId = 1;
+        state.widgetId = 1;
+        
+        resetGfxCmdQueue();
+    }
+
+void resetGfxCmdQueue()
 {
-    imguiRenderGLDraw(width, height);
+    gfxCmdQueueSize = 0;
 }
 
-/**
+public void addGfxCmdScissor(ref Rect r)
+{
+    addGfxCmdScissor(r.x, r.y, r.w, r.h);
+}
+
+public void addGfxCmdScissor(int x, int y, int w, int h)
+{
+    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+        return;
+    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+    cmd.type = IMGUI_GFXCMD_SCISSOR;
+    cmd.flags = x < 0 ? 0 : 1; // on/off flag.
+    cmd.color = 0;
+    cmd.rect.x = cast(short) x;
+    cmd.rect.y = cast(short) y;
+    cmd.rect.w = cast(short) w;
+    cmd.rect.h = cast(short) h;
+}
+
+public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
+{
+    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+        return;
+    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+    cmd.type = IMGUI_GFXCMD_RECT;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
+    cmd.rect.x = cast(short)(x * 8.0f);
+    cmd.rect.y = cast(short)(y * 8.0f);
+    cmd.rect.w = cast(short)(w * 8.0f);
+    cmd.rect.h = cast(short)(h * 8.0f);
+    cmd.rect.r = 0;
+}
+
+public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA color)
+{
+    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+        return;
+    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+    cmd.type = IMGUI_GFXCMD_LINE;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
+    cmd.line.x0 = cast(short)(x0 * 8.0f);
+    cmd.line.y0 = cast(short)(y0 * 8.0f);
+    cmd.line.x1 = cast(short)(x1 * 8.0f);
+    cmd.line.y1 = cast(short)(y1 * 8.0f);
+    cmd.line.r = cast(short)(r * 8.0f);
+}
+
+public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RGBA color)
+{
+    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+        return;
+    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+    cmd.type = IMGUI_GFXCMD_RECT;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
+    cmd.rect.x = cast(short)(x * 8.0f);
+    cmd.rect.y = cast(short)(y * 8.0f);
+    cmd.rect.w = cast(short)(w * 8.0f);
+    cmd.rect.h = cast(short)(h * 8.0f);
+    cmd.rect.r = cast(short)(r * 8.0f);
+}
+
+public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
+{
+    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+        return;
+    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+    cmd.type = IMGUI_GFXCMD_TRIANGLE;
+    cmd.flags = cast(byte) flags;
+    cmd.color = color.toPackedRGBA();
+    cmd.rect.x = cast(short)(x * 8.0f);
+    cmd.rect.y = cast(short)(y * 8.0f);
+    cmd.rect.w = cast(short)(w * 8.0f);
+    cmd.rect.h = cast(short)(h * 8.0f);
+}
+
+public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
+{
+    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+        return;
+    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+    cmd.type = IMGUI_GFXCMD_TEXT;
+    cmd.flags = 0;
+    cmd.color = color.toPackedRGBA();
+    cmd.text.x = cast(short) x;
+    cmd.text.y = cast(short) y;
+    cmd.text.align_ = cast(short) align_;
+    cmd.text.text = text;
+}
+
+    /**
     Begin the definition of a new scrollable area.
 
     Once elements within the scrollable area are defined
@@ -483,17 +335,17 @@ void imguiRender(int width, int height)
 
     $(D true) if the mouse was located inside the scrollable area.
 */
-bool imguiBeginScrollArea(ref ScrollAreaContext context,
+bool beginScrollArea(ref ScrollAreaContext context,
                           const(char)[] title,
                           int xPos, int yPos,
                           int width, int height,
                           bool scrollHorizontal=false, int scrolledHorizontalPixels=2000,
                           const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    g_state.areaId++;
-    g_state.widgetId = 0;
-    context.verticalScrollId = (g_state.areaId << 16) | 0;
-    context.horizontalScrollId = (g_state.areaId << 16) | 1;
+    state.areaId++;
+    state.widgetId = 0;
+    context.verticalScrollId = (state.areaId << 16) | 0;
+    context.horizontalScrollId = (state.areaId << 16) | 1;
 
     context.scrollAreaRect = Rect(xPos, yPos, width, height);
     context.viewport = Rect(xPos + SCROLL_AREA_PADDING,
@@ -502,12 +354,12 @@ bool imguiBeginScrollArea(ref ScrollAreaContext context,
                                  max(1, height - AREA_HEADER - SCROLL_BAR_SIZE));     // avoiding a segfault.
 
 
-    g_state.widgetX = xPos + SCROLL_AREA_PADDING - context.xOffset;
+    state.widgetX = xPos + SCROLL_AREA_PADDING - context.xOffset;
 
     context.verticalScrollbar = Rect(xPos + width - SCROLL_BAR_SIZE,
-                               yPos + SCROLL_BAR_SIZE,
-                               SCROLL_BAR_SIZE,
-                               height - AREA_HEADER-SCROLL_BAR_SIZE);
+                                     yPos + SCROLL_BAR_SIZE,
+                                     SCROLL_BAR_SIZE,
+                                     height - AREA_HEADER-SCROLL_BAR_SIZE);
     context.horizontalScrollbar = Rect(context.scrollAreaRect.x, context.scrollAreaRect.y,
                                        context.scrollAreaRect.w - SCROLL_BAR_SIZE, SCROLL_BAR_SIZE);
     if (context.reveal.active)
@@ -519,18 +371,15 @@ bool imguiBeginScrollArea(ref ScrollAreaContext context,
         context.reveal.active = false;
     }
 
-    g_state.widgetY = yPos + height - AREA_HEADER + context.yOffset;
-    g_state.widgetW = scrollHorizontal ? scrolledHorizontalPixels : width - SCROLL_AREA_PADDING * 4;
+    state.widgetY = yPos + height - AREA_HEADER + context.yOffset;
+    state.widgetW = scrollHorizontal ? scrolledHorizontalPixels : width - SCROLL_AREA_PADDING * 4;
 
     context.scrolledHorizontalPixels = scrolledHorizontalPixels;
 
-    context.scrolledContentTop = g_state.widgetY;
+    context.scrolledContentTop = state.widgetY;
 
-    g_focusTop = yPos - AREA_HEADER;
-    g_focusBottom = yPos - AREA_HEADER + height;
-
-    context.insideScrollArea = inRect(xPos, yPos, width, height, false);
-    g_state.insideCurrentScroll = context.insideScrollArea;
+    context.insideScrollArea = state.inRect(xPos, yPos, width, height, false);
+    state.insideCurrentScroll = context.insideScrollArea;
 
     addGfxCmdRoundedRect(cast(float) xPos, cast(float) yPos,
                          cast(float) width, cast(float) height, 6,
@@ -543,10 +392,10 @@ bool imguiBeginScrollArea(ref ScrollAreaContext context,
     return context.insideScrollArea;
 }
 
-void imguiRevealNextElement(ref ScrollAreaContext context, float percentage=0.5f)
+void revealNextElement(ref ScrollAreaContext context, float percentage=0.5f)
 {
     context.reveal.active = true;
-    context.reveal.yOffset = g_state.widgetY;
+    context.reveal.yOffset = state.widgetY;
     context.reveal.percentage = percentage;
 }
 
@@ -565,10 +414,10 @@ auto horizontalScrollbarRect(const ref Rect scrollbar)
                 SCROLL_BAR_HANDLE_SIZE);
 }
 
-auto imguiEndScrollAreaVerticalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
+auto endScrollAreaVerticalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
 {
-    auto scroller = context.verticalScrollbar.verticalScrollbarRect();
-    context.scrolledContentBottom = g_state.widgetY;
+    auto scroller = verticalScrollbarRect(context.verticalScrollbar);
+    context.scrolledContentBottom = state.widgetY;
     int scrolledPixels = context.getScrolledContentHeight();
 
     float percentageVisible = cast(float)scroller.h / cast(float) scrolledPixels;
@@ -584,27 +433,27 @@ auto imguiEndScrollAreaVerticalScroller(ref ScrollAreaContext context, const ref
 
         const int range = scroller.h - (nob.h - 1);
         uint hid = context.verticalScrollId;
-        buttonLogic(hid, nob.inside());
+        state.buttonLogic(hid, nob.inside(state));
 
-        if (hid.isActive())
+        if (state.isIdActive(hid))
         {
 
-            if (g_state.wentActive)
+            if (state.wentActive)
             {
                 float u = cast(float)(nob.y - scroller.y) / cast(float) range;
-                g_state.dragY = g_state.my;
-                g_state.dragOrigY = u;
+                state.dragY = state.my;
+                state.dragOrigY = u;
             }
 
-            if (g_state.dragY != g_state.my)
+            if (state.dragY != state.my)
             {
-                float u = g_state.dragOrigY + (g_state.my - g_state.dragY) / cast(float) range;
+                float u = state.dragOrigY + (state.my - state.dragY) / cast(float) range;
                 u.clamp(0, 1);
                 context.yOffset = cast(int)((1 - u) * (scrolledPixels - scroller.h));
             }
         }
 
-        auto color = hid.isActive ? colorScheme.scroll.bar.thumbPress : (hid.isHot ? colorScheme.scroll.bar.thumbHover : colorScheme.scroll.bar.thumb);
+        auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover : colorScheme.scroll.bar.thumb);
 
         // vertical Bar
         // BG
@@ -619,9 +468,9 @@ auto imguiEndScrollAreaVerticalScroller(ref ScrollAreaContext context, const ref
     return tuple!("pixels", "visible")(scrolledPixels, visible);
 }
 
-auto imguiEndScrollAreaHorizontalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
+auto endScrollAreaHorizontalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
 {
-    auto scroller = context.horizontalScrollbar.horizontalScrollbarRect();
+    auto scroller = horizontalScrollbarRect(context.horizontalScrollbar);
 
     float percentageVisible = (context.scrolledHorizontalPixels ? scroller.w / context.scrolledHorizontalPixels.to!float : 1.0f);
     bool visible = percentageVisible < 1;
@@ -638,27 +487,27 @@ auto imguiEndScrollAreaHorizontalScroller(ref ScrollAreaContext context, const r
 
         const int range = scroller.w - (nob.w - 1);
         uint hid = context.horizontalScrollId;
-        buttonLogic(hid, nob.inside());
+        state.buttonLogic(hid, nob.inside(state));
 
-        if (hid.isActive())
+        if (state.isIdActive(hid))
         {
 
-            if (g_state.wentActive)
+            if (state.wentActive)
             {
                 float u = cast(float)(nob.x - scroller.x) / cast(float) range;
-                g_state.dragX = g_state.mx;
-                g_state.dragOrigX = u;
+                state.dragX = state.mx;
+                state.dragOrigX = u;
             }
 
-            if (g_state.dragX != g_state.mx)
+            if (state.dragX != state.mx)
             {
-                float u = g_state.dragOrigX + (g_state.mx - g_state.dragX) / cast(float) range;
+                float u = state.dragOrigX + (state.mx - state.dragX) / cast(float) range;
                 u.clamp(0, 1);
                 context.xOffset = cast(int)(u * (context.scrolledHorizontalPixels - scroller.w));
             }
         }
 
-        auto color = hid.isActive ? colorScheme.scroll.bar.thumbPress : (hid.isHot ? colorScheme.scroll.bar.thumbHover : colorScheme.scroll.bar.thumb);
+        auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover : colorScheme.scroll.bar.thumb);
         // horizontal bar
         // background
         addGfxCmdRect(cast(float) context.scrollAreaRect.x, cast(float) context.scrollAreaRect.y+SCROLL_AREA_PADDING/2,
@@ -678,7 +527,7 @@ auto imguiEndScrollAreaHorizontalScroller(ref ScrollAreaContext context, const r
 
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiEndScrollArea(ref ScrollAreaContext context, const ref ColorScheme colorScheme = defaultColorScheme)
+void endScrollArea(ref ScrollAreaContext context, const ref ColorScheme colorScheme = defaultColorScheme)
 {
     // scrollbars are 2 scroll_area_paddings wide, with 0.5 before and after .. totalling 3 * scroll_area_paddings
     // on top is the header
@@ -686,32 +535,34 @@ void imguiEndScrollArea(ref ScrollAreaContext context, const ref ColorScheme col
     // Disable scissoring.
     addGfxCmdScissor(-1, -1, -1, -1);
 
-    auto vertical = imguiEndScrollAreaVerticalScroller(context, colorScheme);
-    auto horizontal = imguiEndScrollAreaHorizontalScroller(context, colorScheme);
+    auto vertical = endScrollAreaVerticalScroller(context, colorScheme);
+    auto horizontal = endScrollAreaHorizontalScroller(context, colorScheme);
 
     // Handle mouse scrolling.
     if (context.insideScrollArea) // && !anyActive())
     {
         if (vertical.visible)
         {
-            if (g_state.scrollInfo.dy)
+            if (state.scrollInfo.dy)
             {
-                context.yOffset += 20 * g_state.scrollInfo.dy;
+                context.yOffset += 20 * state.scrollInfo.dy;
                 context.yOffset.clamp(0, vertical.pixels - context.viewport.h);
             }
         }
         if (horizontal.visible)
         {
-            if (g_state.scrollInfo.dx)
+            if (state.scrollInfo.dx)
             {
-                context.xOffset += 20 * g_state.scrollInfo.dx;
+                context.xOffset += 20 * state.scrollInfo.dx;
                 context.xOffset.clamp(0, horizontal.pixels - context.viewport.w);
             }
         }
     }
 
-    g_state.insideCurrentScroll = false;
+    state.insideCurrentScroll = false;
 }
+
+
 
 /**
     Define a new button.
@@ -735,29 +586,29 @@ void imguiEndScrollArea(ref ScrollAreaContext context, const ref ColorScheme col
         onPress();
     -----
 */
-bool imguiButton(string label, Enabled enabled = Enabled.yes,
+bool button(string label, Enabled enabled = Enabled.yes,
         const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    g_state.widgetId++;
-    uint id = (g_state.areaId << 16) | g_state.widgetId;
+    state.widgetId++;
+    uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - BUTTON_HEIGHT;
-    int w = g_state.widgetW;
+    int x = state.widgetX;
+    int y = state.widgetY - BUTTON_HEIGHT;
+    int w = state.widgetW;
     int h = BUTTON_HEIGHT;
-    g_state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
 
-    bool over = enabled && inRect(x, y, w, h);
+    bool over = enabled && state.inRect(x, y, w, h);
     addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-            cast(float) h, 10, isActive(id) ? colorScheme.button.backPress
+            cast(float) h, 10, state.isIdActive(id) ? colorScheme.button.backPress
             : colorScheme.button.back);
 
-    auto color = enabled ? (isHot(id) ? colorScheme.button.textHover : colorScheme.button.text)
+    auto color = enabled ? (state.isIdHot(id) ? colorScheme.button.textHover : colorScheme.button.text)
         : colorScheme.button.textDisabled;
     addGfxCmdText(x + BUTTON_HEIGHT / 2,
             y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE, TextAlign.left, label, color);
 
-    return buttonLogic(id, over);
+    return state.buttonLogic(id, over);
 }
 
 /**
@@ -783,20 +634,20 @@ bool imguiButton(string label, Enabled enabled = Enabled.yes,
         writeln(checkState);  // check the current state
     -----
 */
-bool imguiCheck(const(char)[] label, bool* checkState, Enabled enabled = Enabled.yes,
+bool check(const(char)[] label, bool* checkState, Enabled enabled = Enabled.yes,
         const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    g_state.widgetId++;
-    uint id = (g_state.areaId << 16) | g_state.widgetId;
+    state.widgetId++;
+    uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - BUTTON_HEIGHT;
-    int w = g_state.widgetW;
+    int x = state.widgetX;
+    int y = state.widgetY - BUTTON_HEIGHT;
+    int w = state.widgetW;
     int h = BUTTON_HEIGHT;
-    g_state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
 
-    bool over = enabled && inRect(x, y, w, h);
-    bool res = buttonLogic(id, over);
+    bool over = enabled && state.inRect(x, y, w, h);
+    bool res = state.buttonLogic(id, over);
 
     if (res) // toggle the state
         *checkState ^= 1;
@@ -805,18 +656,18 @@ bool imguiCheck(const(char)[] label, bool* checkState, Enabled enabled = Enabled
     const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 
     addGfxCmdRoundedRect(cast(float) cx - 3, cast(float) cy - 3,
-            cast(float) CHECK_SIZE + 6, cast(float) CHECK_SIZE + 6, 4, isActive(id)
+            cast(float) CHECK_SIZE + 6, cast(float) CHECK_SIZE + 6, 4, state.isIdActive(id)
             ? colorScheme.checkbox.press : colorScheme.checkbox.back);
 
     if (*checkState)
     {
-        auto color = enabled ? (isActive(id) ? colorScheme.checkbox.checked
+        auto color = enabled ? (state.isIdActive(id) ? colorScheme.checkbox.checked
                 : colorScheme.checkbox.doUncheck) : colorScheme.checkbox.disabledChecked;
         addGfxCmdRoundedRect(cast(float) cx, cast(float) cy, cast(float) CHECK_SIZE,
                 cast(float) CHECK_SIZE, cast(float) CHECK_SIZE / 2 - 1, color);
     }
 
-    auto color = enabled ? (isHot(id) ? colorScheme.checkbox.textHover : colorScheme.checkbox.text)
+    auto color = enabled ? (state.isIdHot(id) ? colorScheme.checkbox.textHover : colorScheme.checkbox.text)
         : colorScheme.checkbox.textDisabled;
     addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
             TextAlign.left, label, color);
@@ -839,24 +690,24 @@ bool imguiCheck(const(char)[] label, bool* checkState, Enabled enabled = Enabled
     Note that pressing an item implies pressing and releasing the
     left mouse button while over the item.
 */
-bool imguiItem(const(char)[] label, Enabled enabled = Enabled.yes,
+bool item(const(char)[] label, Enabled enabled = Enabled.yes,
         const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    g_state.widgetId++;
-    uint id = (g_state.areaId << 16) | g_state.widgetId;
+    state.widgetId++;
+    uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - BUTTON_HEIGHT;
-    int w = g_state.widgetW;
+    int x = state.widgetX;
+    int y = state.widgetY - BUTTON_HEIGHT;
+    int w = state.widgetW;
     int h = BUTTON_HEIGHT;
-    g_state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
 
-    bool over = enabled && inRect(x, y, w, h);
-    bool res = buttonLogic(id, over);
+    bool over = enabled && state.inRect(x, y, w, h);
+    bool res = state.buttonLogic(id, over);
 
-    if (isHot(id))
+    if (state.isIdHot(id))
         addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-                cast(float) h, 10, isActive(id) ? colorScheme.item.press : colorScheme.item.hover);
+                cast(float) h, 10, state.isIdActive(id) ? colorScheme.item.press : colorScheme.item.hover);
 
     addGfxCmdText(x + BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
             TextAlign.left, label, enabled ? colorScheme.item.text : colorScheme.item.textDisabled);
@@ -881,33 +732,33 @@ bool imguiItem(const(char)[] label, Enabled enabled = Enabled.yes,
     Note that pressing a collapsable element implies pressing and releasing the
     left mouse button while over the collapsable element.
 */
-bool imguiCollapse(const(char)[] label, const(char)[] subtext, bool* checkState,
+bool collapse(const(char)[] label, const(char)[] subtext, bool* checkState,
         Enabled enabled = Enabled.yes, const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    g_state.widgetId++;
-    uint id = (g_state.areaId << 16) | g_state.widgetId;
+    state.widgetId++;
+    uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - BUTTON_HEIGHT;
-    int w = g_state.widgetW;
+    int x = state.widgetX;
+    int y = state.widgetY - BUTTON_HEIGHT;
+    int w = state.widgetW;
     int h = BUTTON_HEIGHT;
-    g_state.widgetY -= BUTTON_HEIGHT; // + DEFAULT_SPACING;
+    state.widgetY -= BUTTON_HEIGHT; // + DEFAULT_SPACING;
 
     const int cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
     const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 
-    bool over = enabled && inRect(x, y, w, h);
-    bool res = buttonLogic(id, over);
+    bool over = enabled && state.inRect(x, y, w, h);
+    bool res = state.buttonLogic(id, over);
 
     if (res) // toggle the state
         *checkState ^= 1;
 
-    auto triangleColor = (*checkState) ? (isActive(id)
-            ? colorScheme.collapse.doHide : colorScheme.collapse.shown) : isActive(id)
+    auto triangleColor = (*checkState) ? (state.isIdActive(id)
+            ? colorScheme.collapse.doHide : colorScheme.collapse.shown) : state.isIdActive(id)
         ? colorScheme.collapse.doShow : colorScheme.collapse.hidden;
     addGfxCmdTriangle(cx, cy, CHECK_SIZE, CHECK_SIZE, 2, triangleColor);
 
-    auto textColor = enabled ? (isHot(id) ? colorScheme.collapse.textHover
+    auto textColor = enabled ? (state.isIdHot(id) ? colorScheme.collapse.textHover
             : colorScheme.collapse.text) : colorScheme.collapse.textDisabled;
     addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
             TextAlign.left, label, textColor);
@@ -927,11 +778,11 @@ bool imguiCollapse(const(char)[] label, const(char)[] subtext, bool* checkState,
     label = The text that will be displayed as the label.
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiLabel(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
+void label(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - BUTTON_HEIGHT;
-    g_state.widgetY -= BUTTON_HEIGHT;
+    int x = state.widgetX;
+    int y = state.widgetY - BUTTON_HEIGHT;
+    state.widgetY -= BUTTON_HEIGHT;
     addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
             TextAlign.left, label, colorScheme.label.text);
 }
@@ -944,12 +795,12 @@ void imguiLabel(const(char)[] label, const ref ColorScheme colorScheme = default
     label = The text that will be displayed as the value.
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiValue(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
+void value(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    const int x = g_state.widgetX;
-    const int y = g_state.widgetY - BUTTON_HEIGHT;
-    const int w = g_state.widgetW;
-    g_state.widgetY -= BUTTON_HEIGHT;
+    const int x = state.widgetX;
+    const int y = state.widgetY - BUTTON_HEIGHT;
+    const int w = state.widgetW;
+    state.widgetY -= BUTTON_HEIGHT;
 
     addGfxCmdText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
             TextAlign.right, label, colorScheme.value.text);
@@ -974,18 +825,18 @@ void imguiValue(const(char)[] label, const ref ColorScheme colorScheme = default
     Note that pressing a slider implies pressing and releasing the
     left mouse button while over the slider.
 */
-bool imguiSlider(const(char)[] label, float* sliderState, float minValue,
+bool slider(const(char)[] label, float* sliderState, float minValue,
         float maxValue, float stepValue, Enabled enabled = Enabled.yes,
         const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    g_state.widgetId++;
-    uint id = (g_state.areaId << 16) | g_state.widgetId;
+    state.widgetId++;
+    uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - BUTTON_HEIGHT;
-    int w = g_state.widgetW;
+    int x = state.widgetX;
+    int y = state.widgetY - BUTTON_HEIGHT;
+    int w = state.widgetW;
     int h = SLIDER_HEIGHT;
-    g_state.widgetY -= SLIDER_HEIGHT + DEFAULT_SPACING;
+    state.widgetY -= SLIDER_HEIGHT + DEFAULT_SPACING;
 
     addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
             cast(float) h, 4.0f, colorScheme.slider.back);
@@ -997,21 +848,21 @@ bool imguiSlider(const(char)[] label, float* sliderState, float minValue,
 
     int m = cast(int)(u * range);
 
-    bool over = enabled && inRect(x + m, y, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
-    bool res = buttonLogic(id, over);
+    bool over = enabled && state.inRect(x + m, y, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
+    bool res = state.buttonLogic(id, over);
     bool valChanged = false;
 
-    if (isActive(id))
+    if (state.isIdActive(id))
     {
-        if (g_state.wentActive)
+        if (state.wentActive)
         {
-            g_state.dragX = g_state.mx;
-            g_state.dragOrigX = u;
+            state.dragX = state.mx;
+            state.dragOrigX = u;
         }
 
-        if (g_state.dragX != g_state.mx)
+        if (state.dragX != state.mx)
         {
-            u = g_state.dragOrigX + cast(float)(g_state.mx - g_state.dragX) / cast(float) range;
+            u = state.dragOrigX + cast(float)(state.mx - state.dragX) / cast(float) range;
             u.clamp(0, 1);
 
             *sliderState = minValue + u * (maxValue - minValue);
@@ -1021,7 +872,7 @@ bool imguiSlider(const(char)[] label, float* sliderState, float minValue,
         }
     }
 
-    auto color = isActive(id) ? colorScheme.slider.thumbPress : (isHot(id)
+    auto color = state.isIdActive(id) ? colorScheme.slider.thumbPress : (state.isIdHot(id)
             ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
     addGfxCmdRoundedRect(cast(float)(x + m), cast(float) y,
             cast(float) SLIDER_MARKER_WIDTH, cast(float) SLIDER_HEIGHT, 4.0f, color);
@@ -1034,9 +885,9 @@ bool imguiSlider(const(char)[] label, float* sliderState, float minValue,
     char[32] msgBuf;
     string msg = sformat(msgBuf, fmt, *sliderState).idup;
 
-    auto sliderTextColor = enabled ? (isHot(id) ? colorScheme.slider.textHover
+    auto sliderTextColor = enabled ? (state.isIdHot(id) ? colorScheme.slider.textHover
             : colorScheme.slider.text) : colorScheme.slider.textDisabled;
-    auto sliderValueColor = enabled ? (isHot(id)
+    auto sliderValueColor = enabled ? (state.isIdHot(id)
             ? colorScheme.slider.valueHover : colorScheme.slider.value)
         : colorScheme.slider.valueDisabled;
     addGfxCmdText(x + SLIDER_HEIGHT / 2, y + SLIDER_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
@@ -1120,40 +971,40 @@ bool imguiSlider(const(char)[] label, float* sliderState, float minValue,
  * }
  * --------------------
  */
-bool imguiTextInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
+bool textInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
         bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
 {
     assert(buffer.ptr == usedSlice.ptr && buffer.length >= usedSlice.length,
             "The usedSlice parameter on imguiTextInput must be a slice to the buffer " ~ "parameter");
 
     // Label
-    g_state.widgetId++;
-    uint id = (g_state.areaId << 16) | g_state.widgetId;
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - BUTTON_HEIGHT;
+    state.widgetId++;
+    uint id = (state.areaId << 16) | state.widgetId;
+    int x = state.widgetX;
+    int y = state.widgetY - BUTTON_HEIGHT;
     addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
             TextAlign.left, label, colorScheme.textInput.label);
 
     bool res = false;
     // Handle control input if any (Backspace to erase characters, Enter to confirm).
     // Backspace
-    if (isInputable(id) && g_state.unicode == 0x08
-            && g_state.unicode != g_state.lastUnicode && !usedSlice.empty)
+    if (state.isIdInputable(id) && state.unicode == 0x08
+            && state.unicode != state.lastUnicode && !usedSlice.empty)
     {
         usedSlice = usedSlice[0 .. $ - 1];
     }
     // Pressing Enter "confirms" the input.
-    else if (isInputable(id) && g_state.unicode == 0x0D && g_state.unicode != g_state.lastUnicode)
+    else if (state.isIdInputable(id) && state.unicode == 0x0D && state.unicode != state.lastUnicode)
     {
-        g_state.inputable = 0;
+        state.inputable = 0;
         res = true;
     }
-    else if (isInputable(id) && g_state.unicode != 0 && g_state.unicode != g_state.lastUnicode)
+    else if (state.isIdInputable(id) && state.unicode != 0 && state.unicode != state.lastUnicode)
     {
         import std.utf;
 
         char[4] codePoints;
-        const codePointCount = std.utf.encode(codePoints, g_state.unicode);
+        const codePointCount = std.utf.encode(codePoints, state.unicode);
         // Only add the character into the buffer if we can fit it there.
         if (buffer.length - usedSlice.length >= codePointCount)
         {
@@ -1163,41 +1014,41 @@ bool imguiTextInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
     }
 
     // Draw buffer data
-    uint labelLen = cast(uint)(imgui.engine.getTextLength(label) + 0.5f);
+    uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
     x += labelLen;
-    int w = g_state.widgetW - labelLen - DEFAULT_SPACING * 2;
+    int w = state.widgetW - labelLen - DEFAULT_SPACING * 2;
     int h = BUTTON_HEIGHT;
-    bool over = inRect(x, y, w, h);
-    textInputLogic(id, over, forceInputable);
+    bool over = state.inRect(x, y, w, h);
+    state.textInputLogic(id, over, forceInputable);
     addGfxCmdRoundedRect(cast(float)(x + DEFAULT_SPACING), cast(float) y,
-            cast(float) w, cast(float) h, 10, isInputable(id)
+            cast(float) w, cast(float) h, 10, state.isIdInputable(id)
             ? colorScheme.textInput.back : colorScheme.textInput.backDisabled);
     addGfxCmdText(x + DEFAULT_SPACING * 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, usedSlice, isInputable(id)
+            TextAlign.left, usedSlice, state.isIdInputable(id)
             ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
 
-    g_state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
     return res;
 }
 
 /** Add horizontal indentation for elements to be added. */
-void imguiIndent()
+void indent()
 {
-    g_state.widgetX += INDENT_SIZE;
-    g_state.widgetW -= INDENT_SIZE;
+    state.widgetX += INDENT_SIZE;
+    state.widgetW -= INDENT_SIZE;
 }
 
 /** Remove horizontal indentation for elements to be added. */
-void imguiUnindent()
+void unindent()
 {
-    g_state.widgetX -= INDENT_SIZE;
-    g_state.widgetW += INDENT_SIZE;
+    state.widgetX -= INDENT_SIZE;
+    state.widgetW += INDENT_SIZE;
 }
 
 /** Add vertical space as a separator below the last element. */
-void imguiSeparator()
+void separator()
 {
-    g_state.widgetY -= DEFAULT_SPACING * 3;
+    state.widgetY -= DEFAULT_SPACING * 3;
 }
 
 /**
@@ -1206,13 +1057,13 @@ void imguiSeparator()
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiSeparatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
+void separatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
 {
-    int x = g_state.widgetX;
-    int y = g_state.widgetY - DEFAULT_SPACING * 2;
-    int w = g_state.widgetW;
+    int x = state.widgetX;
+    int y = state.widgetY - DEFAULT_SPACING * 2;
+    int w = state.widgetW;
     int h = 1;
-    g_state.widgetY -= DEFAULT_SPACING * 4;
+    state.widgetY -= DEFAULT_SPACING * 4;
 
     addGfxCmdRect(cast(float) x, cast(float) y, cast(float) w, cast(float) h,
             colorScheme.separator);
@@ -1224,7 +1075,7 @@ void imguiSeparatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
     Params:
     color = Optionally override the current default text color when creating this element.
 */
-void imguiDrawText(int xPos, int yPos, TextAlign textAlign, const(char)[] text,
+void drawText(int xPos, int yPos, TextAlign textAlign, const(char)[] text,
         RGBA color = defaultColorScheme.generic.text)
 {
     addGfxCmdText(xPos, yPos, textAlign, text, color);
@@ -1236,7 +1087,7 @@ void imguiDrawText(int xPos, int yPos, TextAlign textAlign, const(char)[] text,
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiDrawLine(float x0, float y0, float x1, float y1, float r,
+void drawLine(float x0, float y0, float x1, float y1, float r,
         RGBA color = defaultColorScheme.generic.line)
 {
     addGfxCmdLine(x0, y0, x1, y1, r, color);
@@ -1248,7 +1099,7 @@ void imguiDrawLine(float x0, float y0, float x1, float y1, float r,
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiDrawRect(float xPos, float yPos, float width, float height,
+void drawRect(float xPos, float yPos, float width, float height,
         RGBA color = defaultColorScheme.generic.rect)
 {
     addGfxCmdRect(xPos, yPos, width, height, color);
@@ -1260,8 +1111,34 @@ void imguiDrawRect(float xPos, float yPos, float width, float height,
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void imguiDrawRoundedRect(float xPos, float yPos, float width, float height,
+void drawRoundedRect(float xPos, float yPos, float width, float height,
         float r, RGBA color = defaultColorScheme.generic.roundRect)
 {
     addGfxCmdRoundedRect(xPos, yPos, width, height, r, color);
 }
+/** End the list of batched commands for the current frame. */
+void endFrame()
+{
+    state.clearInput();
+}
+
+/** Render all of the batched commands for the current frame. */
+void render(int width, int height)
+{
+    renderGLDraw(gfxCmdQueue.ptr, gfxCmdQueueSize, width, height);
+}
+
+}
+
+void clamp(T)(ref T value, const T minValue, const T maxValue)
+{
+    if (value < minValue)
+    {
+        value = minValue;
+    }
+    else if (value > maxValue)
+    {
+        value =  maxValue;
+    }
+}
+
