@@ -94,7 +94,7 @@ struct GUI
 
         int xCursor = 10; // xpos to place new scrollareas to
         imguiBeginScrollArea("Scroll area 1", xCursor, 10, scrollAreaWidth,
-                             scrollAreaHeight, &scrollArea1);
+                scrollAreaHeight, &scrollArea1);
         xCursor += scrollAreaWidth;
         imguiSeparatorLine();
         imguiSeparator();
@@ -159,8 +159,8 @@ struct GUI
         imguiEndScrollArea();
 
         xCursor += 10;
-        imguiBeginScrollArea("Scroll area 2", xCursor, 10,
-                scrollAreaWidth, scrollAreaHeight, &scrollArea2);
+        imguiBeginScrollArea("Scroll area 2", xCursor, 10, scrollAreaWidth,
+                scrollAreaHeight, &scrollArea2);
         xCursor += scrollAreaWidth;
         imguiSeparatorLine();
         imguiSeparator();
@@ -173,17 +173,17 @@ struct GUI
         imguiEndScrollArea();
 
         xCursor += 10;
-        imguiBeginScrollArea("Scroll area 3", xCursor, 10,
-                scrollAreaWidth, scrollAreaHeight, &scrollArea3);
+        imguiBeginScrollArea("Scroll area 3", xCursor, 10, scrollAreaWidth,
+                scrollAreaHeight, &scrollArea3);
         xCursor += scrollAreaWidth;
         imguiLabel(lastInfo);
         imguiEndScrollArea();
 
         xCursor += 10;
-        imguiBeginScrollArea("Scroll area 4", xCursor, 10, scrollAreaWidth, scrollAreaHeight, &scrollArea4,
-                             true, 2000);
+        imguiBeginScrollArea("Scroll area 4", xCursor, 10, scrollAreaWidth,
+                scrollAreaHeight, &scrollArea4, true, 2000);
         xCursor += scrollAreaWidth;
-        for (int i=0; i<100; ++i)
+        for (int i = 0; i < 100; ++i)
         {
             imguiLabel("long text abcdefghijklmnopqrstuvwxyz %d".format(i));
         }
@@ -257,7 +257,7 @@ struct GUI
     void onScroll(double hOffset, double vOffset)
     {
         mouseScroll.dy -= cast(int) vOffset;
-        mouseScroll.dx -= cast(int)hOffset;
+        mouseScroll.dx -= cast(int) hOffset;
     }
 
     extern (C) static void getUnicode(GLFWwindow* w, uint unicode) nothrow

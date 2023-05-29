@@ -79,18 +79,16 @@ struct ScrollInfo
     }
 }
 
-struct Rect {
+struct Rect
+{
     int x;
     int y;
     int w;
     int h;
     bool inside(ref GuiState state, bool checkScroll = true)
     {
-             return (!checkScroll || state.insideCurrentScroll)
-            && state.mx >= x
-            && state.mx <= x+w
-            && state.my >= y
-            && state.my <= y+h;
+        return (!checkScroll || state.insideCurrentScroll) && state.mx >= x
+            && state.mx <= x + w && state.my >= y && state.my <= y + h;
     }
 
 }
@@ -119,6 +117,7 @@ struct ScrollAreaContext
     {
         return scrolledContentTop - scrolledContentBottom;
     }
+
     bool insideScrollArea;
     // info for next frame
     struct RevealInfo
@@ -127,15 +126,17 @@ struct ScrollAreaContext
         int yOffset;
         float percentage;
     }
+
     RevealInfo reveal;
 }
 
-class ImGui {
+class ImGui
+{
     GuiState state;
-    
+
     GfxCmd[GFXCMD_QUEUE_SIZE] gfxCmdQueue;
     uint gfxCmdQueueSize = 0;
-    
+
     /++ Initialize the imgui library.
      Params:
      
@@ -153,8 +154,8 @@ class ImGui {
     {
         return imguiRenderGLInit(fontPath, fontTextureSize);
     }
-    
-/**
+
+    /**
    TODO
        Begin a new frame. All batched commands after the call to
        $(D imguiBeginFrame) will be rendered as a single frame once
@@ -194,16 +195,14 @@ class ImGui {
                   which may not be automatically handled by your input library's text
                   input functionality (e.g. GLFW's getUnicode() does not do this).
     */
-void beginFrame(int cursorX, int cursorY,
-                    ubyte mouseButtons,
-                    ScrollInfo scrollAreaContext,
-                    dchar unicodeChar = 0)
+    void beginFrame(int cursorX, int cursorY, ubyte mouseButtons,
+            ScrollInfo scrollAreaContext, dchar unicodeChar = 0)
     {
         state.updateInput(cursorX, cursorY, mouseButtons, scrollAreaContext, unicodeChar);
-        
+
         state.hot = state.hotToBe;
         state.hotToBe = 0;
-        
+
         state.wentActive = false;
         state.isActive = false;
         state.isHot = false;
@@ -214,106 +213,106 @@ void beginFrame(int cursorX, int cursorY,
 
         state.areaId = 1;
         state.widgetId = 1;
-        
+
         resetGfxCmdQueue();
     }
 
-void resetGfxCmdQueue()
-{
-    gfxCmdQueueSize = 0;
-}
+    void resetGfxCmdQueue()
+    {
+        gfxCmdQueueSize = 0;
+    }
 
-public void addGfxCmdScissor(ref Rect r)
-{
-    addGfxCmdScissor(r.x, r.y, r.w, r.h);
-}
+    public void addGfxCmdScissor(ref Rect r)
+    {
+        addGfxCmdScissor(r.x, r.y, r.w, r.h);
+    }
 
-public void addGfxCmdScissor(int x, int y, int w, int h)
-{
-    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_SCISSOR;
-    cmd.flags = x < 0 ? 0 : 1; // on/off flag.
-    cmd.color = 0;
-    cmd.rect.x = cast(short) x;
-    cmd.rect.y = cast(short) y;
-    cmd.rect.w = cast(short) w;
-    cmd.rect.h = cast(short) h;
-}
+    public void addGfxCmdScissor(int x, int y, int w, int h)
+    {
+        if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+            return;
+        auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+        cmd.type = IMGUI_GFXCMD_SCISSOR;
+        cmd.flags = x < 0 ? 0 : 1; // on/off flag.
+        cmd.color = 0;
+        cmd.rect.x = cast(short) x;
+        cmd.rect.y = cast(short) y;
+        cmd.rect.w = cast(short) w;
+        cmd.rect.h = cast(short) h;
+    }
 
-public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
-{
-    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_RECT;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.rect.x = cast(short)(x * 8.0f);
-    cmd.rect.y = cast(short)(y * 8.0f);
-    cmd.rect.w = cast(short)(w * 8.0f);
-    cmd.rect.h = cast(short)(h * 8.0f);
-    cmd.rect.r = 0;
-}
+    public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
+    {
+        if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+            return;
+        auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+        cmd.type = IMGUI_GFXCMD_RECT;
+        cmd.flags = 0;
+        cmd.color = color.toPackedRGBA();
+        cmd.rect.x = cast(short)(x * 8.0f);
+        cmd.rect.y = cast(short)(y * 8.0f);
+        cmd.rect.w = cast(short)(w * 8.0f);
+        cmd.rect.h = cast(short)(h * 8.0f);
+        cmd.rect.r = 0;
+    }
 
-public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA color)
-{
-    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_LINE;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.line.x0 = cast(short)(x0 * 8.0f);
-    cmd.line.y0 = cast(short)(y0 * 8.0f);
-    cmd.line.x1 = cast(short)(x1 * 8.0f);
-    cmd.line.y1 = cast(short)(y1 * 8.0f);
-    cmd.line.r = cast(short)(r * 8.0f);
-}
+    public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA color)
+    {
+        if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+            return;
+        auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+        cmd.type = IMGUI_GFXCMD_LINE;
+        cmd.flags = 0;
+        cmd.color = color.toPackedRGBA();
+        cmd.line.x0 = cast(short)(x0 * 8.0f);
+        cmd.line.y0 = cast(short)(y0 * 8.0f);
+        cmd.line.x1 = cast(short)(x1 * 8.0f);
+        cmd.line.y1 = cast(short)(y1 * 8.0f);
+        cmd.line.r = cast(short)(r * 8.0f);
+    }
 
-public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RGBA color)
-{
-    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_RECT;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.rect.x = cast(short)(x * 8.0f);
-    cmd.rect.y = cast(short)(y * 8.0f);
-    cmd.rect.w = cast(short)(w * 8.0f);
-    cmd.rect.h = cast(short)(h * 8.0f);
-    cmd.rect.r = cast(short)(r * 8.0f);
-}
+    public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RGBA color)
+    {
+        if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+            return;
+        auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+        cmd.type = IMGUI_GFXCMD_RECT;
+        cmd.flags = 0;
+        cmd.color = color.toPackedRGBA();
+        cmd.rect.x = cast(short)(x * 8.0f);
+        cmd.rect.y = cast(short)(y * 8.0f);
+        cmd.rect.w = cast(short)(w * 8.0f);
+        cmd.rect.h = cast(short)(h * 8.0f);
+        cmd.rect.r = cast(short)(r * 8.0f);
+    }
 
-public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
-{
-    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_TRIANGLE;
-    cmd.flags = cast(byte) flags;
-    cmd.color = color.toPackedRGBA();
-    cmd.rect.x = cast(short)(x * 8.0f);
-    cmd.rect.y = cast(short)(y * 8.0f);
-    cmd.rect.w = cast(short)(w * 8.0f);
-    cmd.rect.h = cast(short)(h * 8.0f);
-}
+    public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
+    {
+        if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+            return;
+        auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+        cmd.type = IMGUI_GFXCMD_TRIANGLE;
+        cmd.flags = cast(byte) flags;
+        cmd.color = color.toPackedRGBA();
+        cmd.rect.x = cast(short)(x * 8.0f);
+        cmd.rect.y = cast(short)(y * 8.0f);
+        cmd.rect.w = cast(short)(w * 8.0f);
+        cmd.rect.h = cast(short)(h * 8.0f);
+    }
 
-public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
-{
-    if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
-        return;
-    auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
-    cmd.type = IMGUI_GFXCMD_TEXT;
-    cmd.flags = 0;
-    cmd.color = color.toPackedRGBA();
-    cmd.text.x = cast(short) x;
-    cmd.text.y = cast(short) y;
-    cmd.text.align_ = cast(short) align_;
-    cmd.text.text = text;
-}
+    public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
+    {
+        if (gfxCmdQueueSize >= GFXCMD_QUEUE_SIZE)
+            return;
+        auto cmd = &gfxCmdQueue[gfxCmdQueueSize++];
+        cmd.type = IMGUI_GFXCMD_TEXT;
+        cmd.flags = 0;
+        cmd.color = color.toPackedRGBA();
+        cmd.text.x = cast(short) x;
+        cmd.text.y = cast(short) y;
+        cmd.text.align_ = cast(short) align_;
+        cmd.text.text = text;
+    }
 
     /**
     Begin the definition of a new scrollable area.
@@ -335,236 +334,232 @@ public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA col
 
     $(D true) if the mouse was located inside the scrollable area.
 */
-bool beginScrollArea(ref ScrollAreaContext context,
-                          const(char)[] title,
-                          int xPos, int yPos,
-                          int width, int height,
-                          bool scrollHorizontal=false, int scrolledHorizontalPixels=2000,
-                          const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    state.areaId++;
-    state.widgetId = 0;
-    context.verticalScrollId = (state.areaId << 16) | 0;
-    context.horizontalScrollId = (state.areaId << 16) | 1;
-
-    context.scrollAreaRect = Rect(xPos, yPos, width, height);
-    context.viewport = Rect(xPos + SCROLL_AREA_PADDING,
-                                 yPos + SCROLL_BAR_SIZE,
-                                 max(1, width - SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
-                                 max(1, height - AREA_HEADER - SCROLL_BAR_SIZE));     // avoiding a segfault.
-
-
-    state.widgetX = xPos + SCROLL_AREA_PADDING - context.xOffset;
-
-    context.verticalScrollbar = Rect(xPos + width - SCROLL_BAR_SIZE,
-                                     yPos + SCROLL_BAR_SIZE,
-                                     SCROLL_BAR_SIZE,
-                                     height - AREA_HEADER-SCROLL_BAR_SIZE);
-    context.horizontalScrollbar = Rect(context.scrollAreaRect.x, context.scrollAreaRect.y,
-                                       context.scrollAreaRect.w - SCROLL_BAR_SIZE, SCROLL_BAR_SIZE);
-    if (context.reveal.active)
+    bool beginScrollArea(ref ScrollAreaContext context, const(char)[] title, int xPos, int yPos,
+            int width, int height, bool scrollHorizontal = false, int scrolledHorizontalPixels = 2000,
+            const ref ColorScheme colorScheme = defaultColorScheme)
     {
-        context.yOffset = cast(int)(
-          height - SCROLL_BAR_SIZE - context.reveal.yOffset + context.yOffset - context.viewport.h*context.reveal.percentage
-        );
-        context.yOffset.clamp(0, context.getScrolledContentHeight() - context.viewport.h);
-        context.reveal.active = false;
-    }
+        state.areaId++;
+        state.widgetId = 0;
+        context.verticalScrollId = (state.areaId << 16) | 0;
+        context.horizontalScrollId = (state.areaId << 16) | 1;
 
-    state.widgetY = yPos + height - AREA_HEADER + context.yOffset;
-    state.widgetW = scrollHorizontal ? scrolledHorizontalPixels : width - SCROLL_AREA_PADDING * 4;
+        context.scrollAreaRect = Rect(xPos, yPos, width, height);
+        context.viewport = Rect(xPos + SCROLL_AREA_PADDING, yPos + SCROLL_BAR_SIZE,
+                max(1, width - SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
+                max(1,
+                    height - AREA_HEADER - SCROLL_BAR_SIZE)); // avoiding a segfault.
 
-    context.scrolledHorizontalPixels = scrolledHorizontalPixels;
+        state.widgetX = xPos + SCROLL_AREA_PADDING - context.xOffset;
 
-    context.scrolledContentTop = state.widgetY;
-
-    context.insideScrollArea = state.inRect(xPos, yPos, width, height, false);
-    state.insideCurrentScroll = context.insideScrollArea;
-
-    addGfxCmdRoundedRect(cast(float) xPos, cast(float) yPos,
-                         cast(float) width, cast(float) height, 6,
-                         colorScheme.scroll.area.back);
-
-    addGfxCmdText(xPos + AREA_HEADER / 2, yPos + height - AREA_HEADER / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-                  TextAlign.left, title, colorScheme.scroll.area.text);
-
-    addGfxCmdScissor(context.viewport);
-    return context.insideScrollArea;
-}
-
-void revealNextElement(ref ScrollAreaContext context, float percentage=0.5f)
-{
-    context.reveal.active = true;
-    context.reveal.yOffset = state.widgetY;
-    context.reveal.percentage = percentage;
-}
-
-auto verticalScrollbarRect(const ref Rect scrollbar)
-{
-    return Rect(scrollbar.x + SCROLL_AREA_PADDING/2,
-                scrollbar.y,
-                SCROLL_BAR_HANDLE_SIZE,
-                scrollbar.h);
-}
-auto horizontalScrollbarRect(const ref Rect scrollbar)
-{
-    return Rect(scrollbar.x,
-                scrollbar.y + SCROLL_AREA_PADDING/2,
-                scrollbar.w,
-                SCROLL_BAR_HANDLE_SIZE);
-}
-
-auto endScrollAreaVerticalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
-{
-    auto scroller = verticalScrollbarRect(context.verticalScrollbar);
-    context.scrolledContentBottom = state.widgetY;
-    int scrolledPixels = context.getScrolledContentHeight();
-
-    float percentageVisible = cast(float)scroller.h / cast(float) scrolledPixels;
-    bool visible = percentageVisible < 1;
-    if (visible)
-    {
-        float percentageOfStart = cast(float)(scroller.y - context.scrolledContentBottom) / cast(float) scrolledPixels;
-        percentageOfStart.clamp(0, 1);
-
-        // Handle scroll bar logic.
-        auto nob = Rect(scroller.x, scroller.y+cast(int)(percentageOfStart * scroller.h),
-                        scroller.w, cast(int)(percentageVisible*scroller.h));
-
-        const int range = scroller.h - (nob.h - 1);
-        uint hid = context.verticalScrollId;
-        state.buttonLogic(hid, nob.inside(state));
-
-        if (state.isIdActive(hid))
+        context.verticalScrollbar = Rect(xPos + width - SCROLL_BAR_SIZE,
+                yPos + SCROLL_BAR_SIZE, SCROLL_BAR_SIZE, height - AREA_HEADER - SCROLL_BAR_SIZE);
+        context.horizontalScrollbar = Rect(context.scrollAreaRect.x, context.scrollAreaRect.y,
+                context.scrollAreaRect.w - SCROLL_BAR_SIZE, SCROLL_BAR_SIZE);
+        if (context.reveal.active)
         {
-
-            if (state.wentActive)
-            {
-                float u = cast(float)(nob.y - scroller.y) / cast(float) range;
-                state.dragY = state.my;
-                state.dragOrigY = u;
-            }
-
-            if (state.dragY != state.my)
-            {
-                float u = state.dragOrigY + (state.my - state.dragY) / cast(float) range;
-                u.clamp(0, 1);
-                context.yOffset = cast(int)((1 - u) * (scrolledPixels - scroller.h));
-            }
+            context.yOffset = cast(int)(
+                    height - SCROLL_BAR_SIZE - context.reveal.yOffset + context.yOffset
+                    - context.viewport.h * context.reveal.percentage);
+            context.yOffset.clamp(0, context.getScrolledContentHeight() - context.viewport.h);
+            context.reveal.active = false;
         }
 
-        auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover : colorScheme.scroll.bar.thumb);
+        state.widgetY = yPos + height - AREA_HEADER + context.yOffset;
+        state.widgetW = scrollHorizontal ? scrolledHorizontalPixels : width - SCROLL_AREA_PADDING
+            * 4;
 
-        // vertical Bar
-        // BG
-        addGfxCmdRect(cast(float) scroller.x, cast(float) scroller.y,
-                      cast(float) scroller.w, cast(float) scroller.h,
-                      colorScheme.scroll.bar.back);
+        context.scrolledHorizontalPixels = scrolledHorizontalPixels;
 
-        addGfxCmdRect(cast(float) nob.x, cast(float) nob.y,
-                      cast(float) nob.w, cast(float) nob.h,
-                      color);
+        context.scrolledContentTop = state.widgetY;
+
+        context.insideScrollArea = state.inRect(xPos, yPos, width, height, false);
+        state.insideCurrentScroll = context.insideScrollArea;
+
+        addGfxCmdRoundedRect(cast(float) xPos, cast(float) yPos,
+                cast(float) width, cast(float) height, 6, colorScheme.scroll.area.back);
+
+        addGfxCmdText(xPos + AREA_HEADER / 2, yPos + height - AREA_HEADER / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, title, colorScheme.scroll.area.text);
+
+        addGfxCmdScissor(context.viewport);
+        return context.insideScrollArea;
     }
-    return tuple!("pixels", "visible")(scrolledPixels, visible);
-}
 
-auto endScrollAreaHorizontalScroller(ref ScrollAreaContext context, const ref ColorScheme colorScheme)
-{
-    auto scroller = horizontalScrollbarRect(context.horizontalScrollbar);
-
-    float percentageVisible = (context.scrolledHorizontalPixels ? scroller.w / context.scrolledHorizontalPixels.to!float : 1.0f);
-    bool visible = percentageVisible < 1;
-    if (visible)
+    void revealNextElement(ref ScrollAreaContext context, float percentage = 0.5f)
     {
-        float percentageOfStart = (context.scrolledHorizontalPixels ? context.xOffset / context.scrolledHorizontalPixels.to!float: 0.0f);
-        percentageOfStart.clamp(0, 1);
-
-
-        // Handle scroll bar logic.
-        auto visibleStart = percentageOfStart * (context.scrollAreaRect.w-SCROLL_BAR_SIZE);
-        auto visibleWidth = percentageVisible * (context.scrollAreaRect.w-SCROLL_BAR_SIZE);
-        auto nob = Rect(cast(int)(scroller.x+visibleStart), scroller.y, cast(int)visibleWidth, scroller.h);
-
-        const int range = scroller.w - (nob.w - 1);
-        uint hid = context.horizontalScrollId;
-        state.buttonLogic(hid, nob.inside(state));
-
-        if (state.isIdActive(hid))
-        {
-
-            if (state.wentActive)
-            {
-                float u = cast(float)(nob.x - scroller.x) / cast(float) range;
-                state.dragX = state.mx;
-                state.dragOrigX = u;
-            }
-
-            if (state.dragX != state.mx)
-            {
-                float u = state.dragOrigX + (state.mx - state.dragX) / cast(float) range;
-                u.clamp(0, 1);
-                context.xOffset = cast(int)(u * (context.scrolledHorizontalPixels - scroller.w));
-            }
-        }
-
-        auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover : colorScheme.scroll.bar.thumb);
-        // horizontal bar
-        // background
-        addGfxCmdRect(cast(float) context.scrollAreaRect.x, cast(float) context.scrollAreaRect.y+SCROLL_AREA_PADDING/2,
-                      cast(float) context.scrollAreaRect.w-SCROLL_BAR_SIZE, cast(float) SCROLL_BAR_HANDLE_SIZE,
-                      colorScheme.scroll.bar.back);
-
-        addGfxCmdRect(cast(float) nob.x, cast(float) nob.y,
-                      cast(float) nob.w, nob.h,
-                      color);
+        context.reveal.active = true;
+        context.reveal.yOffset = state.widgetY;
+        context.reveal.percentage = percentage;
     }
-    return tuple!("pixels", "visible")(context.scrolledHorizontalPixels, visible);
-}
-/**
+
+    auto verticalScrollbarRect(const ref Rect scrollbar)
+    {
+        return Rect(scrollbar.x + SCROLL_AREA_PADDING / 2, scrollbar.y,
+                SCROLL_BAR_HANDLE_SIZE, scrollbar.h);
+    }
+
+    auto horizontalScrollbarRect(const ref Rect scrollbar)
+    {
+        return Rect(scrollbar.x, scrollbar.y + SCROLL_AREA_PADDING / 2,
+                scrollbar.w, SCROLL_BAR_HANDLE_SIZE);
+    }
+
+    auto endScrollAreaVerticalScroller(ref ScrollAreaContext context,
+            const ref ColorScheme colorScheme)
+    {
+        auto scroller = verticalScrollbarRect(context.verticalScrollbar);
+        context.scrolledContentBottom = state.widgetY;
+        int scrolledPixels = context.getScrolledContentHeight();
+
+        float percentageVisible = cast(float) scroller.h / cast(float) scrolledPixels;
+        bool visible = percentageVisible < 1;
+        if (visible)
+        {
+            float percentageOfStart = cast(float)(scroller.y - context.scrolledContentBottom) / cast(
+                    float) scrolledPixels;
+            percentageOfStart.clamp(0, 1);
+
+            // Handle scroll bar logic.
+            auto nob = Rect(scroller.x, scroller.y + cast(int)(percentageOfStart * scroller.h),
+                    scroller.w, cast(int)(percentageVisible * scroller.h));
+
+            const int range = scroller.h - (nob.h - 1);
+            uint hid = context.verticalScrollId;
+            state.buttonLogic(hid, nob.inside(state));
+
+            if (state.isIdActive(hid))
+            {
+
+                if (state.wentActive)
+                {
+                    float u = cast(float)(nob.y - scroller.y) / cast(float) range;
+                    state.dragY = state.my;
+                    state.dragOrigY = u;
+                }
+
+                if (state.dragY != state.my)
+                {
+                    float u = state.dragOrigY + (state.my - state.dragY) / cast(float) range;
+                    u.clamp(0, 1);
+                    context.yOffset = cast(int)((1 - u) * (scrolledPixels - scroller.h));
+                }
+            }
+
+            auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress
+                : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover
+                        : colorScheme.scroll.bar.thumb);
+
+            // vertical Bar
+            // BG
+            addGfxCmdRect(cast(float) scroller.x, cast(float) scroller.y,
+                    cast(float) scroller.w, cast(float) scroller.h, colorScheme.scroll.bar.back);
+
+            addGfxCmdRect(cast(float) nob.x, cast(float) nob.y,
+                    cast(float) nob.w, cast(float) nob.h, color);
+        }
+        return tuple!("pixels", "visible")(scrolledPixels, visible);
+    }
+
+    auto endScrollAreaHorizontalScroller(ref ScrollAreaContext context,
+            const ref ColorScheme colorScheme)
+    {
+        auto scroller = horizontalScrollbarRect(context.horizontalScrollbar);
+
+        float percentageVisible = (context.scrolledHorizontalPixels
+                ? scroller.w / context.scrolledHorizontalPixels.to!float : 1.0f);
+        bool visible = percentageVisible < 1;
+        if (visible)
+        {
+            float percentageOfStart = (context.scrolledHorizontalPixels
+                    ? context.xOffset / context.scrolledHorizontalPixels.to!float : 0.0f);
+            percentageOfStart.clamp(0, 1);
+
+            // Handle scroll bar logic.
+            auto visibleStart = percentageOfStart * (context.scrollAreaRect.w - SCROLL_BAR_SIZE);
+            auto visibleWidth = percentageVisible * (context.scrollAreaRect.w - SCROLL_BAR_SIZE);
+            auto nob = Rect(cast(int)(scroller.x + visibleStart), scroller.y,
+                    cast(int) visibleWidth, scroller.h);
+
+            const int range = scroller.w - (nob.w - 1);
+            uint hid = context.horizontalScrollId;
+            state.buttonLogic(hid, nob.inside(state));
+
+            if (state.isIdActive(hid))
+            {
+
+                if (state.wentActive)
+                {
+                    float u = cast(float)(nob.x - scroller.x) / cast(float) range;
+                    state.dragX = state.mx;
+                    state.dragOrigX = u;
+                }
+
+                if (state.dragX != state.mx)
+                {
+                    float u = state.dragOrigX + (state.mx - state.dragX) / cast(float) range;
+                    u.clamp(0, 1);
+                    context.xOffset = cast(int)(u * (context.scrolledHorizontalPixels - scroller.w));
+                }
+            }
+
+            auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress
+                : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover
+                        : colorScheme.scroll.bar.thumb);
+            // horizontal bar
+            // background
+            addGfxCmdRect(cast(float) context.scrollAreaRect.x,
+                    cast(float) context.scrollAreaRect.y + SCROLL_AREA_PADDING / 2,
+                    cast(float) context.scrollAreaRect.w - SCROLL_BAR_SIZE,
+                    cast(float) SCROLL_BAR_HANDLE_SIZE, colorScheme.scroll.bar.back);
+
+            addGfxCmdRect(cast(float) nob.x, cast(float) nob.y, cast(float) nob.w, nob.h, color);
+        }
+        return tuple!("pixels", "visible")(context.scrolledHorizontalPixels, visible);
+    }
+    /**
     End the definition of the last scrollable element.
 
     Params:
 
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void endScrollArea(ref ScrollAreaContext context, const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    // scrollbars are 2 scroll_area_paddings wide, with 0.5 before and after .. totalling 3 * scroll_area_paddings
-    // on top is the header
-
-    // Disable scissoring.
-    addGfxCmdScissor(-1, -1, -1, -1);
-
-    auto vertical = endScrollAreaVerticalScroller(context, colorScheme);
-    auto horizontal = endScrollAreaHorizontalScroller(context, colorScheme);
-
-    // Handle mouse scrolling.
-    if (context.insideScrollArea) // && !anyActive())
+    void endScrollArea(ref ScrollAreaContext context,
+            const ref ColorScheme colorScheme = defaultColorScheme)
     {
-        if (vertical.visible)
+        // scrollbars are 2 scroll_area_paddings wide, with 0.5 before and after .. totalling 3 * scroll_area_paddings
+        // on top is the header
+
+        // Disable scissoring.
+        addGfxCmdScissor(-1, -1, -1, -1);
+
+        auto vertical = endScrollAreaVerticalScroller(context, colorScheme);
+        auto horizontal = endScrollAreaHorizontalScroller(context, colorScheme);
+
+        // Handle mouse scrolling.
+        if (context.insideScrollArea) // && !anyActive())
         {
-            if (state.scrollInfo.dy)
+            if (vertical.visible)
             {
-                context.yOffset += 20 * state.scrollInfo.dy;
-                context.yOffset.clamp(0, vertical.pixels - context.viewport.h);
+                if (state.scrollInfo.dy)
+                {
+                    context.yOffset += 20 * state.scrollInfo.dy;
+                    context.yOffset.clamp(0, vertical.pixels - context.viewport.h);
+                }
+            }
+            if (horizontal.visible)
+            {
+                if (state.scrollInfo.dx)
+                {
+                    context.xOffset += 20 * state.scrollInfo.dx;
+                    context.xOffset.clamp(0, horizontal.pixels - context.viewport.w);
+                }
             }
         }
-        if (horizontal.visible)
-        {
-            if (state.scrollInfo.dx)
-            {
-                context.xOffset += 20 * state.scrollInfo.dx;
-                context.xOffset.clamp(0, horizontal.pixels - context.viewport.w);
-            }
-        }
+
+        state.insideCurrentScroll = false;
     }
 
-    state.insideCurrentScroll = false;
-}
-
-
-
-/**
+    /**
     Define a new button.
 
     Params:
@@ -586,32 +581,34 @@ void endScrollArea(ref ScrollAreaContext context, const ref ColorScheme colorSch
         onPress();
     -----
 */
-bool button(string label, Enabled enabled = Enabled.yes,
-        const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    state.widgetId++;
-    uint id = (state.areaId << 16) | state.widgetId;
+    bool button(string label, Enabled enabled = Enabled.yes,
+            const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        state.widgetId++;
+        uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = state.widgetX;
-    int y = state.widgetY - BUTTON_HEIGHT;
-    int w = state.widgetW;
-    int h = BUTTON_HEIGHT;
-    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+        int x = state.widgetX;
+        int y = state.widgetY - BUTTON_HEIGHT;
+        int w = state.widgetW;
+        int h = BUTTON_HEIGHT;
+        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
 
-    bool over = enabled && state.inRect(x, y, w, h);
-    addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-            cast(float) h, 10, state.isIdActive(id) ? colorScheme.button.backPress
-            : colorScheme.button.back);
+        bool over = enabled && state.inRect(x, y, w, h);
+        addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
+                cast(float) h, 10, state.isIdActive(id)
+                ? colorScheme.button.backPress : colorScheme.button.back);
 
-    auto color = enabled ? (state.isIdHot(id) ? colorScheme.button.textHover : colorScheme.button.text)
-        : colorScheme.button.textDisabled;
-    addGfxCmdText(x + BUTTON_HEIGHT / 2,
-            y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE, TextAlign.left, label, color);
+        auto color = enabled ? (state.isIdHot(id)
+                ? colorScheme.button.textHover : colorScheme.button.text)
+            : colorScheme.button.textDisabled;
+        addGfxCmdText(x + BUTTON_HEIGHT / 2,
+                y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, label, color);
 
-    return state.buttonLogic(id, over);
-}
+        return state.buttonLogic(id, over);
+    }
 
-/**
+    /**
     Define a new checkbox.
 
     Params:
@@ -634,48 +631,50 @@ bool button(string label, Enabled enabled = Enabled.yes,
         writeln(checkState);  // check the current state
     -----
 */
-bool check(const(char)[] label, bool* checkState, Enabled enabled = Enabled.yes,
-        const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    state.widgetId++;
-    uint id = (state.areaId << 16) | state.widgetId;
-
-    int x = state.widgetX;
-    int y = state.widgetY - BUTTON_HEIGHT;
-    int w = state.widgetW;
-    int h = BUTTON_HEIGHT;
-    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
-
-    bool over = enabled && state.inRect(x, y, w, h);
-    bool res = state.buttonLogic(id, over);
-
-    if (res) // toggle the state
-        *checkState ^= 1;
-
-    const int cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-    const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-
-    addGfxCmdRoundedRect(cast(float) cx - 3, cast(float) cy - 3,
-            cast(float) CHECK_SIZE + 6, cast(float) CHECK_SIZE + 6, 4, state.isIdActive(id)
-            ? colorScheme.checkbox.press : colorScheme.checkbox.back);
-
-    if (*checkState)
+    bool check(const(char)[] label, bool* checkState, Enabled enabled = Enabled.yes,
+            const ref ColorScheme colorScheme = defaultColorScheme)
     {
-        auto color = enabled ? (state.isIdActive(id) ? colorScheme.checkbox.checked
-                : colorScheme.checkbox.doUncheck) : colorScheme.checkbox.disabledChecked;
-        addGfxCmdRoundedRect(cast(float) cx, cast(float) cy, cast(float) CHECK_SIZE,
-                cast(float) CHECK_SIZE, cast(float) CHECK_SIZE / 2 - 1, color);
+        state.widgetId++;
+        uint id = (state.areaId << 16) | state.widgetId;
+
+        int x = state.widgetX;
+        int y = state.widgetY - BUTTON_HEIGHT;
+        int w = state.widgetW;
+        int h = BUTTON_HEIGHT;
+        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+
+        bool over = enabled && state.inRect(x, y, w, h);
+        bool res = state.buttonLogic(id, over);
+
+        if (res) // toggle the state
+            *checkState ^= 1;
+
+        const int cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+        const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+
+        addGfxCmdRoundedRect(cast(float) cx - 3, cast(float) cy - 3,
+                cast(float) CHECK_SIZE + 6, cast(float) CHECK_SIZE + 6, 4, state.isIdActive(id)
+                ? colorScheme.checkbox.press : colorScheme.checkbox.back);
+
+        if (*checkState)
+        {
+            auto color = enabled ? (state.isIdActive(id)
+                    ? colorScheme.checkbox.checked : colorScheme.checkbox.doUncheck)
+                : colorScheme.checkbox.disabledChecked;
+            addGfxCmdRoundedRect(cast(float) cx, cast(float) cy, cast(float) CHECK_SIZE,
+                    cast(float) CHECK_SIZE, cast(float) CHECK_SIZE / 2 - 1, color);
+        }
+
+        auto color = enabled ? (state.isIdHot(id)
+                ? colorScheme.checkbox.textHover : colorScheme.checkbox.text)
+            : colorScheme.checkbox.textDisabled;
+        addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, label, color);
+
+        return res;
     }
 
-    auto color = enabled ? (state.isIdHot(id) ? colorScheme.checkbox.textHover : colorScheme.checkbox.text)
-        : colorScheme.checkbox.textDisabled;
-    addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, label, color);
-
-    return res;
-}
-
-/**
+    /**
     Define a new item.
 
     Params:
@@ -690,32 +689,34 @@ bool check(const(char)[] label, bool* checkState, Enabled enabled = Enabled.yes,
     Note that pressing an item implies pressing and releasing the
     left mouse button while over the item.
 */
-bool item(const(char)[] label, Enabled enabled = Enabled.yes,
-        const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    state.widgetId++;
-    uint id = (state.areaId << 16) | state.widgetId;
+    bool item(const(char)[] label, Enabled enabled = Enabled.yes,
+            const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        state.widgetId++;
+        uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = state.widgetX;
-    int y = state.widgetY - BUTTON_HEIGHT;
-    int w = state.widgetW;
-    int h = BUTTON_HEIGHT;
-    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+        int x = state.widgetX;
+        int y = state.widgetY - BUTTON_HEIGHT;
+        int w = state.widgetW;
+        int h = BUTTON_HEIGHT;
+        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
 
-    bool over = enabled && state.inRect(x, y, w, h);
-    bool res = state.buttonLogic(id, over);
+        bool over = enabled && state.inRect(x, y, w, h);
+        bool res = state.buttonLogic(id, over);
 
-    if (state.isIdHot(id))
-        addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-                cast(float) h, 10, state.isIdActive(id) ? colorScheme.item.press : colorScheme.item.hover);
+        if (state.isIdHot(id))
+            addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
+                    cast(float) h, 10, state.isIdActive(id)
+                    ? colorScheme.item.press : colorScheme.item.hover);
 
-    addGfxCmdText(x + BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, label, enabled ? colorScheme.item.text : colorScheme.item.textDisabled);
+        addGfxCmdText(x + BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, label, enabled ? colorScheme.item.text
+                : colorScheme.item.textDisabled);
 
-    return res;
-}
+        return res;
+    }
 
-/**
+    /**
     Define a new collapsable element.
 
     Params:
@@ -732,45 +733,46 @@ bool item(const(char)[] label, Enabled enabled = Enabled.yes,
     Note that pressing a collapsable element implies pressing and releasing the
     left mouse button while over the collapsable element.
 */
-bool collapse(const(char)[] label, const(char)[] subtext, bool* checkState,
-        Enabled enabled = Enabled.yes, const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    state.widgetId++;
-    uint id = (state.areaId << 16) | state.widgetId;
+    bool collapse(const(char)[] label, const(char)[] subtext, bool* checkState,
+            Enabled enabled = Enabled.yes, const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        state.widgetId++;
+        uint id = (state.areaId << 16) | state.widgetId;
 
-    int x = state.widgetX;
-    int y = state.widgetY - BUTTON_HEIGHT;
-    int w = state.widgetW;
-    int h = BUTTON_HEIGHT;
-    state.widgetY -= BUTTON_HEIGHT; // + DEFAULT_SPACING;
+        int x = state.widgetX;
+        int y = state.widgetY - BUTTON_HEIGHT;
+        int w = state.widgetW;
+        int h = BUTTON_HEIGHT;
+        state.widgetY -= BUTTON_HEIGHT; // + DEFAULT_SPACING;
 
-    const int cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-    const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+        const int cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+        const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
 
-    bool over = enabled && state.inRect(x, y, w, h);
-    bool res = state.buttonLogic(id, over);
+        bool over = enabled && state.inRect(x, y, w, h);
+        bool res = state.buttonLogic(id, over);
 
-    if (res) // toggle the state
-        *checkState ^= 1;
+        if (res) // toggle the state
+            *checkState ^= 1;
 
-    auto triangleColor = (*checkState) ? (state.isIdActive(id)
-            ? colorScheme.collapse.doHide : colorScheme.collapse.shown) : state.isIdActive(id)
-        ? colorScheme.collapse.doShow : colorScheme.collapse.hidden;
-    addGfxCmdTriangle(cx, cy, CHECK_SIZE, CHECK_SIZE, 2, triangleColor);
+        auto triangleColor = (*checkState) ? (state.isIdActive(id)
+                ? colorScheme.collapse.doHide : colorScheme.collapse.shown) : state.isIdActive(id)
+            ? colorScheme.collapse.doShow : colorScheme.collapse.hidden;
+        addGfxCmdTriangle(cx, cy, CHECK_SIZE, CHECK_SIZE, 2, triangleColor);
 
-    auto textColor = enabled ? (state.isIdHot(id) ? colorScheme.collapse.textHover
-            : colorScheme.collapse.text) : colorScheme.collapse.textDisabled;
-    addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, label, textColor);
+        auto textColor = enabled ? (state.isIdHot(id)
+                ? colorScheme.collapse.textHover : colorScheme.collapse.text)
+            : colorScheme.collapse.textDisabled;
+        addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, label, textColor);
 
-    if (subtext)
-        addGfxCmdText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-                TextAlign.right, subtext, colorScheme.collapse.subtext);
+        if (subtext)
+            addGfxCmdText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                    TextAlign.right, subtext, colorScheme.collapse.subtext);
 
-    return res;
-}
+        return res;
+    }
 
-/**
+    /**
     Define a new label.
 
     Params:
@@ -778,16 +780,16 @@ bool collapse(const(char)[] label, const(char)[] subtext, bool* checkState,
     label = The text that will be displayed as the label.
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void label(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    int x = state.widgetX;
-    int y = state.widgetY - BUTTON_HEIGHT;
-    state.widgetY -= BUTTON_HEIGHT;
-    addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, label, colorScheme.label.text);
-}
+    void label(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        int x = state.widgetX;
+        int y = state.widgetY - BUTTON_HEIGHT;
+        state.widgetY -= BUTTON_HEIGHT;
+        addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, label, colorScheme.label.text);
+    }
 
-/**
+    /**
     Define a new value.
 
     Params:
@@ -795,18 +797,18 @@ void label(const(char)[] label, const ref ColorScheme colorScheme = defaultColor
     label = The text that will be displayed as the value.
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void value(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    const int x = state.widgetX;
-    const int y = state.widgetY - BUTTON_HEIGHT;
-    const int w = state.widgetW;
-    state.widgetY -= BUTTON_HEIGHT;
+    void value(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        const int x = state.widgetX;
+        const int y = state.widgetY - BUTTON_HEIGHT;
+        const int w = state.widgetW;
+        state.widgetY -= BUTTON_HEIGHT;
 
-    addGfxCmdText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.right, label, colorScheme.value.text);
-}
+        addGfxCmdText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.right, label, colorScheme.value.text);
+    }
 
-/**
+    /**
     Define a new slider.
 
     Params:
@@ -825,80 +827,81 @@ void value(const(char)[] label, const ref ColorScheme colorScheme = defaultColor
     Note that pressing a slider implies pressing and releasing the
     left mouse button while over the slider.
 */
-bool slider(const(char)[] label, float* sliderState, float minValue,
-        float maxValue, float stepValue, Enabled enabled = Enabled.yes,
-        const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    state.widgetId++;
-    uint id = (state.areaId << 16) | state.widgetId;
-
-    int x = state.widgetX;
-    int y = state.widgetY - BUTTON_HEIGHT;
-    int w = state.widgetW;
-    int h = SLIDER_HEIGHT;
-    state.widgetY -= SLIDER_HEIGHT + DEFAULT_SPACING;
-
-    addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-            cast(float) h, 4.0f, colorScheme.slider.back);
-
-    const int range = w - SLIDER_MARKER_WIDTH;
-
-    float u = (*sliderState - minValue) / (maxValue - minValue);
-    u.clamp(0, 1);
-
-    int m = cast(int)(u * range);
-
-    bool over = enabled && state.inRect(x + m, y, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
-    bool res = state.buttonLogic(id, over);
-    bool valChanged = false;
-
-    if (state.isIdActive(id))
+    bool slider(const(char)[] label, float* sliderState, float minValue, float maxValue,
+            float stepValue, Enabled enabled = Enabled.yes,
+            const ref ColorScheme colorScheme = defaultColorScheme)
     {
-        if (state.wentActive)
+        state.widgetId++;
+        uint id = (state.areaId << 16) | state.widgetId;
+
+        int x = state.widgetX;
+        int y = state.widgetY - BUTTON_HEIGHT;
+        int w = state.widgetW;
+        int h = SLIDER_HEIGHT;
+        state.widgetY -= SLIDER_HEIGHT + DEFAULT_SPACING;
+
+        addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
+                cast(float) h, 4.0f, colorScheme.slider.back);
+
+        const int range = w - SLIDER_MARKER_WIDTH;
+
+        float u = (*sliderState - minValue) / (maxValue - minValue);
+        u.clamp(0, 1);
+
+        int m = cast(int)(u * range);
+
+        bool over = enabled && state.inRect(x + m, y, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
+        bool res = state.buttonLogic(id, over);
+        bool valChanged = false;
+
+        if (state.isIdActive(id))
         {
-            state.dragX = state.mx;
-            state.dragOrigX = u;
+            if (state.wentActive)
+            {
+                state.dragX = state.mx;
+                state.dragOrigX = u;
+            }
+
+            if (state.dragX != state.mx)
+            {
+                u = state.dragOrigX + cast(float)(state.mx - state.dragX) / cast(float) range;
+                u.clamp(0, 1);
+
+                *sliderState = minValue + u * (maxValue - minValue);
+                *sliderState = floor(*sliderState / stepValue + 0.5f) * stepValue; // Snap to stepValue
+                m = cast(int)(u * range);
+                valChanged = true;
+            }
         }
 
-        if (state.dragX != state.mx)
-        {
-            u = state.dragOrigX + cast(float)(state.mx - state.dragX) / cast(float) range;
-            u.clamp(0, 1);
+        auto color = state.isIdActive(id) ? colorScheme.slider.thumbPress
+            : (state.isIdHot(id) ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
+        addGfxCmdRoundedRect(cast(float)(x + m), cast(float) y,
+                cast(float) SLIDER_MARKER_WIDTH, cast(float) SLIDER_HEIGHT, 4.0f, color);
 
-            *sliderState = minValue + u * (maxValue - minValue);
-            *sliderState = floor(*sliderState / stepValue + 0.5f) * stepValue; // Snap to stepValue
-            m = cast(int)(u * range);
-            valChanged = true;
-        }
+        // TODO: fix this, take a look at 'nicenum'.
+        // todo: this should display sub 0.1 if the step is low enough.
+        int digits = cast(int)(ceil(log10(stepValue)));
+        char[16] fmtBuf;
+        auto fmt = sformat(fmtBuf, "%%.%df", digits >= 0 ? 0 : -digits);
+        char[32] msgBuf;
+        string msg = sformat(msgBuf, fmt, *sliderState).idup;
+
+        auto sliderTextColor = enabled ? (state.isIdHot(id)
+                ? colorScheme.slider.textHover : colorScheme.slider.text)
+            : colorScheme.slider.textDisabled;
+        auto sliderValueColor = enabled ? (state.isIdHot(id)
+                ? colorScheme.slider.valueHover : colorScheme.slider.value)
+            : colorScheme.slider.valueDisabled;
+        addGfxCmdText(x + SLIDER_HEIGHT / 2, y + SLIDER_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, label, sliderTextColor);
+        addGfxCmdText(x + w - SLIDER_HEIGHT / 2, y + SLIDER_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.right, msg, sliderValueColor);
+
+        return res || valChanged;
     }
 
-    auto color = state.isIdActive(id) ? colorScheme.slider.thumbPress : (state.isIdHot(id)
-            ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
-    addGfxCmdRoundedRect(cast(float)(x + m), cast(float) y,
-            cast(float) SLIDER_MARKER_WIDTH, cast(float) SLIDER_HEIGHT, 4.0f, color);
-
-    // TODO: fix this, take a look at 'nicenum'.
-    // todo: this should display sub 0.1 if the step is low enough.
-    int digits = cast(int)(ceil(log10(stepValue)));
-    char[16] fmtBuf;
-    auto fmt = sformat(fmtBuf, "%%.%df", digits >= 0 ? 0 : -digits);
-    char[32] msgBuf;
-    string msg = sformat(msgBuf, fmt, *sliderState).idup;
-
-    auto sliderTextColor = enabled ? (state.isIdHot(id) ? colorScheme.slider.textHover
-            : colorScheme.slider.text) : colorScheme.slider.textDisabled;
-    auto sliderValueColor = enabled ? (state.isIdHot(id)
-            ? colorScheme.slider.valueHover : colorScheme.slider.value)
-        : colorScheme.slider.valueDisabled;
-    addGfxCmdText(x + SLIDER_HEIGHT / 2, y + SLIDER_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, label, sliderTextColor);
-    addGfxCmdText(x + w - SLIDER_HEIGHT / 2, y + SLIDER_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.right, msg, sliderValueColor);
-
-    return res || valChanged;
-}
-
-/** Define a text input field.
+    /** Define a text input field.
  *
  * Params:
  *
@@ -971,162 +974,165 @@ bool slider(const(char)[] label, float* sliderState, float minValue,
  * }
  * --------------------
  */
-bool textInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
-        bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    assert(buffer.ptr == usedSlice.ptr && buffer.length >= usedSlice.length,
-            "The usedSlice parameter on imguiTextInput must be a slice to the buffer " ~ "parameter");
-
-    // Label
-    state.widgetId++;
-    uint id = (state.areaId << 16) | state.widgetId;
-    int x = state.widgetX;
-    int y = state.widgetY - BUTTON_HEIGHT;
-    addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, label, colorScheme.textInput.label);
-
-    bool res = false;
-    // Handle control input if any (Backspace to erase characters, Enter to confirm).
-    // Backspace
-    if (state.isIdInputable(id) && state.unicode == 0x08
-            && state.unicode != state.lastUnicode && !usedSlice.empty)
+    bool textInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
+            bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
     {
-        usedSlice = usedSlice[0 .. $ - 1];
-    }
-    // Pressing Enter "confirms" the input.
-    else if (state.isIdInputable(id) && state.unicode == 0x0D && state.unicode != state.lastUnicode)
-    {
-        state.inputable = 0;
-        res = true;
-    }
-    else if (state.isIdInputable(id) && state.unicode != 0 && state.unicode != state.lastUnicode)
-    {
-        import std.utf;
+        assert(buffer.ptr == usedSlice.ptr && buffer.length >= usedSlice.length,
+                "The usedSlice parameter on imguiTextInput must be a slice to the buffer "
+                ~ "parameter");
 
-        char[4] codePoints;
-        const codePointCount = std.utf.encode(codePoints, state.unicode);
-        // Only add the character into the buffer if we can fit it there.
-        if (buffer.length - usedSlice.length >= codePointCount)
+        // Label
+        state.widgetId++;
+        uint id = (state.areaId << 16) | state.widgetId;
+        int x = state.widgetX;
+        int y = state.widgetY - BUTTON_HEIGHT;
+        addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, label, colorScheme.textInput.label);
+
+        bool res = false;
+        // Handle control input if any (Backspace to erase characters, Enter to confirm).
+        // Backspace
+        if (state.isIdInputable(id) && state.unicode == 0x08
+                && state.unicode != state.lastUnicode && !usedSlice.empty)
         {
-            usedSlice = buffer[0 .. usedSlice.length + codePointCount];
-            usedSlice[$ - codePointCount .. $] = codePoints[0 .. codePointCount];
+            usedSlice = usedSlice[0 .. $ - 1];
         }
+        // Pressing Enter "confirms" the input.
+        else if (state.isIdInputable(id) && state.unicode == 0x0D
+                && state.unicode != state.lastUnicode)
+        {
+            state.inputable = 0;
+            res = true;
+        }
+        else if (state.isIdInputable(id) && state.unicode != 0 && state.unicode != state
+                .lastUnicode)
+        {
+            import std.utf;
+
+            char[4] codePoints;
+            const codePointCount = std.utf.encode(codePoints, state.unicode);
+            // Only add the character into the buffer if we can fit it there.
+            if (buffer.length - usedSlice.length >= codePointCount)
+            {
+                usedSlice = buffer[0 .. usedSlice.length + codePointCount];
+                usedSlice[$ - codePointCount .. $] = codePoints[0 .. codePointCount];
+            }
+        }
+
+        // Draw buffer data
+        uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
+        x += labelLen;
+        int w = state.widgetW - labelLen - DEFAULT_SPACING * 2;
+        int h = BUTTON_HEIGHT;
+        bool over = state.inRect(x, y, w, h);
+        state.textInputLogic(id, over, forceInputable);
+        addGfxCmdRoundedRect(cast(float)(x + DEFAULT_SPACING), cast(float) y,
+                cast(float) w, cast(float) h, 10, state.isIdInputable(id)
+                ? colorScheme.textInput.back : colorScheme.textInput.backDisabled);
+        addGfxCmdText(x + DEFAULT_SPACING * 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+                TextAlign.left, usedSlice, state.isIdInputable(id)
+                ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
+
+        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+        return res;
     }
 
-    // Draw buffer data
-    uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
-    x += labelLen;
-    int w = state.widgetW - labelLen - DEFAULT_SPACING * 2;
-    int h = BUTTON_HEIGHT;
-    bool over = state.inRect(x, y, w, h);
-    state.textInputLogic(id, over, forceInputable);
-    addGfxCmdRoundedRect(cast(float)(x + DEFAULT_SPACING), cast(float) y,
-            cast(float) w, cast(float) h, 10, state.isIdInputable(id)
-            ? colorScheme.textInput.back : colorScheme.textInput.backDisabled);
-    addGfxCmdText(x + DEFAULT_SPACING * 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
-            TextAlign.left, usedSlice, state.isIdInputable(id)
-            ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
+    /** Add horizontal indentation for elements to be added. */
+    void indent()
+    {
+        state.widgetX += INDENT_SIZE;
+        state.widgetW -= INDENT_SIZE;
+    }
 
-    state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
-    return res;
-}
+    /** Remove horizontal indentation for elements to be added. */
+    void unindent()
+    {
+        state.widgetX -= INDENT_SIZE;
+        state.widgetW += INDENT_SIZE;
+    }
 
-/** Add horizontal indentation for elements to be added. */
-void indent()
-{
-    state.widgetX += INDENT_SIZE;
-    state.widgetW -= INDENT_SIZE;
-}
+    /** Add vertical space as a separator below the last element. */
+    void separator()
+    {
+        state.widgetY -= DEFAULT_SPACING * 3;
+    }
 
-/** Remove horizontal indentation for elements to be added. */
-void unindent()
-{
-    state.widgetX -= INDENT_SIZE;
-    state.widgetW += INDENT_SIZE;
-}
-
-/** Add vertical space as a separator below the last element. */
-void separator()
-{
-    state.widgetY -= DEFAULT_SPACING * 3;
-}
-
-/**
+    /**
     Add a horizontal line as a separator below the last element.
 
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void separatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
-{
-    int x = state.widgetX;
-    int y = state.widgetY - DEFAULT_SPACING * 2;
-    int w = state.widgetW;
-    int h = 1;
-    state.widgetY -= DEFAULT_SPACING * 4;
+    void separatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        int x = state.widgetX;
+        int y = state.widgetY - DEFAULT_SPACING * 2;
+        int w = state.widgetW;
+        int h = 1;
+        state.widgetY -= DEFAULT_SPACING * 4;
 
-    addGfxCmdRect(cast(float) x, cast(float) y, cast(float) w, cast(float) h,
-            colorScheme.separator);
-}
+        addGfxCmdRect(cast(float) x, cast(float) y, cast(float) w, cast(float) h,
+                colorScheme.separator);
+    }
 
-/**
+    /**
     Draw text.
 
     Params:
     color = Optionally override the current default text color when creating this element.
 */
-void drawText(int xPos, int yPos, TextAlign textAlign, const(char)[] text,
-        RGBA color = defaultColorScheme.generic.text)
-{
-    addGfxCmdText(xPos, yPos, textAlign, text, color);
-}
+    void drawText(int xPos, int yPos, TextAlign textAlign, const(char)[] text,
+            RGBA color = defaultColorScheme.generic.text)
+    {
+        addGfxCmdText(xPos, yPos, textAlign, text, color);
+    }
 
-/**
+    /**
     Draw a line.
 
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void drawLine(float x0, float y0, float x1, float y1, float r,
-        RGBA color = defaultColorScheme.generic.line)
-{
-    addGfxCmdLine(x0, y0, x1, y1, r, color);
-}
+    void drawLine(float x0, float y0, float x1, float y1, float r,
+            RGBA color = defaultColorScheme.generic.line)
+    {
+        addGfxCmdLine(x0, y0, x1, y1, r, color);
+    }
 
-/**
+    /**
     Draw a rectangle.
 
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void drawRect(float xPos, float yPos, float width, float height,
-        RGBA color = defaultColorScheme.generic.rect)
-{
-    addGfxCmdRect(xPos, yPos, width, height, color);
-}
+    void drawRect(float xPos, float yPos, float width, float height,
+            RGBA color = defaultColorScheme.generic.rect)
+    {
+        addGfxCmdRect(xPos, yPos, width, height, color);
+    }
 
-/**
+    /**
     Draw a rounded rectangle.
 
     Params:
     colorScheme = Optionally override the current default color scheme when creating this element.
 */
-void drawRoundedRect(float xPos, float yPos, float width, float height,
-        float r, RGBA color = defaultColorScheme.generic.roundRect)
-{
-    addGfxCmdRoundedRect(xPos, yPos, width, height, r, color);
-}
-/** End the list of batched commands for the current frame. */
-void endFrame()
-{
-    state.clearInput();
-}
+    void drawRoundedRect(float xPos, float yPos, float width, float height, float r,
+            RGBA color = defaultColorScheme.generic.roundRect)
+    {
+        addGfxCmdRoundedRect(xPos, yPos, width, height, r, color);
+    }
+    /** End the list of batched commands for the current frame. */
+    void endFrame()
+    {
+        state.clearInput();
+    }
 
-/** Render all of the batched commands for the current frame. */
-void render(int width, int height)
-{
-    renderGLDraw(gfxCmdQueue.ptr, gfxCmdQueueSize, width, height);
-}
+    /** Render all of the batched commands for the current frame. */
+    void render(int width, int height)
+    {
+        renderGLDraw(gfxCmdQueue.ptr, gfxCmdQueueSize, width, height);
+    }
 
 }
 
@@ -1138,7 +1144,6 @@ void clamp(T)(ref T value, const T minValue, const T maxValue)
     }
     else if (value > maxValue)
     {
-        value =  maxValue;
+        value = maxValue;
     }
 }
-

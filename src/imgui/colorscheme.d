@@ -23,7 +23,6 @@ struct RGBA
     }
 }
 
-
 struct ColorScheme
 {
     /**

@@ -643,7 +643,7 @@ void renderGLDraw(GfxCmd* commands, size_t numberOfCommands, int width, int heig
 
     glDisable(GL_SCISSOR_TEST);
 
-    foreach (ref cmd; commands[0..numberOfCommands])
+    foreach (ref cmd; commands[0 .. numberOfCommands])
     {
         if (cmd.type == IMGUI_GFXCMD_RECT)
         {

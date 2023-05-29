@@ -35,8 +35,8 @@ enum DEFAULT_SPACING = 4;
 enum TEXT_HEIGHT = 35;
 enum TEXT_BASELINE = 5;
 enum SCROLL_AREA_PADDING = 6;
-enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING*3;
-enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING*2;
+enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING * 3;
+enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING * 2;
 enum INDENT_SIZE = 16;
 enum AREA_HEADER = 35;
 
@@ -130,7 +130,7 @@ public:
         return active == id;
     }
 
-/// Is the widget with specified ID 'inputable' for e.g. text input?
+    /// Is the widget with specified ID 'inputable' for e.g. text input?
     bool isIdInputable(uint id)
     {
         return inputable == id;
@@ -143,8 +143,8 @@ public:
 
     bool inRect(int x, int y, int w, int h, bool checkScroll = true)
     {
-        return (!checkScroll || insideCurrentScroll) && mx >= x
-            && mx <= x + w && my >= y && my <= y + h;
+        return (!checkScroll || insideCurrentScroll) && mx >= x && mx <= x + w && my >= y
+            && my <= y + h;
     }
 
     void clearInput()
@@ -153,6 +153,7 @@ public:
         leftReleased = false;
         scrollInfo.reset();
     }
+
     void clearActive()
     {
         active = 0;
@@ -168,11 +169,11 @@ public:
         wentActive = true;
     }
 
-// Set the inputable widget to the widget with specified ID.
-//
-// A text input becomes 'inputable' when it is 'hot' and left-clicked.
-//
-// 0 if no widget is inputable
+    // Set the inputable widget to the widget with specified ID.
+    //
+    // A text input becomes 'inputable' when it is 'hot' and left-clicked.
+    //
+    // 0 if no widget is inputable
     void setInputable(uint id)
     {
         inputable = id;
@@ -220,7 +221,7 @@ public:
         return res;
     }
 
-/** Input logic for text input fields.
+    /** Input logic for text input fields.
  *
  * Params:
  *
@@ -251,7 +252,7 @@ public:
         }
     }
 
-/* Update user input on the beginning of a frame.
+    /* Update user input on the beginning of a frame.
  *
  * Params:
  *
@@ -283,10 +284,9 @@ public:
         this.unicode = unicodeChar;
     }
 
-// Separate from gl3_renderer.getTextLength so api doesn't directly call renderer.
+    // Separate from gl3_renderer.getTextLength so api doesn't directly call renderer.
     float getTextLength(const(char)[] text)
     {
         return imgui.gl3_renderer.getTextLength(text);
     }
 }
-
