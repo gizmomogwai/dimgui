@@ -22,7 +22,6 @@ import std.stdio;
 import std.string;
 
 import imgui.api;
-import imgui.gl3_renderer;
 
 package:
 
@@ -267,6 +266,7 @@ public:
  */
     void updateInput(MouseInfo mouseInfo, dchar unicodeChar)
     {
+        import imgui.gl3_renderer : maxCharacterCount;
         bool left = (mouseInfo.buttons & MouseButton.left) != 0;
 
         this.mouseInfo = mouseInfo;
@@ -286,6 +286,7 @@ public:
     // Separate from gl3_renderer.getTextLength so api doesn't directly call renderer.
     float getTextLength(const(char)[] text)
     {
-        return imgui.gl3_renderer.getTextLength(text);
+        import imgui.gl3_renderer : getTextLength;
+        return getTextLength(text);
     }
 }
