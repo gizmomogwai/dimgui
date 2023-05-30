@@ -68,12 +68,18 @@ void imguiDestroy()
     imguiRenderGLDestroy();
 }
 
-struct ScrollInfo
+struct MouseInfo
 {
+    int x;
+    int y;
+    ubyte buttons;
     int dx;
     int dy;
     void reset()
     {
+        x = 0;
+        y = 0;
+        buttons = 0;
         dx = 0;
         dy = 0;
     }
@@ -87,8 +93,8 @@ struct Rect
     int h;
     bool inside(ref GuiState state, bool checkScroll = true)
     {
-        return (!checkScroll || state.insideCurrentScroll) && state.mx >= x
-            && state.mx <= x + w && state.my >= y && state.my <= y + h;
+        return (!checkScroll || state.insideCurrentScroll) && state.mouseInfo.x >= x
+            && state.mouseInfo.x <= x + w && state.mouseInfo.y >= y && state.mouseInfo.y <= y + h;
     }
 
 }
@@ -125,6 +131,7 @@ struct ScrollAreaContext
         bool active;
         int yOffset;
         float percentage;
+        int oldYOffset;
     }
 
     RevealInfo reveal;
@@ -195,10 +202,10 @@ class ImGui
                   which may not be automatically handled by your input library's text
                   input functionality (e.g. GLFW's getUnicode() does not do this).
     */
-    void beginFrame(int cursorX, int cursorY, ubyte mouseButtons,
-            ScrollInfo scrollAreaContext, dchar unicodeChar = 0)
+    void beginFrame(MouseInfo mouseInfo,
+                    dchar unicodeChar = 0)
     {
-        state.updateInput(cursorX, cursorY, mouseButtons, scrollAreaContext, unicodeChar);
+        state.updateInput(mouseInfo, unicodeChar);
 
         state.hot = state.hotToBe;
         state.hotToBe = 0;
@@ -335,8 +342,8 @@ class ImGui
     $(D true) if the mouse was located inside the scrollable area.
 */
     bool beginScrollArea(ref ScrollAreaContext context, const(char)[] title, int xPos, int yPos,
-            int width, int height, bool scrollHorizontal = false, int scrolledHorizontalPixels = 2000,
-            const ref ColorScheme colorScheme = defaultColorScheme)
+                         int width, int height, bool scrollHorizontal = false, int scrolledHorizontalPixels = 2000,
+                         const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.areaId++;
         state.widgetId = 0;
@@ -433,13 +440,13 @@ class ImGui
                 if (state.wentActive)
                 {
                     float u = cast(float)(nob.y - scroller.y) / cast(float) range;
-                    state.dragY = state.my;
+                    state.dragY = state.mouseInfo.y;
                     state.dragOrigY = u;
                 }
 
-                if (state.dragY != state.my)
+                if (state.dragY != state.mouseInfo.y)
                 {
-                    float u = state.dragOrigY + (state.my - state.dragY) / cast(float) range;
+                    float u = state.dragOrigY + (state.mouseInfo.y - state.dragY) / cast(float) range;
                     u.clamp(0, 1);
                     context.yOffset = cast(int)((1 - u) * (scrolledPixels - scroller.h));
                 }
@@ -490,13 +497,13 @@ class ImGui
                 if (state.wentActive)
                 {
                     float u = cast(float)(nob.x - scroller.x) / cast(float) range;
-                    state.dragX = state.mx;
+                    state.dragX = state.mouseInfo.x;
                     state.dragOrigX = u;
                 }
 
-                if (state.dragX != state.mx)
+                if (state.dragX != state.mouseInfo.x)
                 {
-                    float u = state.dragOrigX + (state.mx - state.dragX) / cast(float) range;
+                    float u = state.dragOrigX + (state.mouseInfo.x - state.dragX) / cast(float) range;
                     u.clamp(0, 1);
                     context.xOffset = cast(int)(u * (context.scrolledHorizontalPixels - scroller.w));
                 }
@@ -534,23 +541,25 @@ class ImGui
 
         auto vertical = endScrollAreaVerticalScroller(context, colorScheme);
         auto horizontal = endScrollAreaHorizontalScroller(context, colorScheme);
-
+        if (context.reveal.active)
+        {
+        }
         // Handle mouse scrolling.
         if (context.insideScrollArea) // && !anyActive())
         {
             if (vertical.visible)
             {
-                if (state.scrollInfo.dy)
+                if (state.mouseInfo.dy)
                 {
-                    context.yOffset += 20 * state.scrollInfo.dy;
+                    context.yOffset += 20 * state.mouseInfo.dy;
                     context.yOffset.clamp(0, vertical.pixels - context.viewport.h);
                 }
             }
             if (horizontal.visible)
             {
-                if (state.scrollInfo.dx)
+                if (state.mouseInfo.dx)
                 {
-                    context.xOffset += 20 * state.scrollInfo.dx;
+                    context.xOffset += 20 * state.mouseInfo.dx;
                     context.xOffset.clamp(0, horizontal.pixels - context.viewport.w);
                 }
             }
@@ -858,13 +867,13 @@ class ImGui
         {
             if (state.wentActive)
             {
-                state.dragX = state.mx;
+                state.dragX = state.mouseInfo.x;
                 state.dragOrigX = u;
             }
 
-            if (state.dragX != state.mx)
+            if (state.dragX != state.mouseInfo.x)
             {
-                u = state.dragOrigX + cast(float)(state.mx - state.dragX) / cast(float) range;
+                u = state.dragOrigX + cast(float)(state.mouseInfo.x - state.dragX) / cast(float) range;
                 u.clamp(0, 1);
 
                 *sliderState = minValue + u * (maxValue - minValue);

@@ -87,8 +87,7 @@ struct GuiState
 public:
     bool left;
     bool leftPressed, leftReleased;
-    int mx = -1, my = -1;
-    ScrollInfo scrollInfo;
+    MouseInfo mouseInfo = MouseInfo(-1, -1, 0, 0, 0);
     // 'unicode' value passed to updateInput.
     dchar unicode;
     // 'unicode' value passed to updateInput on previous frame.
@@ -143,15 +142,18 @@ public:
 
     bool inRect(int x, int y, int w, int h, bool checkScroll = true)
     {
-        return (!checkScroll || insideCurrentScroll) && mx >= x && mx <= x + w && my >= y
-            && my <= y + h;
+        // dfmt off
+        return (!checkScroll || insideCurrentScroll)
+            && mouseInfo.x >= x && mouseInfo.x <= x + w
+            && mouseInfo.y >= y  && mouseInfo.y <= y + h;
+        // dfmt on
     }
 
     void clearInput()
     {
         leftPressed = false;
         leftReleased = false;
-        scrollInfo.reset();
+        mouseInfo.reset();
     }
 
     void clearActive()
@@ -263,17 +265,14 @@ public:
  * unicodeChar = Unicode text input from the keyboard (usually the unicode result of last
  *               keypress).
  */
-    void updateInput(int mx, int my, ubyte mbut, ScrollInfo scrollInfo, dchar unicodeChar)
+    void updateInput(MouseInfo mouseInfo, dchar unicodeChar)
     {
-        bool left = (mbut & MouseButton.left) != 0;
+        bool left = (mouseInfo.buttons & MouseButton.left) != 0;
 
-        this.mx = mx;
-        this.my = my;
+        this.mouseInfo = mouseInfo;
         this.leftPressed = !this.left && left;
         this.leftReleased = this.left && !left;
         this.left = left;
-
-        this.scrollInfo = scrollInfo;
 
         // Ignore characters we can't draw
         if (unicodeChar > maxCharacterCount())
