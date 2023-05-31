@@ -631,7 +631,7 @@ void drawText(float x, float y, const(char)[] text, int align_, uint col)
     // glDisable(GL_TEXTURE_2D);
 }
 
-void renderGLDraw(GfxCmd* commands, size_t numberOfCommands, int width, int height)
+void renderGLDraw(GfxCmd[] commands, int width, int height)
 {
     const float s = 1.0f / 8.0f;
 
@@ -643,7 +643,7 @@ void renderGLDraw(GfxCmd* commands, size_t numberOfCommands, int width, int heig
 
     glDisable(GL_SCISSOR_TEST);
 
-    foreach (ref cmd; commands[0 .. numberOfCommands])
+    foreach (ref cmd; commands)
     {
         if (cmd.type == IMGUI_GFXCMD_RECT)
         {

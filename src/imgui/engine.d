@@ -70,7 +70,7 @@ struct GfxCmd
 {
     char type;
     char flags;
-    byte[2] pad;
+    byte[2] padding;
     uint color;
 
     union
@@ -267,6 +267,7 @@ public:
     void updateInput(MouseInfo mouseInfo, dchar unicodeChar)
     {
         import imgui.gl3_renderer : maxCharacterCount;
+
         bool left = (mouseInfo.buttons & MouseButton.left) != 0;
 
         this.mouseInfo = mouseInfo;
@@ -287,6 +288,7 @@ public:
     float getTextLength(const(char)[] text)
     {
         import imgui.gl3_renderer : getTextLength;
+
         return getTextLength(text);
     }
 }
