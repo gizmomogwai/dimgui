@@ -11,9 +11,6 @@ module imgui.util;
     due to a DMD bug with an infinite loop problem. This isn't reported yet.
 */
 
-import std.range;
-import std.stdio;
-
 auto ref fieldRange(S, T)(auto ref T sym)
 {
     static if (is(T == struct) && !is(T == S))

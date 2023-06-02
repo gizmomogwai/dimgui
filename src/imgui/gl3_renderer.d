@@ -17,20 +17,18 @@
  */
 module imgui.gl3_renderer;
 
-import core.stdc.stdlib;
-import core.stdc.string;
+import core.stdc.stdlib : free, malloc;
+import core.stdc.string : memset;
 
 import std.file : read;
-import std.math;
-import std.stdio;
+import std.math : sqrt, PI, cos, sin;
 
-import bindbc.opengl;
-import bindbc.glfw;
+import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer, glBufferData, glDrawArrays, loadOpenGL, GL_TEXTURE_2D, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport, glDeleteTextures, glDeleteVertexArrays, glDeleteBuffers, glDeleteProgram, glViewport, glUseProgram, glActiveTexture, glUniform2f, glUniform1i, glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
 
-import imgui.api;
-import imgui.engine;
-import imgui.stdb_truetype;
-import imgui.colorscheme;
+import imgui.api : RGBA, TextAlign;
+import imgui.engine : GfxCmd, TEXT_HEIGHT, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, IMGUI_GFXCMD_SCISSOR;
+import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad, stbtt_BakeFontBitmap, STBTT_ifloor;
+
 private:
 // Draw up to 65536 unicode glyphs.  What this will actually do is draw *only glyphs the
 // font supports* until it will run out of glyphs or texture space (determined by
@@ -375,7 +373,6 @@ void drawLine(float x0, float y0, float x1, float y1, float r, float fth, uint c
 void loadBindBCOpenGL()
 {
     const result = loadOpenGL();
-    writeln(result);
     import std.exception : enforce;
 
     (result == GLSupport.gl33).enforce("need opengl 3.3 support");

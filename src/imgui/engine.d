@@ -17,7 +17,7 @@
  */
 module imgui.engine;
 
-import imgui.api;
+import imgui.api : MouseInfo, MouseButton;
 
 package:
 

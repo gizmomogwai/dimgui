@@ -6,14 +6,13 @@
  */
 module imgui.stdb_truetype;
 
-import core.stdc.stdlib;
-import core.stdc.string;
+import core.stdc.stdlib : qsort;
+import core.stdc.string : memcpy, memset, strlen;
 
-import std.exception;
-import std.math;
+import std.exception : enforce;
+import std.math : floor, sqrt, ceil;
 
-import imgui.engine;
-import imgui.gl3_renderer;
+import imgui.gl3_renderer : imguimalloc, imguifree;
 
 package:
 
