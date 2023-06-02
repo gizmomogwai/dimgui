@@ -106,9 +106,6 @@ public:
     uint hot;
     // The widget that will be 'hot' in the next frame.
     uint hotToBe;
-    // These two are probably unused? (set but not read?)
-    bool isHot;
-    bool isActive;
 
     bool wentActive;
     int dragX, dragY;
@@ -126,6 +123,20 @@ public:
     bool isIdActive(uint id)
     {
         return active == id;
+    }
+
+    void beginFrame()
+    {
+        wentActive = false;
+        hot = hotToBe;
+        hotToBe = 0;
+
+        widgetX = 0;
+        widgetY = 0;
+        widgetW = 0;
+
+        areaId = 1;
+        widgetId = 1;
     }
 
     /// Is the widget with specified ID 'inputable' for e.g. text input?
@@ -202,8 +213,6 @@ public:
         // if button is active, then react on left up
         if (isIdActive(id))
         {
-            isActive = true;
-
             if (over)
                 setHot(id);
 
@@ -214,10 +223,6 @@ public:
                 clearActive();
             }
         }
-
-        // Not sure if this does anything (g_state.isHot doesn't seem to be used).
-        if (isIdHot(id))
-            isHot = true;
 
         return res;
     }
@@ -245,11 +250,6 @@ public:
             {
                 setInputable(id);
             }
-        }
-        // Not sure if this does anything (g_state.isHot doesn't seem to be used).
-        if (isIdHot(id))
-        {
-            isHot = true;
         }
     }
 

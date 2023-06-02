@@ -209,21 +209,7 @@ class ImGui
     void beginFrame(MouseInfo mouseInfo, dchar unicodeChar = 0)
     {
         state.updateInput(mouseInfo, unicodeChar);
-
-        state.hot = state.hotToBe;
-        state.hotToBe = 0;
-
-        state.wentActive = false;
-        state.isActive = false;
-        state.isHot = false;
-
-        state.widgetX = 0;
-        state.widgetY = 0;
-        state.widgetW = 0;
-
-        state.areaId = 1;
-        state.widgetId = 1;
-
+        state.beginFrame();
         resetGfxCmdQueue();
     }
 
