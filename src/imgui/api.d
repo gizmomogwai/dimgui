@@ -23,17 +23,15 @@ module imgui.api;
 
    This module contains the API of the library.
 */
-
-import std.algorithm;
-import std.math;
-import std.stdio;
-import std.string;
-import std.range;
+import std.algorithm : max;
+import std.math : floor, ceil, log10;
+import std.string : sformat;
+import std.range : Appender, appender, empty;
 import std.conv : to;
-import imgui.engine;
-import imgui.gl3_renderer;
+import imgui.engine : GuiState, GfxCmd, IMGUI_GFXCMD_SCISSOR, imguiGfxRect, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE, imguiGfxLine, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, imguiGfxText, SCROLL_AREA_PADDING, SCROLL_BAR_SIZE, AREA_HEADER, TEXT_HEIGHT, TEXT_BASELINE, SCROLL_BAR_HANDLE_SIZE, BUTTON_HEIGHT, DEFAULT_SPACING, CHECK_SIZE, SLIDER_HEIGHT, SLIDER_MARKER_WIDTH, INDENT_SIZE;
+import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
-public import imgui.colorscheme;
+import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
 
 ///
 enum TextAlign
@@ -226,8 +224,8 @@ class ImGui
     public void addGfxCmdScissor(int x, int y, int w, int h)
     {
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_SCISSOR, flags: x < 0 ? 0 : 1, rect: imguiGfxRect(cast(short) x,
-                                                                                 cast(short) y, cast(short) w, cast(short) h)
+            type: IMGUI_GFXCMD_SCISSOR, flags: x < 0 ? 0 : 1, rect: imguiGfxRect(cast(int) x,
+                                                                                 cast(int) y, cast(int) w, cast(int) h)
         };
         gfxCmdQueue.put(cmd);
     }
@@ -235,8 +233,8 @@ class ImGui
     public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
     {
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_RECT, color: color.toPackedRGBA(), rect: imguiGfxRect(cast(short)(x * 8.0f),
-                                                                                     cast(short)(y * 8.0f), cast(short)(w * 8.0f), cast(short)(h * 8.0f))
+            type: IMGUI_GFXCMD_RECT, color: color.toPackedRGBA(), rect: imguiGfxRect(cast(int)(x * 8.0f),
+                                                                                     cast(int)(y * 8.0f), cast(int)(w * 8.0f), cast(int)(h * 8.0f))
         };
         gfxCmdQueue.put(cmd);
     }
@@ -244,9 +242,9 @@ class ImGui
     public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA color)
     {
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_LINE, color: color.toPackedRGBA(), line: imguiGfxLine(cast(short)(x0 * 8.0f),
-                                                                                     cast(short)(y0 * 8.0f), cast(short)(x1 * 8.0f),
-                                                                                     cast(short)(y1 * 8.0f), cast(short)(r * 8.0f))
+            type: IMGUI_GFXCMD_LINE, color: color.toPackedRGBA(), line: imguiGfxLine(cast(int)(x0 * 8.0f),
+                                                                                     cast(int)(y0 * 8.0f), cast(int)(x1 * 8.0f),
+                                                                                     cast(int)(y1 * 8.0f), cast(int)(r * 8.0f))
         };
         gfxCmdQueue.put(cmd);
     }
@@ -254,9 +252,9 @@ class ImGui
     public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RGBA color)
     {
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_RECT, color: color.toPackedRGBA(), rect: imguiGfxRect(cast(short)(x * 8.0f),
-                                                                                     cast(short)(y * 8.0f), cast(short)(w * 8.0f),
-                                                                                     cast(short)(h * 8.0f), cast(short)(r * 8.0f))
+            type: IMGUI_GFXCMD_RECT, color: color.toPackedRGBA(), rect: imguiGfxRect(cast(int)(x * 8.0f),
+                                                                                     cast(int)(y * 8.0f), cast(int)(w * 8.0f),
+                                                                                     cast(int)(h * 8.0f), cast(int)(r * 8.0f))
         };
         gfxCmdQueue.put(cmd);
     }
@@ -265,8 +263,8 @@ class ImGui
     {
         GfxCmd cmd = {
             type: IMGUI_GFXCMD_TRIANGLE, flags: cast(byte) flags, color: color.toPackedRGBA(), rect: imguiGfxRect(
-              cast(short)(x * 8.0f), cast(short)(y * 8.0f),
-              cast(short)(w * 8.0f), cast(short)(h * 8.0f))
+              cast(int)(x * 8.0f), cast(int)(y * 8.0f),
+              cast(int)(w * 8.0f), cast(int)(h * 8.0f))
         };
         gfxCmdQueue.put(cmd);
     }
@@ -274,8 +272,8 @@ class ImGui
     public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
     {
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_TEXT, color: color.toPackedRGBA(), text: imguiGfxText(cast(short) x,
-                                                                                     cast(short) y, cast(short) align_, text)
+            type: IMGUI_GFXCMD_TEXT, color: color.toPackedRGBA(), text: imguiGfxText(cast(int) x,
+                                                                                     cast(int) y, cast(int) align_, text)
         };
         gfxCmdQueue.put(cmd);
     }

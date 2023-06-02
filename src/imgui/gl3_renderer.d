@@ -30,7 +30,7 @@ import bindbc.glfw;
 import imgui.api;
 import imgui.engine;
 import imgui.stdb_truetype;
-
+import imgui.colorscheme;
 private:
 // Draw up to 65536 unicode glyphs.  What this will actually do is draw *only glyphs the
 // font supports* until it will run out of glyphs or texture space (determined by

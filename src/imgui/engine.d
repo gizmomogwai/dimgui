@@ -17,15 +17,10 @@
  */
 module imgui.engine;
 
-import std.math;
-import std.stdio;
-import std.string;
-
 import imgui.api;
 
 package:
 
-enum GFXCMD_QUEUE_SIZE = 5000;
 enum BUTTON_HEIGHT = 60;
 enum SLIDER_HEIGHT = 40;
 enum SLIDER_MARKER_WIDTH = 10;
@@ -52,18 +47,18 @@ enum : imguiGfxCmdType
 
 struct imguiGfxRect
 {
-    short x, y, w, h, r;
+    int x, y, w, h, r;
 }
 
 struct imguiGfxText
 {
-    short x, y, align_;
+    int x, y, align_;
     const(char)[] text;
 }
 
 struct imguiGfxLine
 {
-    short x0, y0, x1, y1, r;
+    int x0, y0, x1, y1, r;
 }
 
 struct GfxCmd
