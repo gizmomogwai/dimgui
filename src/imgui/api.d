@@ -146,6 +146,7 @@ class ImGui
     this()
     {
         gfxCmdQueue = appender!(GfxCmd[]);
+        gfxCmdQueue.reserve(512);
     }
     /++ Initialize the imgui library.
      Params:
