@@ -48,12 +48,20 @@ enum : imguiGfxCmdType
 struct imguiGfxRect
 {
     int x, y, w, h, r;
+    bool outside(int height)
+    {
+        return (y > height) ||  (y+h < 0);
+    }
 }
 
 struct imguiGfxText
 {
     int x, y, align_;
     const(char)[] text;
+    bool outside(int height)
+    {
+        return (y > height) || (y + TEXT_HEIGHT < 0);
+    }
 }
 
 struct imguiGfxLine

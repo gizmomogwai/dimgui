@@ -644,6 +644,11 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
     {
         if (cmd.type == IMGUI_GFXCMD_RECT)
         {
+            if (cmd.rect.outside(height))
+            {
+                continue;
+            }
+
             if (cmd.rect.r == 0)
             {
                 drawRect(cast(float) cmd.rect.x * s + 0.5f,
@@ -662,7 +667,7 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
         else if (cmd.type == IMGUI_GFXCMD_LINE)
         {
             drawLine(cmd.line.x0 * s, cmd.line.y0 * s, cmd.line.x1 * s,
-                    cmd.line.y1 * s, cmd.line.r * s, 1.0f, cmd.color);
+                     cmd.line.y1 * s, cmd.line.r * s, 1.0f, cmd.color);
         }
         else if (cmd.type == IMGUI_GFXCMD_TRIANGLE)
         {
@@ -694,6 +699,10 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
         }
         else if (cmd.type == IMGUI_GFXCMD_TEXT)
         {
+            if (cmd.text.outside(height))
+            {
+                continue;
+            }
             drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.color);
         }
         else if (cmd.type == IMGUI_GFXCMD_SCISSOR)
