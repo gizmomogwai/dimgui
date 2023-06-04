@@ -225,10 +225,13 @@ class ImGui
 
     public void addGfxCmdScissor(int x, int y, int w, int h)
     {
+        // dfmt off
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_SCISSOR, flags: x < 0 ? 0 : 1, rect: imguiGfxRect(cast(int) x,
-                                                                                 cast(int) y, cast(int) w, cast(int) h)
+            type: IMGUI_GFXCMD_SCISSOR,
+            flags: x < 0 ? 0 : 1,
+            rect: imguiGfxRect(x, y, w, h),
         };
+        // dfmt on
         gfxCmdQueue.put(cmd);
     }
 
@@ -1119,8 +1122,7 @@ class ImGui
     /** Render all of the batched commands for the current frame. */
     void render()
     {
-        auto data = gfxCmdQueue[];
-        renderGLDraw(data, state.width, state.height);
+        renderGLDraw(gfxCmdQueue[], state.width, state.height);
     }
 
 }
