@@ -28,7 +28,7 @@ import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.range : Appender, appender, empty;
 import std.conv : to;
-import imgui.engine : GuiState, GfxCmd, IMGUI_GFXCMD_SCISSOR, imguiGfxRect, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE, imguiGfxLine, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, imguiGfxText, SCROLL_AREA_PADDING, SCROLL_BAR_SIZE, AREA_HEADER, TEXT_HEIGHT, TEXT_BASELINE, SCROLL_BAR_HANDLE_SIZE, BUTTON_HEIGHT, DEFAULT_SPACING, CHECK_SIZE, SLIDER_HEIGHT, SLIDER_MARKER_WIDTH, INDENT_SIZE;
+import imgui.engine : Sizes, GuiState, GfxCmd, IMGUI_GFXCMD_SCISSOR, imguiGfxRect, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE, imguiGfxLine, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, imguiGfxText;
 import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
@@ -230,51 +230,64 @@ class ImGui
         gfxCmdQueue.put(cmd);
     }
 
-    public void addGfxCmdRect(float x, float y, float w, float h, RGBA color)
+    public void addGfxCmdRect(int x, int y, int w, int h, RGBA color)
     {
+        // dfmt off
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_RECT, color: color.toPackedRGBA(), rect: imguiGfxRect(cast(int)(x * 8.0f),
-                                                                                     cast(int)(y * 8.0f), cast(int)(w * 8.0f), cast(int)(h * 8.0f))
+            type: IMGUI_GFXCMD_RECT,
+            color: color.toPackedRGBA(),
+            rect: imguiGfxRect(x, y, w, h),
         };
+        // dfmt on
         gfxCmdQueue.put(cmd);
     }
 
-    public void addGfxCmdLine(float x0, float y0, float x1, float y1, float r, RGBA color)
+    public void addGfxCmdLine(int x1, int y1, int x2, int y2, int r, RGBA color)
     {
+        // dfmt off
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_LINE, color: color.toPackedRGBA(), line: imguiGfxLine(cast(int)(x0 * 8.0f),
-                                                                                     cast(int)(y0 * 8.0f), cast(int)(x1 * 8.0f),
-                                                                                     cast(int)(y1 * 8.0f), cast(int)(r * 8.0f))
+            type: IMGUI_GFXCMD_LINE,
+            color: color.toPackedRGBA(),
+            line: imguiGfxLine(x1, y1, x2, y2, r),
         };
+        // dfmt on
         gfxCmdQueue.put(cmd);
     }
 
-    public void addGfxCmdRoundedRect(float x, float y, float w, float h, float r, RGBA color)
+    public void addGfxCmdRoundedRect(int x, int y, int w, int h, int r, RGBA color)
     {
+        // dfmt off
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_RECT, color: color.toPackedRGBA(), rect: imguiGfxRect(cast(int)(x * 8.0f),
-                                                                                     cast(int)(y * 8.0f), cast(int)(w * 8.0f),
-                                                                                     cast(int)(h * 8.0f), cast(int)(r * 8.0f))
+            type: IMGUI_GFXCMD_RECT,
+            color: color.toPackedRGBA(),
+            rect: imguiGfxRect(x, y, w, h, r),
         };
+        // dfmt on
         gfxCmdQueue.put(cmd);
     }
 
     public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
     {
+        // dfmt off
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_TRIANGLE, flags: cast(byte) flags, color: color.toPackedRGBA(), rect: imguiGfxRect(
-              cast(int)(x * 8.0f), cast(int)(y * 8.0f),
-              cast(int)(w * 8.0f), cast(int)(h * 8.0f))
+            type: IMGUI_GFXCMD_TRIANGLE,
+            flags: cast(byte) flags,
+            color: color.toPackedRGBA(),
+            rect: imguiGfxRect(x, y, w, h),
         };
+        // dfmt on
         gfxCmdQueue.put(cmd);
     }
 
     public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
     {
+        // dfmt off
         GfxCmd cmd = {
-            type: IMGUI_GFXCMD_TEXT, color: color.toPackedRGBA(), text: imguiGfxText(cast(int) x,
-                                                                                     cast(int) y, cast(int) align_, text)
+            type: IMGUI_GFXCMD_TEXT,
+            color: color.toPackedRGBA(),
+            text: imguiGfxText(x, y, align_, text),
         };
+        // dfmt on
         gfxCmdQueue.put(cmd);
     }
 
@@ -308,22 +321,22 @@ class ImGui
         context.horizontalScrollId = (state.areaId << 16) | 1;
 
         context.scrollAreaRect = Rect(xPos, yPos, width, height);
-        context.viewport = Rect(xPos + SCROLL_AREA_PADDING, yPos + SCROLL_BAR_SIZE,
-                                max(1, width - SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
-                                max(1,
-                                    height - AREA_HEADER - SCROLL_BAR_SIZE)); // avoiding a segfault.
+        context.viewport =
+            Rect(xPos + Sizes.SCROLL_AREA_PADDING, yPos + Sizes.SCROLL_BAR_SIZE,
+                 max(1, width - Sizes.SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
+                 max(1, height - Sizes.AREA_HEADER - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
 
-        state.widgetX = xPos + SCROLL_AREA_PADDING - context.xOffset;
+        state.widgetX = xPos + Sizes.SCROLL_AREA_PADDING - context.xOffset;
 
-        context.verticalScrollbar = Rect(xPos + width - SCROLL_BAR_SIZE,
-                                         yPos + SCROLL_BAR_SIZE, SCROLL_BAR_SIZE, height - AREA_HEADER - SCROLL_BAR_SIZE);
+        context.verticalScrollbar = Rect(xPos + width - Sizes.SCROLL_BAR_SIZE,
+                                         yPos + Sizes.SCROLL_BAR_SIZE, Sizes.SCROLL_BAR_SIZE, height - Sizes.AREA_HEADER - Sizes.SCROLL_BAR_SIZE);
         context.horizontalScrollbar = Rect(context.scrollAreaRect.x, context.scrollAreaRect.y,
-                                           context.scrollAreaRect.w - SCROLL_BAR_SIZE, SCROLL_BAR_SIZE);
+                                           context.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE, Sizes.SCROLL_BAR_SIZE);
         if (context.reveal.active)
         {
             // dfmt off
             context.yOffset = cast(int)(
-              yPos + height - AREA_HEADER + context.yOffset
+              yPos + height - Sizes.AREA_HEADER + context.yOffset
               - context.reveal.yOffset
               - context.viewport.h * context.reveal.percentage);
             // dfmt on
@@ -331,8 +344,8 @@ class ImGui
             context.reveal.active = false;
         }
 
-        state.widgetY = yPos + height - AREA_HEADER + context.yOffset;
-        state.widgetW = scrollHorizontal ? scrolledHorizontalPixels : width - SCROLL_AREA_PADDING
+        state.widgetY = yPos + height - Sizes.AREA_HEADER + context.yOffset;
+        state.widgetW = scrollHorizontal ? scrolledHorizontalPixels : width - Sizes.SCROLL_AREA_PADDING
             * 4;
 
         context.scrolledHorizontalPixels = scrolledHorizontalPixels;
@@ -345,7 +358,7 @@ class ImGui
         addGfxCmdRoundedRect(cast(float) xPos, cast(float) yPos,
                              cast(float) width, cast(float) height, 6, colorScheme.scroll.area.back);
 
-        addGfxCmdText(xPos + AREA_HEADER / 2, yPos + height - AREA_HEADER / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(xPos + Sizes.AREA_HEADER / 2, yPos + height - Sizes.AREA_HEADER / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, title, colorScheme.scroll.area.text);
 
         addGfxCmdScissor(context.viewport);
@@ -361,14 +374,14 @@ class ImGui
 
     auto verticalScrollbarRect(const ref Rect scrollbar)
     {
-        return Rect(scrollbar.x + SCROLL_AREA_PADDING / 2, scrollbar.y,
-                    SCROLL_BAR_HANDLE_SIZE, scrollbar.h);
+        return Rect(scrollbar.x + Sizes.SCROLL_AREA_PADDING / 2, scrollbar.y,
+                    Sizes.SCROLL_BAR_HANDLE_SIZE, scrollbar.h);
     }
 
     auto horizontalScrollbarRect(const ref Rect scrollbar)
     {
-        return Rect(scrollbar.x, scrollbar.y + SCROLL_AREA_PADDING / 2,
-                    scrollbar.w, SCROLL_BAR_HANDLE_SIZE);
+        return Rect(scrollbar.x, scrollbar.y + Sizes.SCROLL_AREA_PADDING / 2,
+                    scrollbar.w, Sizes.SCROLL_BAR_HANDLE_SIZE);
     }
 
     auto endScrollAreaVerticalScroller(ref ScrollAreaContext context,
@@ -442,8 +455,8 @@ class ImGui
             percentageOfStart.clamp(0, 1);
 
             // Handle scroll bar logic.
-            auto visibleStart = percentageOfStart * (context.scrollAreaRect.w - SCROLL_BAR_SIZE);
-            auto visibleWidth = percentageVisible * (context.scrollAreaRect.w - SCROLL_BAR_SIZE);
+            auto visibleStart = percentageOfStart * (context.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE);
+            auto visibleWidth = percentageVisible * (context.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE);
             auto nob = Rect(cast(int)(scroller.x + visibleStart), scroller.y,
                             cast(int) visibleWidth, scroller.h);
 
@@ -474,12 +487,12 @@ class ImGui
                    : colorScheme.scroll.bar.thumb);
             // horizontal bar
             // background
-            addGfxCmdRect(cast(float) context.scrollAreaRect.x,
-                          cast(float) context.scrollAreaRect.y + SCROLL_AREA_PADDING / 2,
-                          cast(float) context.scrollAreaRect.w - SCROLL_BAR_SIZE,
-                          cast(float) SCROLL_BAR_HANDLE_SIZE, colorScheme.scroll.bar.back);
+            addGfxCmdRect(context.scrollAreaRect.x,
+                          context.scrollAreaRect.y + Sizes.SCROLL_AREA_PADDING / 2,
+                          context.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE,
+                          Sizes.SCROLL_BAR_HANDLE_SIZE, colorScheme.scroll.bar.back);
 
-            addGfxCmdRect(cast(float) nob.x, cast(float) nob.y, cast(float) nob.w, nob.h, color);
+            addGfxCmdRect(nob.x, nob.y, nob.w, nob.h, color);
         }
         return tuple!("pixels", "visible")(context.scrolledHorizontalPixels, visible);
     }
@@ -557,21 +570,20 @@ class ImGui
         uint id = (state.areaId << 16) | state.widgetId;
 
         int x = state.widgetX;
-        int y = state.widgetY - BUTTON_HEIGHT;
+        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         int w = state.widgetW;
-        int h = BUTTON_HEIGHT;
-        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+        int h = Sizes.BUTTON_HEIGHT;
+        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
         bool over = enabled && state.inRect(x, y, w, h);
-        addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-                             cast(float) h, 10, state.isIdActive(id)
+        addGfxCmdRoundedRect(x, y, w, h, 10, state.isIdActive(id)
                              ? colorScheme.button.backPress : colorScheme.button.back);
 
         auto color = enabled ? (state.isIdHot(id)
                                 ? colorScheme.button.textHover : colorScheme.button.text)
             : colorScheme.button.textDisabled;
-        addGfxCmdText(x + BUTTON_HEIGHT / 2,
-                      y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + Sizes.BUTTON_HEIGHT / 2,
+                      y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, color);
 
         return state.buttonLogic(id, over);
@@ -607,10 +619,10 @@ class ImGui
         uint id = (state.areaId << 16) | state.widgetId;
 
         int x = state.widgetX;
-        int y = state.widgetY - BUTTON_HEIGHT;
+        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         int w = state.widgetW;
-        int h = BUTTON_HEIGHT;
-        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+        int h = Sizes.BUTTON_HEIGHT;
+        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
@@ -618,26 +630,26 @@ class ImGui
         if (res) // toggle the state
             *checkState ^= 1;
 
-        const int cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-        const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+        const int cx = x + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
+        const int cy = y + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
 
-        addGfxCmdRoundedRect(cast(float) cx - 3, cast(float) cy - 3,
-                             cast(float) CHECK_SIZE + 6, cast(float) CHECK_SIZE + 6, 4, state.isIdActive(id)
-                             ? colorScheme.checkbox.press : colorScheme.checkbox.back);
-
+        // dfmt off
+        addGfxCmdRoundedRect(cx - 3, cy - 3,
+                             Sizes.CHECK_SIZE + 6, Sizes.CHECK_SIZE + 6,
+                             4, state.isIdActive(id) ? colorScheme.checkbox.press : colorScheme.checkbox.back);
+        // dfmt on
         if (*checkState)
         {
             auto color = enabled ? (state.isIdActive(id)
                                     ? colorScheme.checkbox.checked : colorScheme.checkbox.doUncheck)
                 : colorScheme.checkbox.disabledChecked;
-            addGfxCmdRoundedRect(cast(float) cx, cast(float) cy, cast(float) CHECK_SIZE,
-                                 cast(float) CHECK_SIZE, cast(float) CHECK_SIZE / 2 - 1, color);
+            addGfxCmdRoundedRect(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE / 2 - 1, color);
         }
 
         auto color = enabled ? (state.isIdHot(id)
                                 ? colorScheme.checkbox.textHover : colorScheme.checkbox.text)
             : colorScheme.checkbox.textDisabled;
-        addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + Sizes.BUTTON_HEIGHT, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, color);
 
         return res;
@@ -665,10 +677,10 @@ class ImGui
         uint id = (state.areaId << 16) | state.widgetId;
 
         int x = state.widgetX;
-        int y = state.widgetY - BUTTON_HEIGHT;
+        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         int w = state.widgetW;
-        int h = BUTTON_HEIGHT;
-        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+        int h = Sizes.BUTTON_HEIGHT;
+        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
@@ -678,7 +690,7 @@ class ImGui
                                  cast(float) h, 10, state.isIdActive(id)
                                  ? colorScheme.item.press : colorScheme.item.hover);
 
-        addGfxCmdText(x + BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + Sizes.BUTTON_HEIGHT / 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, enabled ? colorScheme.item.text
                       : colorScheme.item.textDisabled);
 
@@ -709,13 +721,13 @@ class ImGui
         uint id = (state.areaId << 16) | state.widgetId;
 
         int x = state.widgetX;
-        int y = state.widgetY - BUTTON_HEIGHT;
+        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         int w = state.widgetW;
-        int h = BUTTON_HEIGHT;
-        state.widgetY -= BUTTON_HEIGHT; // + DEFAULT_SPACING;
+        int h = Sizes.BUTTON_HEIGHT;
+        state.widgetY -= Sizes.BUTTON_HEIGHT; // + DEFAULT_SPACING;
 
-        const int cx = x + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
-        const int cy = y + BUTTON_HEIGHT / 2 - CHECK_SIZE / 2;
+        const int cx = x + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
+        const int cy = y + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
 
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
@@ -726,16 +738,16 @@ class ImGui
         auto triangleColor = (*checkState) ? (state.isIdActive(id)
                                               ? colorScheme.collapse.doHide : colorScheme.collapse.shown) : state.isIdActive(id)
             ? colorScheme.collapse.doShow : colorScheme.collapse.hidden;
-        addGfxCmdTriangle(cx, cy, CHECK_SIZE, CHECK_SIZE, 2, triangleColor);
+        addGfxCmdTriangle(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE, 2, triangleColor);
 
         auto textColor = enabled ? (state.isIdHot(id)
                                     ? colorScheme.collapse.textHover : colorScheme.collapse.text)
             : colorScheme.collapse.textDisabled;
-        addGfxCmdText(x + BUTTON_HEIGHT, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + Sizes.BUTTON_HEIGHT, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, textColor);
 
         if (subtext)
-            addGfxCmdText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+            addGfxCmdText(x + w - Sizes.BUTTON_HEIGHT / 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                           TextAlign.right, subtext, colorScheme.collapse.subtext);
 
         return res;
@@ -752,9 +764,9 @@ class ImGui
     void label(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         int x = state.widgetX;
-        int y = state.widgetY - BUTTON_HEIGHT;
-        state.widgetY -= BUTTON_HEIGHT;
-        addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        state.widgetY -= Sizes.BUTTON_HEIGHT;
+        addGfxCmdText(x, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, colorScheme.label.text);
     }
 
@@ -769,11 +781,11 @@ class ImGui
     void value(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         const int x = state.widgetX;
-        const int y = state.widgetY - BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         const int w = state.widgetW;
-        state.widgetY -= BUTTON_HEIGHT;
+        state.widgetY -= Sizes.BUTTON_HEIGHT;
 
-        addGfxCmdText(x + w - BUTTON_HEIGHT / 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + w - Sizes.BUTTON_HEIGHT / 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.right, label, colorScheme.value.text);
     }
 
@@ -804,22 +816,21 @@ class ImGui
         uint id = (state.areaId << 16) | state.widgetId;
 
         int x = state.widgetX;
-        int y = state.widgetY - BUTTON_HEIGHT;
+        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         int w = state.widgetW;
-        int h = SLIDER_HEIGHT;
-        state.widgetY -= SLIDER_HEIGHT + DEFAULT_SPACING;
+        int h = Sizes.SLIDER_HEIGHT;
+        state.widgetY -= Sizes.SLIDER_HEIGHT + Sizes.DEFAULT_SPACING;
 
-        addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-                             cast(float) h, 4.0f, colorScheme.slider.back);
+        addGfxCmdRoundedRect(x, y, w, h, 4, colorScheme.slider.back);
 
-        const int range = w - SLIDER_MARKER_WIDTH;
+        const int range = w - Sizes.SLIDER_MARKER_WIDTH;
 
         float u = (*sliderState - minValue) / (maxValue - minValue);
         u.clamp(0, 1);
 
         int m = cast(int)(u * range);
 
-        bool over = enabled && state.inRect(x + m, y, SLIDER_MARKER_WIDTH, SLIDER_HEIGHT);
+        bool over = enabled && state.inRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH, Sizes.SLIDER_HEIGHT);
         bool res = state.buttonLogic(id, over);
         bool valChanged = false;
 
@@ -845,8 +856,7 @@ class ImGui
 
         auto color = state.isIdActive(id) ? colorScheme.slider.thumbPress
             : (state.isIdHot(id) ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
-        addGfxCmdRoundedRect(cast(float)(x + m), cast(float) y,
-                             cast(float) SLIDER_MARKER_WIDTH, cast(float) SLIDER_HEIGHT, 4.0f, color);
+        addGfxCmdRoundedRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH, Sizes.SLIDER_HEIGHT, 4, color);
 
         // TODO: fix this, take a look at 'nicenum'.
         // todo: this should display sub 0.1 if the step is low enough.
@@ -862,9 +872,9 @@ class ImGui
         auto sliderValueColor = enabled ? (state.isIdHot(id)
                                            ? colorScheme.slider.valueHover : colorScheme.slider.value)
             : colorScheme.slider.valueDisabled;
-        addGfxCmdText(x + SLIDER_HEIGHT / 2, y + SLIDER_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + Sizes.SLIDER_HEIGHT / 2, y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, sliderTextColor);
-        addGfxCmdText(x + w - SLIDER_HEIGHT / 2, y + SLIDER_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + w - Sizes.SLIDER_HEIGHT / 2, y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.right, msg, sliderValueColor);
 
         return res || valChanged;
@@ -954,8 +964,8 @@ class ImGui
         state.widgetId++;
         uint id = (state.areaId << 16) | state.widgetId;
         int x = state.widgetX;
-        int y = state.widgetY - BUTTON_HEIGHT;
-        addGfxCmdText(x, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        addGfxCmdText(x, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, colorScheme.textInput.label);
 
         bool res = false;
@@ -991,39 +1001,39 @@ class ImGui
         // Draw buffer data
         uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
         x += labelLen;
-        int w = state.widgetW - labelLen - DEFAULT_SPACING * 2;
-        int h = BUTTON_HEIGHT;
+        int w = state.widgetW - labelLen - Sizes.DEFAULT_SPACING * 2;
+        int h = Sizes.BUTTON_HEIGHT;
         bool over = state.inRect(x, y, w, h);
         state.textInputLogic(id, over, forceInputable);
-        addGfxCmdRoundedRect(cast(float)(x + DEFAULT_SPACING), cast(float) y,
+        addGfxCmdRoundedRect(cast(float)(x + Sizes.DEFAULT_SPACING), cast(float) y,
                              cast(float) w, cast(float) h, 10, state.isIdInputable(id)
                              ? colorScheme.textInput.back : colorScheme.textInput.backDisabled);
-        addGfxCmdText(x + DEFAULT_SPACING * 2, y + BUTTON_HEIGHT / 2 - TEXT_HEIGHT / 2 + TEXT_BASELINE,
+        addGfxCmdText(x + Sizes.DEFAULT_SPACING * 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, usedSlice, state.isIdInputable(id)
                       ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
 
-        state.widgetY -= BUTTON_HEIGHT + DEFAULT_SPACING;
+        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
         return res;
     }
 
     /** Add horizontal indentation for elements to be added. */
     void indent()
     {
-        state.widgetX += INDENT_SIZE;
-        state.widgetW -= INDENT_SIZE;
+        state.widgetX += Sizes.INDENT_SIZE;
+        state.widgetW -= Sizes.INDENT_SIZE;
     }
 
     /** Remove horizontal indentation for elements to be added. */
     void unindent()
     {
-        state.widgetX -= INDENT_SIZE;
-        state.widgetW += INDENT_SIZE;
+        state.widgetX -= Sizes.INDENT_SIZE;
+        state.widgetW += Sizes.INDENT_SIZE;
     }
 
     /** Add vertical space as a separator below the last element. */
     void separator()
     {
-        state.widgetY -= DEFAULT_SPACING * 3;
+        state.widgetY -= Sizes.DEFAULT_SPACING * 3;
     }
 
     /**
@@ -1035,13 +1045,12 @@ class ImGui
     void separatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
     {
         int x = state.widgetX;
-        int y = state.widgetY - DEFAULT_SPACING * 2;
+        int y = state.widgetY - Sizes.DEFAULT_SPACING * 2;
         int w = state.widgetW;
         int h = 1;
-        state.widgetY -= DEFAULT_SPACING * 4;
+        state.widgetY -= Sizes.DEFAULT_SPACING * 4;
 
-        addGfxCmdRect(cast(float) x, cast(float) y, cast(float) w, cast(float) h,
-                      colorScheme.separator);
+        addGfxCmdRect(x, y, w, h, colorScheme.separator);
     }
 
     /**
@@ -1062,7 +1071,7 @@ class ImGui
        Params:
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void drawLine(float x0, float y0, float x1, float y1, float r,
+    void drawLine(int x0, int y0, int x1, int y1, int r,
                   RGBA color = defaultColorScheme.generic.line)
     {
         addGfxCmdLine(x0, y0, x1, y1, r, color);
@@ -1074,7 +1083,7 @@ class ImGui
        Params:
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void drawRect(float xPos, float yPos, float width, float height,
+    void drawRect(int xPos, int yPos, int width, int height,
                   RGBA color = defaultColorScheme.generic.rect)
     {
         addGfxCmdRect(xPos, yPos, width, height, color);
@@ -1086,10 +1095,10 @@ class ImGui
        Params:
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void drawRoundedRect(float xPos, float yPos, float width, float height, float r,
+    void drawRoundedRect(int x, int y, int width, int height, int r,
                          RGBA color = defaultColorScheme.generic.roundRect)
     {
-        addGfxCmdRoundedRect(xPos, yPos, width, height, r, color);
+        addGfxCmdRoundedRect(x, y, width, height, r, color);
     }
     /** End the list of batched commands for the current frame. */
     void endFrame()

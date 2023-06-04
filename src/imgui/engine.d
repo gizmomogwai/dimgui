@@ -21,19 +21,20 @@ import imgui.api : MouseInfo, MouseButton;
 
 package:
 
-enum BUTTON_HEIGHT = 60;
-enum SLIDER_HEIGHT = 40;
-enum SLIDER_MARKER_WIDTH = 10;
-enum CHECK_SIZE = 8;
-enum DEFAULT_SPACING = 4;
-enum TEXT_HEIGHT = 35;
-enum TEXT_BASELINE = 5;
-enum SCROLL_AREA_PADDING = 6;
-enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING * 3;
-enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING * 2;
-enum INDENT_SIZE = 16;
-enum AREA_HEADER = 35;
-
+struct Sizes {
+    enum BUTTON_HEIGHT = 60;
+    enum SLIDER_HEIGHT = 40;
+    enum SLIDER_MARKER_WIDTH = 10;
+    enum CHECK_SIZE = 8;
+    enum DEFAULT_SPACING = 4;
+    enum TEXT_HEIGHT = 35;
+    enum TEXT_BASELINE = 5;
+    enum SCROLL_AREA_PADDING = 6;
+    enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING * 3;
+    enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING * 2;
+    enum INDENT_SIZE = 16;
+    enum AREA_HEADER = 35;
+}
 // Pull render interface.
 alias imguiGfxCmdType = int;
 enum : imguiGfxCmdType
@@ -48,10 +49,6 @@ enum : imguiGfxCmdType
 struct imguiGfxRect
 {
     int x, y, w, h, r;
-    bool outside(int height)
-    {
-        return (y > height) ||  (y+h < 0);
-    }
 }
 
 struct imguiGfxText
@@ -60,13 +57,17 @@ struct imguiGfxText
     const(char)[] text;
     bool outside(int height)
     {
-        return (y > height) || (y + TEXT_HEIGHT < 0);
+        return (y > height) || (y + Sizes.TEXT_HEIGHT < 0);
     }
 }
 
 struct imguiGfxLine
 {
     int x0, y0, x1, y1, r;
+    bool outside(int height)
+    {
+        return (y0 < 0 && y1 <0) || (y0 > height && y1 > height);
+    }
 }
 
 struct GfxCmd

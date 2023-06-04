@@ -17,17 +17,15 @@
  */
 module imgui.gl3_renderer;
 
+import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer, glBufferData, glDrawArrays, loadOpenGL, GL_TEXTURE_2D, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport, glDeleteTextures, glDeleteVertexArrays, glDeleteBuffers, glDeleteProgram, glViewport, glUseProgram, glActiveTexture, glUniform2f, glUniform1i, glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
 import core.stdc.stdlib : free, malloc;
 import core.stdc.string : memset;
-
+import imgui.api : RGBA, TextAlign;
+import imgui.engine : GfxCmd, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, IMGUI_GFXCMD_SCISSOR, Sizes;
+import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad, stbtt_BakeFontBitmap, STBTT_ifloor;
+import std.exception : enforce;
 import std.file : read;
 import std.math : sqrt, PI, cos, sin;
-
-import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer, glBufferData, glDrawArrays, loadOpenGL, GL_TEXTURE_2D, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport, glDeleteTextures, glDeleteVertexArrays, glDeleteBuffers, glDeleteProgram, glViewport, glUseProgram, glActiveTexture, glUniform2f, glUniform1i, glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
-
-import imgui.api : RGBA, TextAlign;
-import imgui.engine : GfxCmd, TEXT_HEIGHT, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, IMGUI_GFXCMD_SCISSOR;
-import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad, stbtt_BakeFontBitmap, STBTT_ifloor;
 
 private:
 // Draw up to 65536 unicode glyphs.  What this will actually do is draw *only glyphs the
@@ -102,7 +100,13 @@ void* imguimalloc(size_t size, void*  /*userptr*/ )
 
 uint toPackedRGBA(RGBA color)
 {
-    return (color.r) | (color.g << 8) | (color.b << 16) | (color.a << 24);
+    // dfmt off
+    return
+        (color.r << 0) |
+        (color.g << 8) |
+        (color.b << 16) |
+        (color.a << 24);
+    // dfmt on
 }
 
 void drawPolygon(const(float)* coords, uint numCoords, float r, uint col)
@@ -129,13 +133,16 @@ void drawPolygon(const(float)* coords, uint numCoords, float r, uint col)
     }
 
     const float[4] colf = [
-        cast(float)(col & 0xff) / 255.0, cast(float)((col >> 8) & 0xff) / 255.0,
-        cast(float)((col >> 16) & 0xff) / 255.0,
-        cast(float)((col >> 24) & 0xff) / 255.0
+        (col & 0xff) / 255.0f,
+        ((col >> 8) & 0xff) / 255.0f,
+        ((col >> 16) & 0xff) / 255.0f,
+        ((col >> 24) & 0xff) / 255.0f
     ];
     const float[4] colTransf = [
-        cast(float)(col & 0xff) / 255.0, cast(float)((col >> 8) & 0xff) / 255.0,
-        cast(float)((col >> 16) & 0xff) / 255.0, 0
+        (col & 0xff) / 255.0f,
+        ((col >> 8) & 0xff) / 255.0f,
+        ((col >> 16) & 0xff) / 255.0f,
+        0f
     ];
 
     for (uint i = 0, j = numCoords - 1; i < numCoords; j = i++)
@@ -373,7 +380,6 @@ void drawLine(float x0, float y0, float x1, float y1, float r, float fth, uint c
 void loadBindBCOpenGL()
 {
     const result = loadOpenGL();
-    import std.exception : enforce;
 
     (result == GLSupport.gl33).enforce("need opengl 3.3 support");
 }
@@ -394,7 +400,7 @@ bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
     ubyte[] ttfBuffer = cast(ubyte[]) fontpath.read;
     ubyte[] bmap = new ubyte[g_font_texture_size * g_font_texture_size];
 
-    const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, TEXT_HEIGHT, bmap.ptr, g_font_texture_size,
+    const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, Sizes.TEXT_HEIGHT, bmap.ptr, g_font_texture_size,
             g_font_texture_size, FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
     // If result is negative, we baked less than max characters so update the max
     // character count.
@@ -438,22 +444,37 @@ bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
     glBufferData(GL_ARRAY_BUFFER, 0, null, GL_STATIC_DRAW);
     g_program = glCreateProgram();
 
-    string vs = "#version 150\n" ~ "uniform vec2 Viewport;\n" ~ "in vec2 VertexPosition;\n"
-        ~ "in vec2 VertexTexCoord;\n" ~ "in vec4 VertexColor;\n"
-        ~ "out vec2 texCoord;\n" ~ "out vec4 vertexColor;\n" ~ "void main(void)\n" ~ "{\n"
-        ~ "    vertexColor = VertexColor;\n"
-        ~ "    texCoord = VertexTexCoord;\n"
-        ~ "    gl_Position = vec4(VertexPosition * 2.0 / Viewport - 1.0, 0.f, 1.0);\n" ~ "}\n";
+    string vs = `
+#version 150
+uniform vec2 Viewport;
+in vec2 VertexPosition;
+in vec2 VertexTexCoord;
+in vec4 VertexColor;
+out vec2 texCoord;
+out vec4 vertexColor;
+void main(void)
+{
+    vertexColor = VertexColor;
+    texCoord = VertexTexCoord;
+    gl_Position = vec4(VertexPosition * 2.0 / Viewport - 1.0, 0.f, 1.0);
+}`;
     GLuint vso = glCreateShader(GL_VERTEX_SHADER);
     auto vsPtr = vs.ptr;
     glShaderSource(vso, 1, &vsPtr, null);
     glCompileShader(vso);
     glAttachShader(g_program, vso);
 
-    string fs = "#version 150\n" ~ "in vec2 texCoord;\n" ~ "in vec4 vertexColor;\n"
-        ~ "uniform sampler2D Texture;\n" ~ "out vec4  Color;\n" ~ "void main(void)\n"
-        ~ "{\n" ~ "    float alpha = texture(Texture, texCoord).r;\n"
-        ~ "    Color = vec4(vertexColor.rgb, vertexColor.a * alpha);\n" ~ "}\n";
+    string fs = `
+#version 150
+in vec2 texCoord;
+in vec4 vertexColor;
+uniform sampler2D Texture;
+out vec4  Color;
+void main(void)
+{
+    float alpha = texture(Texture, texCoord).r;
+    Color = vec4(vertexColor.rgb, vertexColor.a * alpha);
+}`;
     GLuint fso = glCreateShader(GL_FRAGMENT_SHADER);
 
     auto fsPtr = fs.ptr;
@@ -507,10 +528,10 @@ void getBakedQuad(stbtt_bakedchar* chardata, int pw, int ph, int char_index,
     int round_x = STBTT_ifloor(*xpos + b.xoff);
     int round_y = STBTT_ifloor(*ypos - b.yoff);
 
-    q.x0 = cast(float) round_x;
-    q.y0 = cast(float) round_y;
-    q.x1 = cast(float) round_x + b.x1 - b.x0;
-    q.y1 = cast(float) round_y - b.y1 + b.y0;
+    q.x0 = round_x;
+    q.y0 = round_y;
+    q.x1 = round_x + b.x1 - b.x0;
+    q.y1 = round_y - b.y1 + b.y0;
 
     q.s0 = b.x0 / cast(float) pw;
     q.t0 = b.y0 / cast(float) pw;
@@ -557,7 +578,7 @@ float getTextLength(const(char)[] text)
     return getTextLength(g_cdata.ptr, text);
 }
 
-void drawText(float x, float y, const(char)[] text, int align_, uint col)
+void drawText(float x, float y, const(char)[] text, int align_, uint color)
 {
     if (!g_ftex)
         return;
@@ -570,10 +591,10 @@ void drawText(float x, float y, const(char)[] text, int align_, uint col)
     else if (align_ == TextAlign.right)
         x -= getTextLength(g_cdata.ptr, text);
 
-    float r = cast(float)(col & 0xff) / 255.0;
-    float g = cast(float)((col >> 8) & 0xff) / 255.0;
-    float b = cast(float)((col >> 16) & 0xff) / 255.0;
-    float a = cast(float)((col >> 24) & 0xff) / 255.0;
+    const r = (color & 0xff) / 255.0f;
+    const g = ((color >> 8) & 0xff) / 255.0f;
+    const b = ((color >> 16) & 0xff) / 255.0f;
+    const a = ((color >> 24) & 0xff) / 255.0f;
 
     // assume orthographic projection with units = screen pixels, origin at top left
     glBindTexture(GL_TEXTURE_2D, g_ftex);
@@ -623,19 +644,19 @@ void drawText(float x, float y, const(char)[] text, int align_, uint col)
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
     }
+}
 
-    // glEnd();
-    // glDisable(GL_TEXTURE_2D);
+bool outside(float y, float h, float height)
+{
+    return (y > height) || (y+h<0);
 }
 
 void renderGLDraw(GfxCmd[] commands, int width, int height)
 {
-    const float s = 1.0f / 8.0f;
-
     glViewport(0, 0, width, height);
     glUseProgram(g_program);
     glActiveTexture(GL_TEXTURE0);
-    glUniform2f(g_programViewportLocation, cast(float) width, cast(float) height);
+    glUniform2f(g_programViewportLocation, width, height);
     glUniform1i(g_programTextureLocation, 0);
 
     glDisable(GL_SCISSOR_TEST);
@@ -644,42 +665,43 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
     {
         if (cmd.type == IMGUI_GFXCMD_RECT)
         {
-            if (cmd.rect.outside(height))
+            auto y = cmd.rect.y + 0.5f;
+            auto h = cmd.rect.h - 1;
+            if (outside(y, h, height))
             {
                 continue;
             }
 
             if (cmd.rect.r == 0)
             {
-                drawRect(cast(float) cmd.rect.x * s + 0.5f,
-                        cast(float) cmd.rect.y * s + 0.5f,
-                        cast(float) cmd.rect.w * s - 1,
-                        cast(float) cmd.rect.h * s - 1, 1.0f, cmd.color);
+                drawRect(cmd.rect.x + 0.5f, y,
+                         cmd.rect.w - 1, h,
+                         1.0f, cmd.color);
             }
             else
             {
-                drawRoundedRect(cast(float) cmd.rect.x * s + 0.5f,
-                        cast(float) cmd.rect.y * s + 0.5f,
-                        cast(float) cmd.rect.w * s - 1,
-                        cast(float) cmd.rect.h * s - 1, cast(float) cmd.rect.r * s, 1.0f, cmd.color);
+                drawRoundedRect(cmd.rect.x + 0.5f, y,
+                                cmd.rect.w - 1, h,
+                                cmd.rect.r, 1.0f, cmd.color);
             }
         }
         else if (cmd.type == IMGUI_GFXCMD_LINE)
         {
-            drawLine(cmd.line.x0 * s, cmd.line.y0 * s, cmd.line.x1 * s,
-                     cmd.line.y1 * s, cmd.line.r * s, 1.0f, cmd.color);
+            drawLine(cmd.line.x0, cmd.line.y0,
+                     cmd.line.x1, cmd.line.y1,
+                     cmd.line.r, 1.0f, RGBA(255, 0,0,255).toPackedRGBA);//cmd.color);
         }
         else if (cmd.type == IMGUI_GFXCMD_TRIANGLE)
         {
             if (cmd.flags == 1)
             {
                 const float[3 * 2] verts = [
-                    cast(float) cmd.rect.x * s + 0.5f,
-                    cast(float) cmd.rect.y * s + 0.5f,
-                    cast(float) cmd.rect.x * s + 0.5f + cast(float) cmd.rect.w * s - 1,
-                    cast(float) cmd.rect.y * s + 0.5f + cast(float) cmd.rect.h * s / 2 - 0.5f,
-                    cast(float) cmd.rect.x * s + 0.5f,
-                    cast(float) cmd.rect.y * s + 0.5f + cast(float) cmd.rect.h * s - 1,
+                    cmd.rect.x + 0.5f,
+                    cmd.rect.y + 0.5f,
+                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
+                    cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f,
+                    cmd.rect.x + 0.5f,
+                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
                 drawPolygon(verts.ptr, 3, 1.0f, cmd.color);
             }
@@ -687,12 +709,12 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
             if (cmd.flags == 2)
             {
                 const float[3 * 2] verts = [
-                    cast(float) cmd.rect.x * s + 0.5f,
-                    cast(float) cmd.rect.y * s + 0.5f + cast(float) cmd.rect.h * s - 1,
-                    cast(float) cmd.rect.x * s + 0.5f + cast(float) cmd.rect.w * s / 2 - 0.5f,
-                    cast(float) cmd.rect.y * s + 0.5f,
-                    cast(float) cmd.rect.x * s + 0.5f + cast(float) cmd.rect.w * s - 1,
-                    cast(float) cmd.rect.y * s + 0.5f + cast(float) cmd.rect.h * s - 1,
+                    cmd.rect.x + 0.5f,
+                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                    cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f,
+                    cmd.rect.y + 0.5f,
+                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
+                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
                 drawPolygon(verts.ptr, 3, 1.0f, cmd.color);
             }
