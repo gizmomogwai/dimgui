@@ -88,6 +88,8 @@ struct GfxCmd
 struct GuiState
 {
 public:
+    int width;
+    int height;
     bool left;
     bool leftPressed, leftReleased;
     MouseInfo mouseInfo = MouseInfo(-1, -1, 0, 0, 0);

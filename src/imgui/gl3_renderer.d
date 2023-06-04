@@ -669,7 +669,7 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
             auto h = cmd.rect.h - 1;
             if (outside(y, h, height))
             {
-                continue;
+                //continue;
             }
 
             if (cmd.rect.r == 0)
@@ -723,7 +723,7 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
         {
             if (cmd.text.outside(height))
             {
-                continue;
+                //continue;
             }
             drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.color);
         }

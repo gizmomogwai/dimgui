@@ -204,10 +204,12 @@ class ImGui
        which may not be automatically handled by your input library's text
        input functionality (e.g. GLFW's getUnicode() does not do this).
     */
-    void beginFrame(MouseInfo mouseInfo, dchar unicodeChar = 0)
+    void beginFrame(MouseInfo mouseInfo, int width, int height, dchar unicodeChar = 0)
     {
         state.updateInput(mouseInfo, unicodeChar);
         state.beginFrame();
+        state.width = width;
+        state.height = height;
         resetGfxCmdQueue();
     }
 
@@ -311,8 +313,10 @@ class ImGui
 
        $(D true) if the mouse was located inside the scrollable area.
     */
-    bool beginScrollArea(ref ScrollAreaContext context, const(char)[] title, int xPos, int yPos,
-                         int width, int height, bool scrollHorizontal = false, int scrolledHorizontalPixels = 2000,
+    bool beginScrollArea(ref ScrollAreaContext context,
+                         string title,
+                         int xPos, int yPos, int width, int height,
+                         bool scrollHorizontal = false, int scrolledHorizontalPixels = 2000,
                          const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.areaId++;
@@ -575,6 +579,11 @@ class ImGui
         int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
+        if ((y > state.height) || (y+h < 0))
+        {
+            return false;
+        }
+
         bool over = enabled && state.inRect(x, y, w, h);
         addGfxCmdRoundedRect(x, y, w, h, 10, state.isIdActive(id)
                              ? colorScheme.button.backPress : colorScheme.button.back);
@@ -612,7 +621,7 @@ class ImGui
        writeln(checkState);  // check the current state
        -----
     */
-    bool check(const(char)[] label, bool* checkState, Enabled enabled = Enabled.yes,
+    bool check(string label, bool* checkState, Enabled enabled = Enabled.yes,
                const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
@@ -623,7 +632,7 @@ class ImGui
         int w = state.widgetW;
         int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
-
+        // TODO vertical clipping (see button)
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
 
@@ -670,7 +679,7 @@ class ImGui
        Note that pressing an item implies pressing and releasing the
        left mouse button while over the item.
     */
-    bool item(const(char)[] label, Enabled enabled = Enabled.yes,
+    bool item(string label, Enabled enabled = Enabled.yes,
               const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
@@ -682,6 +691,7 @@ class ImGui
         int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
+        // TODO vertical clipping see button
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
 
@@ -714,7 +724,7 @@ class ImGui
        Note that pressing a collapsable element implies pressing and releasing the
        left mouse button while over the collapsable element.
     */
-    bool collapse(const(char)[] label, const(char)[] subtext, bool* checkState,
+    bool collapse(string label, string subtext, bool* checkState,
                   Enabled enabled = Enabled.yes, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
@@ -761,7 +771,7 @@ class ImGui
        label = The text that will be displayed as the label.
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void label(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
+    void label(string label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         int x = state.widgetX;
         int y = state.widgetY - Sizes.BUTTON_HEIGHT;
@@ -778,7 +788,7 @@ class ImGui
        label = The text that will be displayed as the value.
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void value(const(char)[] label, const ref ColorScheme colorScheme = defaultColorScheme)
+    void value(string label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         const int x = state.widgetX;
         const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
@@ -808,7 +818,7 @@ class ImGui
        Note that pressing a slider implies pressing and releasing the
        left mouse button while over the slider.
     */
-    bool slider(const(char)[] label, float* sliderState, float minValue, float maxValue,
+    bool slider(string label, float* sliderState, float minValue, float maxValue,
                 float stepValue, Enabled enabled = Enabled.yes,
                 const ref ColorScheme colorScheme = defaultColorScheme)
     {
@@ -1059,7 +1069,7 @@ class ImGui
        Params:
        color = Optionally override the current default text color when creating this element.
     */
-    void drawText(int xPos, int yPos, TextAlign textAlign, const(char)[] text,
+    void drawText(int xPos, int yPos, TextAlign textAlign, string text,
                   RGBA color = defaultColorScheme.generic.text)
     {
         addGfxCmdText(xPos, yPos, textAlign, text, color);
@@ -1107,10 +1117,10 @@ class ImGui
     }
 
     /** Render all of the batched commands for the current frame. */
-    void render(int width, int height)
+    void render()
     {
         auto data = gfxCmdQueue[];
-        renderGLDraw(data, width, height);
+        renderGLDraw(data, state.width, state.height);
     }
 
 }
