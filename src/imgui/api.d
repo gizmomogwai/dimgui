@@ -636,11 +636,18 @@ class ImGui
         int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
         // TODO vertical clipping (see button)
+        if ((y > state.height) || (y+h < 0))
+        {
+            return false;
+        }
+
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
 
-        if (res) // toggle the state
-            *checkState ^= 1;
+        if (res)
+        {
+            *checkState = !(*checkState);
+        }
 
         const int cx = x + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
         const int cy = y + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
@@ -694,15 +701,21 @@ class ImGui
         int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
+        if ((y > state.height) || (y+h < 0))
+        {
+            return false;
+        }
+
         // TODO vertical clipping see button
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
 
         if (state.isIdHot(id))
+        {
             addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
                                  cast(float) h, 10, state.isIdActive(id)
                                  ? colorScheme.item.press : colorScheme.item.hover);
-
+        }
         addGfxCmdText(x + Sizes.BUTTON_HEIGHT / 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, enabled ? colorScheme.item.text
                       : colorScheme.item.textDisabled);
@@ -745,8 +758,10 @@ class ImGui
         bool over = enabled && state.inRect(x, y, w, h);
         bool res = state.buttonLogic(id, over);
 
-        if (res) // toggle the state
-            *checkState ^= 1;
+        if (res)
+        {
+            *checkState = !(*checkState);
+        }
 
         auto triangleColor = (*checkState) ? (state.isIdActive(id)
                                               ? colorScheme.collapse.doHide : colorScheme.collapse.shown) : state.isIdActive(id)
@@ -776,9 +791,14 @@ class ImGui
     */
     void label(string label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
-        int x = state.widgetX;
-        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int x = state.widgetX;
+        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT;
+        if ((y > state.height) || (y+h < 0))
+        {
+            return;
+        }
         addGfxCmdText(x, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, label, colorScheme.label.text);
     }
@@ -796,8 +816,12 @@ class ImGui
         const int x = state.widgetX;
         const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         const int w = state.widgetW;
+        const int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT;
-
+        if ((y > state.height) || (y+h < 0))
+        {
+            return;
+        }
         addGfxCmdText(x + w - Sizes.BUTTON_HEIGHT / 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.right, label, colorScheme.value.text);
     }
@@ -833,6 +857,10 @@ class ImGui
         int w = state.widgetW;
         int h = Sizes.SLIDER_HEIGHT;
         state.widgetY -= Sizes.SLIDER_HEIGHT + Sizes.DEFAULT_SPACING;
+        if ((y > state.height) || (y+h < 0))
+        {
+            return false;
+        }
 
         addGfxCmdRoundedRect(x, y, w, h, 4, colorScheme.slider.back);
 
@@ -966,7 +994,7 @@ class ImGui
      * }
      * --------------------
      */
-    bool textInput(const(char)[] label, char[] buffer, ref char[] usedSlice,
+    bool textInput(string label, char[] buffer, ref char[] usedSlice,
                    bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         assert(buffer.ptr == usedSlice.ptr && buffer.length >= usedSlice.length,
@@ -1021,7 +1049,8 @@ class ImGui
         addGfxCmdRoundedRect(cast(float)(x + Sizes.DEFAULT_SPACING), cast(float) y,
                              cast(float) w, cast(float) h, 10, state.isIdInputable(id)
                              ? colorScheme.textInput.back : colorScheme.textInput.backDisabled);
-        addGfxCmdText(x + Sizes.DEFAULT_SPACING * 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        addGfxCmdText(x + Sizes.DEFAULT_SPACING * 2,
+                      y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, usedSlice, state.isIdInputable(id)
                       ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
 
@@ -1062,6 +1091,10 @@ class ImGui
         int w = state.widgetW;
         int h = 1;
         state.widgetY -= Sizes.DEFAULT_SPACING * 4;
+        if ((y > state.height) || (y+h < 0))
+        {
+            return;
+        }
 
         addGfxCmdRect(x, y, w, h, colorScheme.separator);
     }

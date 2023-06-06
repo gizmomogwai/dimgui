@@ -54,11 +54,7 @@ struct imguiGfxRect
 struct imguiGfxText
 {
     int x, y, align_;
-    const(char)[] text;
-    bool outside(int height)
-    {
-        return (y > height) || (y + Sizes.TEXT_HEIGHT < 0);
-    }
+    const(char[]) text;
 }
 
 struct imguiGfxLine

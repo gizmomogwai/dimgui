@@ -646,11 +646,6 @@ void drawText(float x, float y, const(char)[] text, int align_, uint color)
     }
 }
 
-bool outside(float y, float h, float height)
-{
-    return (y > height) || (y+h<0);
-}
-
 void renderGLDraw(GfxCmd[] commands, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -667,10 +662,6 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
         {
             auto y = cmd.rect.y + 0.5f;
             auto h = cmd.rect.h - 1;
-            if (outside(y, h, height))
-            {
-                //continue;
-            }
 
             if (cmd.rect.r == 0)
             {
@@ -721,10 +712,6 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
         }
         else if (cmd.type == IMGUI_GFXCMD_TEXT)
         {
-            if (cmd.text.outside(height))
-            {
-                //continue;
-            }
             drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.color);
         }
         else if (cmd.type == IMGUI_GFXCMD_SCISSOR)
