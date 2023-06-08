@@ -9,105 +9,57 @@ import std.string;
 import bindbc.opengl;
 import bindbc.glfw;
 
-import glwtf.input;
-import glwtf.window;
-
 import imgui;
-
 import window;
-
-version (OSX) version = MaybeHighResolutionDisplay;
-version (iOS) version = MaybeHighResolutionDisplay;
 
 struct GUI
 {
+    ImGui gui;
+    Window window;
     this(Window window)
     {
         this.window = window;
-
-        window.on_scroll.strongConnect(&onScroll);
-
-        int width;
-        int height;
-        glfwGetFramebufferSize(window.window, &width, &height);
-
-        // trigger initial viewport transform.
-        onWindowResize(width, height);
-
-        window.on_resize.strongConnect(&onWindowResize);
-
-        // Not really needed, but makes it obvious what we're doing
-        textEntered = textInputBuffer[0 .. 0];
-
-        glfwSetCharCallback(window.window, &getUnicode);
-        glfwSetKeyCallback(window.window, &getKey);
+        string fontPath = thisExePath().dirName().buildPath("../").buildPath("DroidSans.ttf");
+        gui = new ImGui(fontPath);
     }
 
     string lastInfo;
 
     void render()
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_DEPTH_TEST);
 
-        // Mouse states
-        ubyte mousebutton = 0;
-        double mouseX;
-        double mouseY;
-        glfwGetCursorPos(window.window, &mouseX, &mouseY);
+        auto mouse = window.getMouseInfo();
+        auto scrollInfo = window.getAndResetScrollInfo();
+        gui.beginFrame(MouseInfo(mouse.x, mouse.y,
+                                 mouse.button,
+                                 cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
+                       window.width, window.height, 0);
 
-        version (MaybeHighResolutionDisplay)
-        {
-            // Scale the cursor position for high-resolution displays.
-            if (mouseXToWindowFactor == 0) // need to initialize
-            {
-                int virtualWindowWidth, virtualWindowHeight;
-                glfwGetWindowSize(window.window, &virtualWindowWidth, &virtualWindowHeight);
-                if (virtualWindowWidth != 0 && virtualWindowHeight != 0)
-                {
-                    int frameBufferWidth, frameBufferHeight;
-                    glfwGetFramebufferSize(window.window, &frameBufferWidth, &frameBufferHeight);
-                    mouseXToWindowFactor = double(frameBufferWidth) / virtualWindowWidth;
-                    mouseYToWindowFactor = double(frameBufferHeight) / virtualWindowHeight;
-                }
-            }
-            mouseX *= mouseXToWindowFactor;
-            mouseY *= mouseYToWindowFactor;
-        }
+        enum BORDER = 10;
+        int x = BORDER;
+        static ScrollAreaContext scrollArea1;
+        enum scrollArea1W = 400;
+        gui.beginScrollArea(scrollArea1, "Scroll area 1", x, BORDER, scrollArea1W, window.height-2*BORDER);
+        x += scrollArea1W;
 
-        const scrollAreaWidth = windowWidth / 5;
-        const scrollAreaHeight = windowHeight - 20;
-
-        int mousex = cast(int) mouseX;
-        int mousey = cast(int) mouseY;
-
-        mousey = windowHeight - mousey;
-        int leftButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_LEFT);
-        int rightButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_RIGHT);
-        int middleButton = glfwGetMouseButton(window.window, GLFW_MOUSE_BUTTON_MIDDLE);
-
-        if (leftButton == GLFW_PRESS)
-            mousebutton |= MouseButton.left;
-        imguiBeginFrame(mousex, mousey, mousebutton, mouseScroll, staticUnicode);
-        staticUnicode = 0;
-
-        mouseScroll.reset;
-
-        int xCursor = 10; // xpos to place new scrollareas to
-        imguiBeginScrollArea("Scroll area 1", xCursor, 10, scrollAreaWidth,
-                scrollAreaHeight, &scrollArea1);
-        xCursor += scrollAreaWidth;
-        imguiSeparatorLine();
-        imguiSeparator();
-
-        if (imguiButton("Button"))
+        if (gui.button("Button"))
         {
             writeln("button pressed");
         }
 
-        imguiButton("Disabled button", Enabled.no);
-        imguiItem("Item");
-        imguiItem("Disabled item", Enabled.no);
-
+        gui.button("Disabled button", Enabled.no);
+        gui.item("Item");
+        gui.item("Disabled item", Enabled.no);
+        for (int i=0; i<1000; ++i)
+        {
+            gui.item("Item %s".format(i), Enabled.no);
+        }
+/+
         if (imguiCheck("Checkbox", &checkState1))
             lastInfo = "Toggled the checkbox to: '%s'".format(checkState1 ? "On" : "Off");
 
@@ -187,9 +139,11 @@ struct GUI
         {
             imguiLabel("long text abcdefghijklmnopqrstuvwxyz %d".format(i));
         }
-        imguiEndScrollArea();
-        imguiEndFrame();
+        +/
+        gui.endScrollArea(scrollArea1);
+        gui.endFrame();
 
+        /+
         const graphicsXPos = xCursor + 10;
 
         imguiDrawText(graphicsXPos, scrollAreaHeight, TextAlign.left,
@@ -217,134 +171,45 @@ struct GUI
         imguiDrawRect(graphicsXPos, windowHeight - 710, 100, 100, RGBA(32, 32, 192, 192));
         imguiDrawRect(graphicsXPos, windowHeight - 830, 100, 100, RGBA(192, 32, 32, 192));
 
-        imguiRender(windowWidth, windowHeight);
+        +/
+        gui.render();
     }
-
-    /**
-        This tells OpenGL what area of the available area we are
-        rendering to. In this case, we change it to match the
-        full available area. Without this function call resizing
-        the window would have no effect on the rendering.
-    */
-    void onWindowResize(int width, int height)
-    {
-        // bottom-left position.
-        enum int x = 0;
-        enum int y = 0;
-
-        /**
-            This function defines the current viewport transform.
-            It defines as a region of the window, specified by the
-            bottom-left position and a width/height.
-
-            Note about the viewport transform:
-            It is the process of transforming vertex data from normalized
-            device coordinate space to window space. It specifies the
-            viewable region of a window.
-        */
-        glfwGetFramebufferSize(window.window, &width, &height);
-        glViewport(x, y, width, height);
-
-        windowWidth = width;
-        windowHeight = height;
-        version (MaybeHighResolutionDisplay)
-        {
-            mouseXToWindowFactor = 0;
-            mouseYToWindowFactor = 0;
-        }
-    }
-
-    void onScroll(double hOffset, double vOffset)
-    {
-        mouseScroll.dy -= cast(int) vOffset;
-        mouseScroll.dx -= cast(int) hOffset;
-    }
-
-    extern (C) static void getUnicode(GLFWwindow* w, uint unicode) nothrow
-    {
-        staticUnicode = unicode;
-    }
-
-    extern (C) static void getKey(GLFWwindow* w, int key, int scancode, int action, int mods) nothrow
-    {
-        if (action != GLFW_PRESS)
-        {
-            return;
-        }
-        if (key == GLFW_KEY_ENTER)
-        {
-            staticUnicode = 0x0D;
-        }
-        else if (key == GLFW_KEY_BACKSPACE)
-        {
-            staticUnicode = 0x08;
-        }
-    }
-
-private:
-    Window window;
-    int windowWidth;
-    int windowHeight;
-    version (MaybeHighResolutionDisplay)
-    {
-        double mouseXToWindowFactor = 0;
-        double mouseYToWindowFactor = 0;
-    }
-    bool checkState1 = false;
-    bool checkState2 = false;
-    bool checkState3 = true;
-    bool collapseState1 = true;
-    bool collapseState2 = false;
-    float sliderValue1 = 50.0;
-    float sliderValue2 = 30.0;
-    ScrollInfo scrollArea1;
-    ScrollInfo scrollArea2;
-    ScrollInfo scrollArea3;
-    ScrollInfo scrollArea4;
-    ScrollInfo mouseScroll;
-
-    static dchar staticUnicode;
-    // Buffer to store text input
-    char[128] textInputBuffer;
-    // Slice of textInputBuffer
-    char[] textEntered;
-    // Text entered last time the user the text input field.
-    string lastTextEntered;
 }
 
 int main(string[] args)
 {
     int width = 1024, height = 768;
 
-    auto window = createWindow("imgui", WindowMode.windowed, width, height);
+    Window window = new Window(
+      (Window w, int key, int /+scancode+/ , int action, int /+mods+/ )
+      {
+          if ((key == '1') && (action == GLFW_RELEASE))
+          {
+              writeln("1 pressed");
+              return;
+          }
+      }
+    );
     scope (exit)
-        destroy(window);
+    {
+        // destroy(window);
+        glfwTerminate();
+    }
 
     GUI gui = GUI(window);
 
-    glfwSwapInterval(1);
+    //glfwSwapInterval(1);
 
-    string fontPath = thisExePath().dirName().buildPath("../").buildPath("DroidSans.ttf");
 
-    enforce(imguiInit(fontPath));
-
-    glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_DEPTH_TEST);
-
-    while (!glfwWindowShouldClose(window.window))
+    while (!window.window.glfwWindowShouldClose())
     {
         gui.render();
 
         /* Swap front and back buffers. */
-        window.swap_buffers();
+        window.window.glfwSwapBuffers();
 
         /* Poll for and process events. */
         glfwPollEvents();
-
-        if (window.is_key_down(GLFW_KEY_ESCAPE))
-            glfwSetWindowShouldClose(window.window, true);
     }
 
     // Clean UI

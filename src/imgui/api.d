@@ -32,7 +32,7 @@ import imgui.engine : Sizes, GuiState, GfxCmd, IMGUI_GFXCMD_SCISSOR, imguiGfxRec
 import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
-
+import std.exception : enforce;
 ///
 enum TextAlign
 {
@@ -53,11 +53,6 @@ enum Enabled : bool
 {
     no,
     yes,
-}
-
-deprecated bool imguiInit(const(char)[] fontPath, uint fontTextureSize = 1024)
-{
-    return imguiRenderGLInit(fontPath, fontTextureSize);
 }
 
 /** Destroy the imgui library. */
@@ -141,27 +136,11 @@ class ImGui
 
     Appender!(GfxCmd[]) gfxCmdQueue;
 
-    this()
+    this(string fontPath, uint fontTextureSize = 1024)
     {
         gfxCmdQueue = appender!(GfxCmd[]);
         gfxCmdQueue.reserve(512);
-    }
-    /++ Initialize the imgui library.
-     Params:
-
-     fontPath        = Path to a TrueType font file to use to draw text.
-     fontTextureSize = Size of the texture to store font glyphs in. The actual texture
-     size is a square of this value.
-
-     A bigger texture allows to draw more Unicode characters (if the
-     font supports them). 256 (62.5kiB) should be enough for ASCII,
-     1024 (1MB) should be enough for most European scripts.
-
-     Returns: True on success, false on failure.
-     +/
-    bool init(string fontPath, uint fontTextureSize = 1024)
-    {
-        return imguiRenderGLInit(fontPath, fontTextureSize);
+        enforce(imguiRenderGLInit(fontPath, fontTextureSize));
     }
 
     /**

@@ -1,8 +1,5 @@
+/+ helper to work with glfw +/
 module window;
-
-/**
-    Contains various helpers, common code, and initialization routines.
-*/
 
 import std.algorithm : min;
 import std.exception : enforce;
@@ -10,186 +7,189 @@ import std.functional : toDelegate;
 import std.stdio : stderr;
 import std.string : format;
 
-import bindbc.opengl;
-import bindbc.glfw;
-
-import glwtf.input;
-import glwtf.window;
+import bindbc.opengl : loadOpenGL, GL_TRUE, GLSupport;
+import bindbc.glfw : GLFWwindow, glfwGetCursorPos, loadGLFW, glfwSupport, glfwGetWindowSize, glfwGetFramebufferSize, GLFW_PRESS, glfwInit, glfwGetVideoMode, glfwGetMouseButton, GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT, glfwGetPrimaryMonitor, glfwWindowHint;
+import bindbc.glfw : GLFW_VISIBLE, GLFW_OPENGL_DEBUG_CONTEXT, GLFW_CONTEXT_VERSION_MAJOR, GLFW_CONTEXT_VERSION_MINOR, GLFW_OPENGL_FORWARD_COMPAT, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE, glfwCreateWindow;
+import bindbc.glfw : glfwSetWindowUserPointer, glfwSetFramebufferSizeCallback, glfwSetWindowSize, glfwSetScrollCallback, glfwSetWindowPos, glfwMakeContextCurrent, glfwSwapInterval, glfwShowWindow, glfwGetWindowUserPointer;
 
 void loadBindBCGlfw()
 {
     import bindbc.loader.sharedlib;
-
     const result = loadGLFW();
-    import std.stdio : writeln;
-
-    writeln(result);
     if (result != glfwSupport)
     {
+        string errorMessage = "Cannot load glfw:";
         foreach (info; bindbc.loader.sharedlib.errors)
         {
-            writeln("error: ", info.message);
+            import std.conv : to;
+            errorMessage ~= "\n  %s".format(info.message.to!string);
         }
-        throw new Exception("Cannot load glfw");
-    }
-    else
-    {
-        writeln("glfw ok");
+        throw new Exception(errorMessage);
     }
 }
 
-/// init
-shared static this()
+class Window
 {
-}
-
-/// uninit
-shared static ~this()
-{
-    //glfwTerminate();
-}
-
-///
-enum WindowMode
-{
-    fullscreen,
-    windowed,
-}
-
-/**
-    Create a window, an OpenGL 3.x context, and set up some other
-    common routines for error handling, window resizing, etc.
-*/
-Window createWindow(string windowName,
-        WindowMode windowMode = WindowMode.windowed, int width = 1024, int height = 768)
-{
-    import std.stdio : writeln;
-
-    loadBindBCGlfw();
-    glfwInit();
-
-    auto vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    writeln("vidMode: ", vidMode);
-    // constrain the window size so it isn't larger than the desktop size.
-    width = min(width, vidMode.width);
-    height = min(height, vidMode.height);
-
-    // set the window to be initially inivisible since we're repositioning it.
-    glfwWindowHint(GLFW_VISIBLE, 0);
-
-    // enable debugging
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
-
-    Window window = createWindowContext(windowName, WindowMode.windowed, width, height);
-
-    // center the window on the screen
-    glfwSetWindowPos(window.window, (vidMode.width - width) / 2, (vidMode.height - height) / 2);
-
-    // glfw-specific error routine (not a generic GL error handler)
-    register_glfw_error_callback(&glfwErrorCallback);
-
-    // anti-aliasing number of samples.
-    window.samples = 4;
-
-    // activate an opengl context.
-    window.make_context_current();
-
-    void loadBindBCOpenGL()
+    struct MouseInfo
     {
-        const result = loadOpenGL();
+        int x;
+        int y;
+        ubyte button;
+    }
+    struct ScrollInfo
+    {
+        double xOffset;
+        double yOffset;
+        void reset()
+        {
+            xOffset = 0;
+            yOffset = 0;
+        }
+    }
+
+    GLFWwindow* window;
+    int width;
+    int height;
+    ScrollInfo scroll;
+    alias KeyCallback = void delegate(Window w, int key, int scancode, int action, int mods);
+    KeyCallback keyCallback;
+
+    ScrollInfo getAndResetScrollInfo()
+    {
+        ScrollInfo res = scroll;
+        scroll.reset;
+        return res;
+    }
+
+    MouseInfo getMouseInfo()
+    {
+        double mouseX;
+        double mouseY;
+        window.glfwGetCursorPos(&mouseX, &mouseY);
+
+        static double mouseXToWindowFactor = 0;
+        static double mouseYToWindowFactor = 0;
+        if (mouseXToWindowFactor == 0) // need to initialize
+        {
+            int virtualWindowWidth;
+            int virtualWindowHeight;
+            window.glfwGetWindowSize(&virtualWindowWidth, &virtualWindowHeight);
+            if (virtualWindowWidth != 0 && virtualWindowHeight != 0)
+            {
+                int frameBufferWidth;
+                int frameBufferHeight;
+                window.glfwGetFramebufferSize(&frameBufferWidth, &frameBufferHeight);
+                mouseXToWindowFactor = double(frameBufferWidth) / virtualWindowWidth;
+                mouseYToWindowFactor = double(frameBufferHeight) / virtualWindowHeight;
+            }
+        }
+        mouseX *= mouseXToWindowFactor;
+        mouseY *= mouseYToWindowFactor;
+
+        ubyte buttonState = 0;
+        buttonState |= window.glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ? 0x1 : 0x0;
+        buttonState |= window.glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS ? 0x2 : 0x0;
+        return MouseInfo(cast(int) mouseX, height - cast(int) mouseY, buttonState);
+    }
+
+    this(KeyCallback keyCallback, int width=800, int height=600)
+    {
         import std.stdio : writeln;
+        this.keyCallback = keyCallback;
+        loadBindBCGlfw();
+        glfwInit();
 
-        writeln(result);
-        version (Default)
+        auto vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        this.width = min(width, vidMode.width);
+        this.height = min(height, vidMode.height);
+        writeln(vidMode.width);
+        // set the window to be initially inivisible since we're repositioning it.
+        glfwWindowHint(GLFW_VISIBLE, 0);
+
+        // enable debugging
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+        window = glfwCreateWindow(width, height, "test", null, null);
+        enforce(window);
+        window.glfwSetWindowUserPointer(cast(void*) this);
+        //window.glfwSetKeyCallback(&staticKeyCallback);
+        window.glfwSetFramebufferSizeCallback(&staticSizeCallback);
+        window.glfwSetWindowSize(width, height);
+        window.glfwSetScrollCallback(&staticScrollCallback);
+
+        int w, h;
+        window.glfwGetFramebufferSize(&w, &h);
+        staticSizeCallback(window, w, h);
+
+        // center the window on the screen
+        window.glfwSetWindowPos((vidMode.width - width) / 2, (vidMode.height - height) / 2);
+
+        // activate an opengl context.
+        window.glfwMakeContextCurrent();
+        enforce(GLSupport.gl33 == loadOpenGL());
+
+        // turn v-sync off.
+        glfwSwapInterval(0);
+
+        // finally show the window
+        window.glfwShowWindow();
+    }
+
+    void scrollCallback(double xOffset, double yOffset)
+    {
+        this.scroll.xOffset = -xOffset;
+        this.scroll.yOffset = -yOffset;
+    }
+
+    void sizeCallback(int width, int height)
+    {
+        this.width = width;
+        this.height = height;
+        import std.stdio : writeln;
+        writeln("width=", this.width, " height=", this.height);
+    }
+}
+
+extern (C)
+{
+    void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) nothrow
+    {
+        try
         {
-            (result == GLSupport.gl21).enforce("need opengl 2.1 support");
+            auto w = cast(Window) window.glfwGetWindowUserPointer();
+            w.keyCallback(w, key, scancode, action, mods);
         }
-        version (GL_33)
+        catch (Throwable t)
         {
-            if (result == GLSupport.gl33)
-                .enforce("need opengl 3.3 support");
+            assert(0);
         }
     }
-
-    loadBindBCOpenGL();
-
-    // turn v-sync off.
-    glfwSwapInterval(0);
-
-    version (OSX)
+    void staticScrollCallback(GLFWwindow* window, double xOffset, double yOffset) nothrow
     {
-        // GL_ARM_debug_output and GL_KHR_debug are not supported under OS X 10.9.3
+        try
+        {
+            auto w = cast(Window) window.glfwGetWindowUserPointer;
+            w.scrollCallback(xOffset, yOffset);
+        }
+        catch (Throwable t)
+        {
+            assert(0);
+        }
     }
-    else
+    void staticSizeCallback(GLFWwindow* window, int width, int height) nothrow
     {
-        // ensure the debug output extension is supported
-        enforce(GL_ARB_debug_output || GL_KHR_debug);
-
-        // cast: workaround for 'nothrow' propagation bug (haven't been able to reduce it)
-        auto hookDebugCallback = GL_ARB_debug_output ? glDebugMessageCallbackARB : cast(
-                typeof(glDebugMessageCallbackARB)) glDebugMessageCallback;
-
-        // hook the debug callback
-        // cast: when using derelict it assumes its nothrow
-        hookDebugCallback(cast(GLDEBUGPROCARB)&glErrorCallback, null);
-
-        // enable proper stack tracing support (otherwise we'd get random failures at runtime)
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+        try
+        {
+            auto w = cast(Window) window.glfwGetWindowUserPointer();
+            w.sizeCallback(width, height);
+        }
+        catch (Throwable t)
+        {
+            assert(0);
+        }
     }
-
-    // finally show the window
-    glfwShowWindow(window.window);
-
-    return window;
-}
-
-/** Create a window and an OpenGL context. */
-Window createWindowContext(string windowName, WindowMode windowMode, int width, int height)
-{
-    auto window = new Window();
-    auto monitor = windowMode == WindowMode.fullscreen ? glfwGetPrimaryMonitor() : null;
-    auto context = window.create_highest_available_context(width, height,
-            windowName, monitor, null, GLFW_OPENGL_CORE_PROFILE);
-
-    // ensure we've loaded a proper context
-    enforce(context.major >= 3);
-
-    return window;
-}
-
-/** Just emit errors to stderr on GLFW errors. */
-void glfwErrorCallback(int code, string msg)
-{
-    stderr.writefln("Error (%s): %s", code, msg);
-}
-
-///
-class GLException : Exception
-{
-    @safe pure nothrow this(string msg = "", string file = __FILE__,
-            size_t line = __LINE__, Throwable next = null)
-    {
-        super(msg, file, line, next);
-    }
-
-    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__,
-            size_t line = __LINE__)
-    {
-        super(msg, file, line, next);
-    }
-}
-
-/**
-    GL_ARB_debug_output or GL_KHR_debug callback.
-
-    Throwing exceptions across language boundaries is ok as
-    long as $(B GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB) is enabled.
-*/
-extern (System) private void glErrorCallback(GLenum source, GLenum type, GLuint id,
-        GLenum severity, GLsizei length, in GLchar* message, GLvoid* userParam)
-{
-    //string msg = format("glErrorCallback: source: %s, type: %s, id: %s, severity: %s, length: %s, message: %s, userParam: %s",
-    //                     source, type, id, severity, length, message.to!string, userParam);
-
-    //stderr.writeln(msg);
 }

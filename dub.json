@@ -46,11 +46,7 @@
     "lflags-windows-x86": ["/LIBPATH:$PACKAGE_DIR\\lib\\x86"],
     "lflags-windows-x86_64": ["/LIBPATH:$PACKAGE_DIR\\lib\\x86-64"],
 
-    "subPackages": [
-        "examples/colors",
-        "examples/demo",
-        "examples/memory"
-    ],
+    "subPackages": [ "examples/demo" ],
 
     "versions": ["GL_33"]
 }
