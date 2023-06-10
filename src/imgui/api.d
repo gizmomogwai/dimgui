@@ -119,7 +119,7 @@ struct ScrollAreaContext
 
     bool insideScrollArea;
     // info for next frame
-    struct RevealInfo
+    static struct RevealInfo
     {
         bool active;
         int yOffset;
@@ -183,26 +183,21 @@ class ImGui
        which may not be automatically handled by your input library's text
        input functionality (e.g. GLFW's getUnicode() does not do this).
     */
-    void beginFrame(MouseInfo mouseInfo, int width, int height, dchar unicodeChar = 0)
+    public void beginFrame(MouseInfo mouseInfo, int width, int height, dchar unicodeChar = 0)
     {
         state.updateInput(mouseInfo, unicodeChar);
         state.beginFrame();
         state.width = width;
         state.height = height;
-        resetGfxCmdQueue();
-    }
-
-    void resetGfxCmdQueue()
-    {
         gfxCmdQueue.clear;
     }
 
-    public void addGfxCmdScissor(ref Rect r)
+    private void addGfxCmdScissor(ref Rect r)
     {
         addGfxCmdScissor(r.x, r.y, r.w, r.h);
     }
 
-    public void addGfxCmdScissor(int x, int y, int w, int h)
+    private void addGfxCmdScissor(int x, int y, int w, int h)
     {
         // dfmt off
         GfxCmd cmd = {
@@ -214,7 +209,7 @@ class ImGui
         gfxCmdQueue.put(cmd);
     }
 
-    public void addGfxCmdRect(int x, int y, int w, int h, RGBA color)
+    private void addGfxCmdRect(int x, int y, int w, int h, RGBA color)
     {
         // dfmt off
         GfxCmd cmd = {
@@ -238,7 +233,7 @@ class ImGui
         gfxCmdQueue.put(cmd);
     }
 
-    public void addGfxCmdRoundedRect(int x, int y, int w, int h, int r, RGBA color)
+    private void addGfxCmdRoundedRect(int x, int y, int w, int h, int r, RGBA color)
     {
         // dfmt off
         GfxCmd cmd = {
@@ -250,7 +245,7 @@ class ImGui
         gfxCmdQueue.put(cmd);
     }
 
-    public void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
+    private void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
     {
         // dfmt off
         GfxCmd cmd = {
@@ -263,7 +258,7 @@ class ImGui
         gfxCmdQueue.put(cmd);
     }
 
-    public void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
+    private void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
     {
         // dfmt off
         GfxCmd cmd = {
@@ -295,7 +290,7 @@ class ImGui
 
        $(D true) if the mouse was located inside the scrollable area.
     */
-    bool beginScrollArea(ref ScrollAreaContext context,
+    public bool beginScrollArea(ref ScrollAreaContext context,
                          string title,
                          int xPos, int yPos, int width, int height,
                          bool scrollHorizontal = false, int scrolledHorizontalPixels = 2000,
@@ -351,26 +346,26 @@ class ImGui
         return context.insideScrollArea;
     }
 
-    void revealNextElement(ref ScrollAreaContext context, float percentage = 0.5f)
+    public void revealNextElement(ref ScrollAreaContext context, float percentage = 0.5f)
     {
         context.reveal.active = true;
         context.reveal.yOffset = state.widgetY;
         context.reveal.percentage = percentage;
     }
 
-    auto verticalScrollbarRect(const ref Rect scrollbar)
+    private auto verticalScrollbarRect(const ref Rect scrollbar)
     {
         return Rect(scrollbar.x + Sizes.SCROLL_AREA_PADDING / 2, scrollbar.y,
                     Sizes.SCROLL_BAR_HANDLE_SIZE, scrollbar.h);
     }
 
-    auto horizontalScrollbarRect(const ref Rect scrollbar)
+    private auto horizontalScrollbarRect(const ref Rect scrollbar)
     {
         return Rect(scrollbar.x, scrollbar.y + Sizes.SCROLL_AREA_PADDING / 2,
                     scrollbar.w, Sizes.SCROLL_BAR_HANDLE_SIZE);
     }
 
-    auto endScrollAreaVerticalScroller(ref ScrollAreaContext context,
+    private auto endScrollAreaVerticalScroller(ref ScrollAreaContext context,
                                        const ref ColorScheme colorScheme)
     {
         auto scroller = verticalScrollbarRect(context.verticalScrollbar);
@@ -426,7 +421,7 @@ class ImGui
         return tuple!("pixels", "visible")(scrolledPixels, visible);
     }
 
-    auto endScrollAreaHorizontalScroller(ref ScrollAreaContext context,
+    private auto endScrollAreaHorizontalScroller(ref ScrollAreaContext context,
                                          const ref ColorScheme colorScheme)
     {
         auto scroller = horizontalScrollbarRect(context.horizontalScrollbar);
@@ -489,7 +484,7 @@ class ImGui
 
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void endScrollArea(ref ScrollAreaContext context,
+    public void endScrollArea(ref ScrollAreaContext context,
                        const ref ColorScheme colorScheme = defaultColorScheme)
     {
         // scrollbars are 2 scroll_area_paddings wide, with 0.5 before and after .. totalling 3 * scroll_area_paddings
@@ -549,7 +544,7 @@ class ImGui
        onPress();
        -----
     */
-    bool button(string label, Enabled enabled = Enabled.yes,
+    public bool button(string label, Enabled enabled = Enabled.yes,
                 const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
@@ -603,8 +598,8 @@ class ImGui
        writeln(checkState);  // check the current state
        -----
     */
-    bool check(string label, bool* checkState, Enabled enabled = Enabled.yes,
-               const ref ColorScheme colorScheme = defaultColorScheme)
+    public bool checkbox(string label, bool* checkState, Enabled enabled = Enabled.yes,
+                         const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
         uint id = (state.areaId << 16) | state.widgetId;
@@ -668,7 +663,7 @@ class ImGui
        Note that pressing an item implies pressing and releasing the
        left mouse button while over the item.
     */
-    bool item(string label, Enabled enabled = Enabled.yes,
+    public bool item(string label, Enabled enabled = Enabled.yes,
               const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
@@ -719,7 +714,7 @@ class ImGui
        Note that pressing a collapsable element implies pressing and releasing the
        left mouse button while over the collapsable element.
     */
-    bool collapse(string label, string subtext, bool* checkState,
+    public bool collapse(string label, string subtext, bool* checkState,
                   Enabled enabled = Enabled.yes, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
@@ -768,7 +763,7 @@ class ImGui
        label = The text that will be displayed as the label.
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void label(string label, const ref ColorScheme colorScheme = defaultColorScheme)
+    public void label(string label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         const int x = state.widgetX;
         const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
@@ -790,7 +785,7 @@ class ImGui
        label = The text that will be displayed as the value.
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void value(string label, const ref ColorScheme colorScheme = defaultColorScheme)
+    public void value(string label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         const int x = state.widgetX;
         const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
@@ -824,7 +819,7 @@ class ImGui
        Note that pressing a slider implies pressing and releasing the
        left mouse button while over the slider.
     */
-    bool slider(string label, float* sliderState, float minValue, float maxValue,
+    public bool slider(string label, float* sliderState, float minValue, float maxValue,
                 float stepValue, Enabled enabled = Enabled.yes,
                 const ref ColorScheme colorScheme = defaultColorScheme)
     {
@@ -973,7 +968,7 @@ class ImGui
      * }
      * --------------------
      */
-    bool textInput(string label, char[] buffer, ref char[] usedSlice,
+    public bool textInput(string label, char[] buffer, ref char[] usedSlice,
                    bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         assert(buffer.ptr == usedSlice.ptr && buffer.length >= usedSlice.length,
@@ -1038,21 +1033,21 @@ class ImGui
     }
 
     /** Add horizontal indentation for elements to be added. */
-    void indent()
+    public void indent()
     {
         state.widgetX += Sizes.INDENT_SIZE;
         state.widgetW -= Sizes.INDENT_SIZE;
     }
 
     /** Remove horizontal indentation for elements to be added. */
-    void unindent()
+    public void unindent()
     {
         state.widgetX -= Sizes.INDENT_SIZE;
         state.widgetW += Sizes.INDENT_SIZE;
     }
 
     /** Add vertical space as a separator below the last element. */
-    void separator()
+    public void separator()
     {
         state.widgetY -= Sizes.DEFAULT_SPACING * 3;
     }
@@ -1063,7 +1058,7 @@ class ImGui
        Params:
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void separatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
+    public void separatorLine(const ref ColorScheme colorScheme = defaultColorScheme)
     {
         int x = state.widgetX;
         int y = state.widgetY - Sizes.DEFAULT_SPACING * 2;
@@ -1084,7 +1079,7 @@ class ImGui
        Params:
        color = Optionally override the current default text color when creating this element.
     */
-    void drawText(int xPos, int yPos, TextAlign textAlign, string text,
+    public void drawText(int xPos, int yPos, TextAlign textAlign, string text,
                   RGBA color = defaultColorScheme.generic.text)
     {
         addGfxCmdText(xPos, yPos, textAlign, text, color);
@@ -1096,7 +1091,7 @@ class ImGui
        Params:
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void drawLine(int x0, int y0, int x1, int y1, int r,
+    public void drawLine(int x0, int y0, int x1, int y1, int r,
                   RGBA color = defaultColorScheme.generic.line)
     {
         addGfxCmdLine(x0, y0, x1, y1, r, color);
@@ -1108,7 +1103,7 @@ class ImGui
        Params:
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void drawRect(int xPos, int yPos, int width, int height,
+    public void drawRect(int xPos, int yPos, int width, int height,
                   RGBA color = defaultColorScheme.generic.rect)
     {
         addGfxCmdRect(xPos, yPos, width, height, color);
@@ -1120,26 +1115,26 @@ class ImGui
        Params:
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    void drawRoundedRect(int x, int y, int width, int height, int r,
+    public void drawRoundedRect(int x, int y, int width, int height, int r,
                          RGBA color = defaultColorScheme.generic.roundRect)
     {
         addGfxCmdRoundedRect(x, y, width, height, r, color);
     }
     /** End the list of batched commands for the current frame. */
-    void endFrame()
+    public void endFrame()
     {
         state.clearInput();
     }
 
     /** Render all of the batched commands for the current frame. */
-    void render()
+    public void render()
     {
         renderGLDraw(gfxCmdQueue[], state.width, state.height);
     }
 
 }
 
-void clamp(T)(ref T value, const T minValue, const T maxValue)
+public void clamp(T)(ref T value, const T minValue, const T maxValue)
 {
     if (value < minValue)
     {

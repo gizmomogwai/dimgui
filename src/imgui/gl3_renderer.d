@@ -58,22 +58,22 @@ enum FIRST_CHARACTER = 32;
 //
 // This was measured after the optimization to reuse null character glyph, which is in
 // BakeFontBitmap in stdb_truetype.d
-__gshared uint g_font_texture_size = 1024;
-__gshared float[TEMP_COORD_COUNT * 2] g_tempCoords;
-__gshared float[TEMP_COORD_COUNT * 2] g_tempNormals;
-__gshared float[TEMP_COORD_COUNT * 12 + (TEMP_COORD_COUNT - 2) * 6] g_tempVertices;
-__gshared float[TEMP_COORD_COUNT * 12 + (TEMP_COORD_COUNT - 2) * 6] g_tempTextureCoords;
-__gshared float[TEMP_COORD_COUNT * 24 + (TEMP_COORD_COUNT - 2) * 12] g_tempColors;
-__gshared float[CIRCLE_VERTS * 2] g_circleVerts;
-__gshared uint g_max_character_count = MAX_CHARACTER_COUNT;
-__gshared stbtt_bakedchar[MAX_CHARACTER_COUNT] g_cdata;
-__gshared GLuint g_ftex = 0;
-__gshared GLuint g_whitetex = 0;
-__gshared GLuint g_vao = 0;
-__gshared GLuint[3] g_vbos = [0, 0, 0];
-__gshared GLuint g_program = 0;
-__gshared GLuint g_programViewportLocation = 0;
-__gshared GLuint g_programTextureLocation = 0;
+uint g_font_texture_size = 1024;
+float[TEMP_COORD_COUNT * 2] g_tempCoords;
+float[TEMP_COORD_COUNT * 2] g_tempNormals;
+float[TEMP_COORD_COUNT * 12 + (TEMP_COORD_COUNT - 2) * 6] g_tempVertices;
+float[TEMP_COORD_COUNT * 12 + (TEMP_COORD_COUNT - 2) * 6] g_tempTextureCoords;
+float[TEMP_COORD_COUNT * 24 + (TEMP_COORD_COUNT - 2) * 12] g_tempColors;
+float[CIRCLE_VERTS * 2] g_circleVerts;
+uint g_max_character_count = MAX_CHARACTER_COUNT;
+stbtt_bakedchar[MAX_CHARACTER_COUNT] g_cdata;
+GLuint g_ftex = 0;
+GLuint g_whitetex = 0;
+GLuint g_vao = 0;
+GLuint[3] g_vbos = [0, 0, 0];
+GLuint g_program = 0;
+GLuint g_programViewportLocation = 0;
+GLuint g_programTextureLocation = 0;
 
 /** Globals end. */
 
