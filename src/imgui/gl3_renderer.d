@@ -26,6 +26,7 @@ import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad, stbtt_BakeFont
 import std.exception : enforce;
 import std.file : read;
 import std.math : sqrt, PI, cos, sin;
+import std.algorithm : min;
 
 private:
 // Draw up to 65536 unicode glyphs.  What this will actually do is draw *only glyphs the
@@ -102,17 +103,16 @@ uint toPackedRGBA(RGBA color)
 {
     // dfmt off
     return
-        (color.r << 0) |
-        (color.g << 8) |
+        (color.r <<  0) |
+        (color.g <<  8) |
         (color.b << 16) |
         (color.a << 24);
     // dfmt on
 }
 
-void drawPolygon(const(float)* coords, uint numCoords, float r, uint col)
+void drawPolygon(const(float)[] coords, float r, uint col)
 {
-    if (numCoords > TEMP_COORD_COUNT)
-        numCoords = TEMP_COORD_COUNT;
+    const numCoords = min(TEMP_COORD_COUNT, coords.length/2);
 
     for (uint i = 0, j = numCoords - 1; i < numCoords; j = i++)
     {
@@ -280,7 +280,7 @@ void drawRect(float x, float y, float w, float h, float fth, uint col)
         x + 0.5f, y + 0.5f, x + w - 0.5f, y + 0.5f, x + w - 0.5f, y + h - 0.5f,
         x + 0.5f, y + h - 0.5f,
     ];
-    drawPolygon(verts.ptr, 4, fth, col);
+    drawPolygon(verts, fth, col);
 }
 
 /*
@@ -334,7 +334,7 @@ void drawRoundedRect(float x, float y, float w, float h, float r, float fth, uin
     *v++ = x + w - r + cverts[0] * r;
     *v++ = y + r + cverts[1] * r;
 
-    drawPolygon(verts.ptr, (n + 1) * 4, fth, col);
+    drawPolygon(verts, fth, col);
 }
 
 void drawLine(float x0, float y0, float x1, float y1, float r, float fth, uint col)
@@ -374,7 +374,7 @@ void drawLine(float x0, float y0, float x1, float y1, float r, float fth, uint c
     verts[6] = x1 + dx - nx;
     verts[7] = y1 + dy - ny;
 
-    drawPolygon(verts.ptr, 4, fth, col);
+    drawPolygon(verts, fth, col);
 }
 
 void loadBindBCOpenGL()
@@ -694,7 +694,7 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
                     cmd.rect.x + 0.5f,
                     cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
-                drawPolygon(verts.ptr, 3, 1.0f, cmd.color);
+                drawPolygon(verts, 1.0f, cmd.color);
             }
 
             if (cmd.flags == 2)
@@ -707,7 +707,7 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
                     cmd.rect.x + 0.5f + cmd.rect.w - 1,
                     cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
-                drawPolygon(verts.ptr, 3, 1.0f, cmd.color);
+                drawPolygon(verts, 1.0f, cmd.color);
             }
         }
         else if (cmd.type == IMGUI_GFXCMD_TEXT)
