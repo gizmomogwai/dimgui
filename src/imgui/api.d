@@ -336,8 +336,7 @@ class ImGui
         context.insideScrollArea = state.inRect(xPos, yPos, width, height, false);
         state.insideCurrentScroll = context.insideScrollArea;
 
-        addGfxCmdRoundedRect(cast(float) xPos, cast(float) yPos,
-                             cast(float) width, cast(float) height, 6, colorScheme.scroll.area.back);
+        addGfxCmdRoundedRect(xPos, yPos, width, height, 6, colorScheme.scroll.area.back);
 
         addGfxCmdText(xPos + Sizes.AREA_HEADER / 2, yPos + height - Sizes.AREA_HEADER / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                       TextAlign.left, title, colorScheme.scroll.area.text);
@@ -412,11 +411,9 @@ class ImGui
 
             // vertical Bar
             // BG
-            addGfxCmdRect(cast(float) scroller.x, cast(float) scroller.y,
-                          cast(float) scroller.w, cast(float) scroller.h, colorScheme.scroll.bar.back);
+            addGfxCmdRect(scroller.x, scroller.y, scroller.w, scroller.h, colorScheme.scroll.bar.back);
 
-            addGfxCmdRect(cast(float) nob.x, cast(float) nob.y,
-                          cast(float) nob.w, cast(float) nob.h, color);
+            addGfxCmdRect(nob.x, nob.y, nob.w, nob.h, color);
         }
         return tuple!("pixels", "visible")(scrolledPixels, visible);
     }
@@ -686,8 +683,7 @@ class ImGui
 
         if (state.isIdHot(id))
         {
-            addGfxCmdRoundedRect(cast(float) x, cast(float) y, cast(float) w,
-                                 cast(float) h, 10, state.isIdActive(id)
+            addGfxCmdRoundedRect(x, y, w, h, 10, state.isIdActive(id)
                                  ? colorScheme.item.press : colorScheme.item.hover);
         }
         addGfxCmdText(x + Sizes.BUTTON_HEIGHT / 2, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
@@ -1020,8 +1016,7 @@ class ImGui
         int h = Sizes.BUTTON_HEIGHT;
         bool over = state.inRect(x, y, w, h);
         state.textInputLogic(id, over, forceInputable);
-        addGfxCmdRoundedRect(cast(float)(x + Sizes.DEFAULT_SPACING), cast(float) y,
-                             cast(float) w, cast(float) h, 10, state.isIdInputable(id)
+        addGfxCmdRoundedRect(x + Sizes.DEFAULT_SPACING, y, w, h, 10, state.isIdInputable(id)
                              ? colorScheme.textInput.back : colorScheme.textInput.backDisabled);
         addGfxCmdText(x + Sizes.DEFAULT_SPACING * 2,
                       y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
