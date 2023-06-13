@@ -35,16 +35,16 @@ struct GUI
 
         auto mouse = window.getMouseInfo();
         auto scrollInfo = window.getAndResetScrollInfo();
-        gui.beginFrame(MouseInfo(mouse.x, mouse.y,
-                                 mouse.button,
-                                 cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
-                       window.width, window.height, 0);
+        gui.beginFrame(MouseInfo(mouse.x, mouse.y, mouse.button,
+                cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
+                window.width, window.height, 0);
 
         enum BORDER = 10;
         int x = BORDER;
         static ScrollAreaContext scrollArea1;
         enum scrollArea1W = 400;
-        gui.beginScrollArea(scrollArea1, "Scroll area 1", x, BORDER, scrollArea1W, window.height-2*BORDER);
+        gui.beginScrollArea(scrollArea1, "Scroll area 1", x, BORDER,
+                scrollArea1W, window.height - 2 * BORDER);
         x += scrollArea1W;
 
         if (gui.button("Button"))
@@ -55,11 +55,11 @@ struct GUI
         gui.button("Disabled button", Enabled.no);
         gui.item("Item");
         gui.item("Disabled item", Enabled.no);
-        for (int i=0; i<1000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             gui.item("Item %s".format(i), Enabled.no);
         }
-/+
+        /+
         if (imguiCheck("Checkbox", &checkState1))
             lastInfo = "Toggled the checkbox to: '%s'".format(checkState1 ? "On" : "Off");
 
@@ -180,16 +180,13 @@ int main(string[] args)
 {
     int width = 1024, height = 768;
 
-    Window window = new Window(
-      (Window w, int key, int /+scancode+/ , int action, int /+mods+/ )
-      {
-          if ((key == '1') && (action == GLFW_RELEASE))
-          {
-              writeln("1 pressed");
-              return;
-          }
-      }
-    );
+    Window window = new Window((Window w, int key, int /+scancode+/ , int action, int /+mods+/ ) {
+        if ((key == '1') && (action == GLFW_RELEASE))
+        {
+            writeln("1 pressed");
+            return;
+        }
+    });
     scope (exit)
     {
         // destroy(window);
@@ -199,7 +196,6 @@ int main(string[] args)
     GUI gui = GUI(window);
 
     //glfwSwapInterval(1);
-
 
     while (!window.window.glfwWindowShouldClose())
     {

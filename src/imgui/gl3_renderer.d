@@ -17,12 +17,19 @@
  */
 module imgui.gl3_renderer;
 
-import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer, glBufferData, glDrawArrays, loadOpenGL, GL_TEXTURE_2D, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport, glDeleteTextures, glDeleteVertexArrays, glDeleteBuffers, glDeleteProgram, glViewport, glUseProgram, glActiveTexture, glUniform2f, glUniform1i, glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
+import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer,
+    glBufferData, glDrawArrays, loadOpenGL, GL_TEXTURE_2D,
+    GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport, glDeleteTextures,
+    glDeleteVertexArrays, glDeleteBuffers, glDeleteProgram,
+    glViewport, glUseProgram, glActiveTexture, glUniform2f, glUniform1i,
+    glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
 import core.stdc.stdlib : free, malloc;
 import core.stdc.string : memset;
 import imgui.api : RGBA, TextAlign;
-import imgui.engine : GfxCmd, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, IMGUI_GFXCMD_SCISSOR, Sizes;
-import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad, stbtt_BakeFontBitmap, STBTT_ifloor;
+import imgui.engine : GfxCmd, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE,
+    IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, IMGUI_GFXCMD_SCISSOR, Sizes;
+import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad,
+    stbtt_BakeFontBitmap, STBTT_ifloor;
 import std.exception : enforce;
 import std.file : read;
 import std.math : sqrt, PI, cos, sin;
@@ -112,7 +119,7 @@ uint toPackedRGBA(RGBA color)
 
 void drawPolygon(const(float)[] coords, float r, uint col)
 {
-    const numCoords = min(TEMP_COORD_COUNT, coords.length/2);
+    const numCoords = min(TEMP_COORD_COUNT, coords.length / 2);
 
     for (uint i = 0, j = numCoords - 1; i < numCoords; j = i++)
     {
@@ -133,15 +140,11 @@ void drawPolygon(const(float)[] coords, float r, uint col)
     }
 
     const float[4] colf = [
-        (col & 0xff) / 255.0f,
-        ((col >> 8) & 0xff) / 255.0f,
-        ((col >> 16) & 0xff) / 255.0f,
-        ((col >> 24) & 0xff) / 255.0f
+        (col & 0xff) / 255.0f, ((col >> 8) & 0xff) / 255.0f,
+        ((col >> 16) & 0xff) / 255.0f, ((col >> 24) & 0xff) / 255.0f
     ];
     const float[4] colTransf = [
-        (col & 0xff) / 255.0f,
-        ((col >> 8) & 0xff) / 255.0f,
-        ((col >> 16) & 0xff) / 255.0f,
+        (col & 0xff) / 255.0f, ((col >> 8) & 0xff) / 255.0f, ((col >> 16) & 0xff) / 255.0f,
         0f
     ];
 
@@ -665,33 +668,27 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
 
             if (cmd.rect.r == 0)
             {
-                drawRect(cmd.rect.x + 0.5f, y,
-                         cmd.rect.w - 1, h,
-                         1.0f, cmd.color);
+                drawRect(cmd.rect.x + 0.5f, y, cmd.rect.w - 1, h, 1.0f, cmd.color);
             }
             else
             {
-                drawRoundedRect(cmd.rect.x + 0.5f, y,
-                                cmd.rect.w - 1, h,
-                                cmd.rect.r, 1.0f, cmd.color);
+                drawRoundedRect(cmd.rect.x + 0.5f, y, cmd.rect.w - 1, h,
+                        cmd.rect.r, 1.0f, cmd.color);
             }
         }
         else if (cmd.type == IMGUI_GFXCMD_LINE)
         {
-            drawLine(cmd.line.x0, cmd.line.y0,
-                     cmd.line.x1, cmd.line.y1,
-                     cmd.line.r, 1.0f, RGBA(255, 0,0,255).toPackedRGBA);//cmd.color);
+            drawLine(cmd.line.x0, cmd.line.y0, cmd.line.x1, cmd.line.y1,
+                    cmd.line.r, 1.0f, RGBA(255, 0, 0, 255).toPackedRGBA); //cmd.color);
         }
         else if (cmd.type == IMGUI_GFXCMD_TRIANGLE)
         {
             if (cmd.flags == 1)
             {
                 const float[3 * 2] verts = [
-                    cmd.rect.x + 0.5f,
-                    cmd.rect.y + 0.5f,
+                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f,
                     cmd.rect.x + 0.5f + cmd.rect.w - 1,
-                    cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f,
-                    cmd.rect.x + 0.5f,
+                    cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f, cmd.rect.x + 0.5f,
                     cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
                 drawPolygon(verts, 1.0f, cmd.color);
@@ -700,10 +697,8 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
             if (cmd.flags == 2)
             {
                 const float[3 * 2] verts = [
-                    cmd.rect.x + 0.5f,
-                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
-                    cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f,
-                    cmd.rect.y + 0.5f,
+                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                    cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f, cmd.rect.y + 0.5f,
                     cmd.rect.x + 0.5f + cmd.rect.w - 1,
                     cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];

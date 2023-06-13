@@ -8,13 +8,20 @@ import std.stdio : stderr;
 import std.string : format;
 
 import bindbc.opengl : loadOpenGL, GL_TRUE, GLSupport;
-import bindbc.glfw : GLFWwindow, glfwGetCursorPos, loadGLFW, glfwSupport, glfwGetWindowSize, glfwGetFramebufferSize, GLFW_PRESS, glfwInit, glfwGetVideoMode, glfwGetMouseButton, GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT, glfwGetPrimaryMonitor, glfwWindowHint;
-import bindbc.glfw : GLFW_VISIBLE, GLFW_OPENGL_DEBUG_CONTEXT, GLFW_CONTEXT_VERSION_MAJOR, GLFW_CONTEXT_VERSION_MINOR, GLFW_OPENGL_FORWARD_COMPAT, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE, glfwCreateWindow;
-import bindbc.glfw : glfwSetWindowUserPointer, glfwSetFramebufferSizeCallback, glfwSetWindowSize, glfwSetScrollCallback, glfwSetWindowPos, glfwMakeContextCurrent, glfwSwapInterval, glfwShowWindow, glfwGetWindowUserPointer;
+import bindbc.glfw : GLFWwindow, glfwGetCursorPos, loadGLFW, glfwSupport,
+    glfwGetWindowSize, glfwGetFramebufferSize, GLFW_PRESS, glfwInit,
+    glfwGetVideoMode, glfwGetMouseButton, GLFW_MOUSE_BUTTON_LEFT,
+    GLFW_MOUSE_BUTTON_RIGHT, glfwGetPrimaryMonitor, glfwWindowHint;
+import bindbc.glfw : GLFW_VISIBLE, GLFW_OPENGL_DEBUG_CONTEXT, GLFW_CONTEXT_VERSION_MAJOR, GLFW_CONTEXT_VERSION_MINOR,
+    GLFW_OPENGL_FORWARD_COMPAT, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE, glfwCreateWindow;
+import bindbc.glfw : glfwSetWindowUserPointer, glfwSetFramebufferSizeCallback,
+    glfwSetWindowSize, glfwSetScrollCallback, glfwSetWindowPos,
+    glfwMakeContextCurrent, glfwSwapInterval, glfwShowWindow, glfwGetWindowUserPointer;
 
 void loadBindBCGlfw()
 {
     import bindbc.loader.sharedlib;
+
     const result = loadGLFW();
     if (result != glfwSupport)
     {
@@ -22,6 +29,7 @@ void loadBindBCGlfw()
         foreach (info; bindbc.loader.sharedlib.errors)
         {
             import std.conv : to;
+
             errorMessage ~= "\n  %s".format(info.message.to!string);
         }
         throw new Exception(errorMessage);
@@ -36,6 +44,7 @@ class Window
         int y;
         ubyte button;
     }
+
     struct ScrollInfo
     {
         double xOffset;
@@ -92,9 +101,10 @@ class Window
         return MouseInfo(cast(int) mouseX, height - cast(int) mouseY, buttonState);
     }
 
-    this(KeyCallback keyCallback, int width=800, int height=600)
+    this(KeyCallback keyCallback, int width = 800, int height = 600)
     {
         import std.stdio : writeln;
+
         this.keyCallback = keyCallback;
         loadBindBCGlfw();
         glfwInit();
@@ -150,6 +160,7 @@ class Window
         this.width = width;
         this.height = height;
         import std.stdio : writeln;
+
         writeln("width=", this.width, " height=", this.height);
     }
 }
@@ -168,6 +179,7 @@ extern (C)
             assert(0);
         }
     }
+
     void staticScrollCallback(GLFWwindow* window, double xOffset, double yOffset) nothrow
     {
         try
@@ -180,6 +192,7 @@ extern (C)
             assert(0);
         }
     }
+
     void staticSizeCallback(GLFWwindow* window, int width, int height) nothrow
     {
         try

@@ -21,7 +21,8 @@ import imgui.api : MouseInfo, MouseButton;
 
 package:
 
-struct Sizes {
+struct Sizes
+{
     enum BUTTON_HEIGHT = 60;
     enum SLIDER_HEIGHT = 40;
     enum SLIDER_MARKER_WIDTH = 10;
@@ -62,7 +63,7 @@ struct imguiGfxLine
     int x0, y0, x1, y1, r;
     bool outside(int height)
     {
-        return (y0 < 0 && y1 <0) || (y0 > height && y1 > height);
+        return (y0 < 0 && y1 < 0) || (y0 > height && y1 > height);
     }
 }
 
@@ -230,14 +231,14 @@ public:
     }
 
     /** Input logic for text input fields.
- *
- * Params:
- *
- * id             = ID of the text input widget
- * over           = Is the mouse hovering over the text input widget?
- * forceInputable = Force the text input widget to be inputable regardless of whether it's
- *                  hovered and clicked by the mouse or not.
- */
+     *
+     * Params:
+     *
+     * id             = ID of the text input widget
+     * over           = Is the mouse hovering over the text input widget?
+     * forceInputable = Force the text input widget to be inputable regardless of whether it's
+     *                  hovered and clicked by the mouse or not.
+     */
     void textInputLogic(uint id, bool over, bool forceInputable)
     {
         // If nothing else is active, we check for mouse over to make the widget hot in the
@@ -256,16 +257,16 @@ public:
     }
 
     /* Update user input on the beginning of a frame.
- *
- * Params:
- *
- * mx          = Mouse X position.
- * my          = Mouse Y position.
- * mbut        = Mouse buttons pressed (a combination of values of a $(D MouseButton)).
- * scroll      = Mouse wheel movement.
- * unicodeChar = Unicode text input from the keyboard (usually the unicode result of last
- *               keypress).
- */
+     *
+     * Params:
+     *
+     * mx          = Mouse X position.
+     * my          = Mouse Y position.
+     * mbut        = Mouse buttons pressed (a combination of values of a $(D MouseButton)).
+     * scroll      = Mouse wheel movement.
+     * unicodeChar = Unicode text input from the keyboard (usually the unicode result of last
+     *               keypress).
+     */
     void updateInput(MouseInfo mouseInfo, dchar unicodeChar)
     {
         import imgui.gl3_renderer : maxCharacterCount;
