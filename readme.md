@@ -76,3 +76,6 @@ See the accompanying file [license.txt][zlib].
 [glfw]: http://www.glfw.org/
 [memory]: https://github.com/d-gamedev-team/dimgui/blob/master/examples/memory/memory.d
 [dbox]: https://github.com/d-gamedev-team/dbox
+
+# TODO
+- try to get rid of normals and of texture coordinates for normal rendering with white TEXTURE

@@ -68,7 +68,6 @@ enum FIRST_CHARACTER = 32;
 // BakeFontBitmap in stdb_truetype.d
 uint g_font_texture_size = 1024;
 float[TEMP_COORD_COUNT * 2] g_tempCoords;
-float[TEMP_COORD_COUNT * 2] g_tempNormals;
 float[TEMP_COORD_COUNT * 12 + (TEMP_COORD_COUNT - 2) * 6] g_tempVertices;
 float[TEMP_COORD_COUNT * 12 + (TEMP_COORD_COUNT - 2) * 6] g_tempTextureCoords;
 float[TEMP_COORD_COUNT * 24 + (TEMP_COORD_COUNT - 2) * 12] g_tempColors;
@@ -121,24 +120,6 @@ void drawPolygon(const(float)[] coords, float r, uint col)
 {
     const numCoords = min(TEMP_COORD_COUNT, coords.length / 2);
 
-    for (uint i = 0, j = numCoords - 1; i < numCoords; j = i++)
-    {
-        const(float)* v0 = &coords[j * 2];
-        const(float)* v1 = &coords[i * 2];
-        float dx = v1[0] - v0[0];
-        float dy = v1[1] - v0[1];
-        float d = sqrt(dx * dx + dy * dy);
-
-        if (d > 0)
-        {
-            d = 1.0f / d;
-            dx *= d;
-            dy *= d;
-        }
-        g_tempNormals[j * 2 + 0] = dy;
-        g_tempNormals[j * 2 + 1] = -dx;
-    }
-
     const float[4] colf = [
         (col & 0xff) / 255.0f, ((col >> 8) & 0xff) / 255.0f,
         ((col >> 16) & 0xff) / 255.0f, ((col >> 24) & 0xff) / 255.0f
@@ -148,40 +129,11 @@ void drawPolygon(const(float)[] coords, float r, uint col)
         0f
     ];
 
-    for (uint i = 0, j = numCoords - 1; i < numCoords; j = i++)
-    {
-        float dlx0 = g_tempNormals[j * 2 + 0];
-        float dly0 = g_tempNormals[j * 2 + 1];
-        float dlx1 = g_tempNormals[i * 2 + 0];
-        float dly1 = g_tempNormals[i * 2 + 1];
-        float dmx = (dlx0 + dlx1) * 0.5f;
-        float dmy = (dly0 + dly1) * 0.5f;
-        float dmr2 = dmx * dmx + dmy * dmy;
-
-        if (dmr2 > 0.000001f)
-        {
-            float scale = 1.0f / dmr2;
-
-            if (scale > 10.0f)
-                scale = 10.0f;
-            dmx *= scale;
-            dmy *= scale;
-        }
-        g_tempCoords[i * 2 + 0] = coords[i * 2 + 0] + dmx * r;
-        g_tempCoords[i * 2 + 1] = coords[i * 2 + 1] + dmy * r;
-    }
-
     int vSize = numCoords * 12 + (numCoords - 2) * 6;
     int uvSize = numCoords * 2 * 6 + (numCoords - 2) * 2 * 3;
     int cSize = numCoords * 4 * 6 + (numCoords - 2) * 4 * 3;
-    float* v = g_tempVertices.ptr;
-    float* uv = g_tempTextureCoords.ptr;
-    memset(uv, 0, uvSize * float.sizeof);
-    float* c = g_tempColors.ptr;
-    memset(c, 1, cSize * float.sizeof);
-
-    float* ptrV = v;
-    float* ptrC = c;
+    float* ptrV = g_tempVertices.ptr;
+    float* ptrC = g_tempColors.ptr;
 
     for (uint i = 0, j = numCoords - 1; i < numCoords; j = i++)
     {
@@ -191,15 +143,6 @@ void drawPolygon(const(float)[] coords, float r, uint col)
         *ptrV = coords[j * 2];
         *(ptrV + 1) = coords[j * 2 + 1];
         ptrV += 2;
-        *ptrV = g_tempCoords[j * 2];
-        *(ptrV + 1) = g_tempCoords[j * 2 + 1];
-        ptrV += 2;
-        *ptrV = g_tempCoords[j * 2];
-        *(ptrV + 1) = g_tempCoords[j * 2 + 1];
-        ptrV += 2;
-        *ptrV = g_tempCoords[i * 2];
-        *(ptrV + 1) = g_tempCoords[i * 2 + 1];
-        ptrV += 2;
         *ptrV = coords[i * 2];
         *(ptrV + 1) = coords[i * 2 + 1];
         ptrV += 2;
@@ -213,21 +156,6 @@ void drawPolygon(const(float)[] coords, float r, uint col)
         *(ptrC + 1) = colf[1];
         *(ptrC + 2) = colf[2];
         *(ptrC + 3) = colf[3];
-        ptrC += 4;
-        *ptrC = colTransf[0];
-        *(ptrC + 1) = colTransf[1];
-        *(ptrC + 2) = colTransf[2];
-        *(ptrC + 3) = colTransf[3];
-        ptrC += 4;
-        *ptrC = colTransf[0];
-        *(ptrC + 1) = colTransf[1];
-        *(ptrC + 2) = colTransf[2];
-        *(ptrC + 3) = colTransf[3];
-        ptrC += 4;
-        *ptrC = colTransf[0];
-        *(ptrC + 1) = colTransf[1];
-        *(ptrC + 2) = colTransf[2];
-        *(ptrC + 3) = colTransf[3];
         ptrC += 4;
         *ptrC = colf[0];
         *(ptrC + 1) = colf[1];
@@ -269,11 +197,11 @@ void drawPolygon(const(float)[] coords, float r, uint col)
 
     glBindVertexArray(g_vao);
     glBindBuffer(GL_ARRAY_BUFFER, g_vbos[0]);
-    glBufferData(GL_ARRAY_BUFFER, vSize * float.sizeof, v, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vSize * float.sizeof, g_tempVertices.ptr, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, g_vbos[1]);
-    glBufferData(GL_ARRAY_BUFFER, uvSize * float.sizeof, uv, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, uvSize * float.sizeof, g_tempTextureCoords.ptr, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, g_vbos[2]);
-    glBufferData(GL_ARRAY_BUFFER, cSize * float.sizeof, c, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, cSize * float.sizeof, g_tempColors.ptr, GL_STATIC_DRAW);
     glDrawArrays(GL_TRIANGLES, 0, (numCoords * 2 + numCoords - 2) * 3);
 }
 
@@ -673,7 +601,7 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
             else
             {
                 drawRoundedRect(cmd.rect.x + 0.5f, y, cmd.rect.w - 1, h,
-                        cmd.rect.r, 1.0f, cmd.color);
+                                cmd.rect.r, 1.0f, cmd.color);
             }
         }
         else if (cmd.type == IMGUI_GFXCMD_LINE)
