@@ -82,7 +82,8 @@ struct MouseInfo
 bool inside(Rect r, ref GuiState state, bool checkScroll = true)
 {
     return (!checkScroll || state.insideCurrentScroll) && state.mouseInfo.x >= r.x
-        && state.mouseInfo.x <= r.x + r.w && state.mouseInfo.y >= r.y && state.mouseInfo.y <= r.y + r.h;
+        && state.mouseInfo.x <= r.x + r.w && state.mouseInfo.y >= r.y
+        && state.mouseInfo.y <= r.y + r.h;
 }
 
 // data to store for a ScrollArea

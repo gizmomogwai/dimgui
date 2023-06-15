@@ -601,32 +601,32 @@ void renderGLDraw(Command[] commands, int width, int height)
             else
             {
                 drawRoundedRect(cmd.rect.x + 0.5f, y, cmd.rect.w - 1, h,
-                                cmd.rect.r, 1.0f, cmd.color);
+                        cmd.rect.r, 1.0f, cmd.color);
             }
             break;
         case Type.LINE:
             drawLine(cmd.line.x0, cmd.line.y0, cmd.line.x1, cmd.line.y1,
-                     cmd.line.r, 1.0f, RGBA(255, 0, 0, 255).toPackedRGBA); //cmd.color);
+                    cmd.line.r, 1.0f, RGBA(255, 0, 0, 255).toPackedRGBA); //cmd.color);
             break;
         case Type.TRIANGLE:
             if (cmd.flags == 1)
             {
                 const float[3 * 2] verts = [
-                  cmd.rect.x + 0.5f, cmd.rect.y + 0.5f,
-                  cmd.rect.x + 0.5f + cmd.rect.w - 1,
-                  cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f, cmd.rect.x + 0.5f,
-                  cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f,
+                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
+                    cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f, cmd.rect.x + 0.5f,
+                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
                 drawPolygon(verts, 1.0f, cmd.color);
             }
-            
+
             if (cmd.flags == 2)
             {
                 const float[3 * 2] verts = [
-                  cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
-                  cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f, cmd.rect.y + 0.5f,
-                  cmd.rect.x + 0.5f + cmd.rect.w - 1,
-                  cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                    cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f, cmd.rect.y + 0.5f,
+                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
+                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
                 drawPolygon(verts, 1.0f, cmd.color);
             }
