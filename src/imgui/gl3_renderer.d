@@ -26,8 +26,7 @@ import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer,
 import core.stdc.stdlib : free, malloc;
 import core.stdc.string : memset;
 import imgui.api : RGBA, TextAlign;
-import imgui.engine : GfxCmd, IMGUI_GFXCMD_RECT, IMGUI_GFXCMD_LINE,
-    IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, IMGUI_GFXCMD_SCISSOR, Sizes;
+import imgui.engine : Command, Type, Sizes;
 import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad,
     stbtt_BakeFontBitmap, STBTT_ifloor;
 import std.exception : enforce;
@@ -577,7 +576,7 @@ void drawText(float x, float y, const(char)[] text, int align_, uint color)
     }
 }
 
-void renderGLDraw(GfxCmd[] commands, int width, int height)
+void renderGLDraw(Command[] commands, int width, int height)
 {
     glViewport(0, 0, width, height);
     glUseProgram(g_program);
@@ -589,8 +588,9 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
 
     foreach (ref cmd; commands)
     {
-        if (cmd.type == IMGUI_GFXCMD_RECT)
+        final switch (cmd.type)
         {
+        case Type.RECT:
             auto y = cmd.rect.y + 0.5f;
             auto h = cmd.rect.h - 1;
 
@@ -603,42 +603,38 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
                 drawRoundedRect(cmd.rect.x + 0.5f, y, cmd.rect.w - 1, h,
                                 cmd.rect.r, 1.0f, cmd.color);
             }
-        }
-        else if (cmd.type == IMGUI_GFXCMD_LINE)
-        {
+            break;
+        case Type.LINE:
             drawLine(cmd.line.x0, cmd.line.y0, cmd.line.x1, cmd.line.y1,
-                    cmd.line.r, 1.0f, RGBA(255, 0, 0, 255).toPackedRGBA); //cmd.color);
-        }
-        else if (cmd.type == IMGUI_GFXCMD_TRIANGLE)
-        {
+                     cmd.line.r, 1.0f, RGBA(255, 0, 0, 255).toPackedRGBA); //cmd.color);
+            break;
+        case Type.TRIANGLE:
             if (cmd.flags == 1)
             {
                 const float[3 * 2] verts = [
-                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f,
-                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
-                    cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f, cmd.rect.x + 0.5f,
-                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                  cmd.rect.x + 0.5f, cmd.rect.y + 0.5f,
+                  cmd.rect.x + 0.5f + cmd.rect.w - 1,
+                  cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f, cmd.rect.x + 0.5f,
+                  cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
                 drawPolygon(verts, 1.0f, cmd.color);
             }
-
+            
             if (cmd.flags == 2)
             {
                 const float[3 * 2] verts = [
-                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
-                    cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f, cmd.rect.y + 0.5f,
-                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
-                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                  cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                  cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f, cmd.rect.y + 0.5f,
+                  cmd.rect.x + 0.5f + cmd.rect.w - 1,
+                  cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
                 drawPolygon(verts, 1.0f, cmd.color);
             }
-        }
-        else if (cmd.type == IMGUI_GFXCMD_TEXT)
-        {
+            break;
+        case Type.TEXT:
             drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.color);
-        }
-        else if (cmd.type == IMGUI_GFXCMD_SCISSOR)
-        {
+            break;
+        case Type.SCISSOR:
             if (cmd.flags)
             {
                 glEnable(GL_SCISSOR_TEST);
@@ -648,6 +644,7 @@ void renderGLDraw(GfxCmd[] commands, int width, int height)
             {
                 glDisable(GL_SCISSOR_TEST);
             }
+            break;
         }
     }
 

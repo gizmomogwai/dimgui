@@ -28,8 +28,7 @@ import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.range : Appender, appender, empty;
 import std.conv : to;
-import imgui.engine : Sizes, GuiState, GfxCmd, IMGUI_GFXCMD_SCISSOR, imguiGfxRect, IMGUI_GFXCMD_RECT,
-    IMGUI_GFXCMD_LINE, imguiGfxLine, IMGUI_GFXCMD_TRIANGLE, IMGUI_GFXCMD_TEXT, imguiGfxText;
+import imgui.engine : Sizes, GuiState, Command, Type, Rect, Line, Text;
 import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
@@ -80,18 +79,10 @@ struct MouseInfo
     }
 }
 
-struct Rect
+bool inside(Rect r, ref GuiState state, bool checkScroll = true)
 {
-    int x;
-    int y;
-    int w;
-    int h;
-    bool inside(ref GuiState state, bool checkScroll = true)
-    {
-        return (!checkScroll || state.insideCurrentScroll) && state.mouseInfo.x >= x
-            && state.mouseInfo.x <= x + w && state.mouseInfo.y >= y && state.mouseInfo.y <= y + h;
-    }
-
+    return (!checkScroll || state.insideCurrentScroll) && state.mouseInfo.x >= r.x
+        && state.mouseInfo.x <= r.x + r.w && state.mouseInfo.y >= r.y && state.mouseInfo.y <= r.y + r.h;
 }
 
 // data to store for a ScrollArea
@@ -136,11 +127,11 @@ class ImGui
 {
     GuiState state;
 
-    Appender!(GfxCmd[]) gfxCmdQueue;
+    Appender!(Command[]) gfxCmdQueue;
 
     this(string fontPath, uint fontTextureSize = 1024)
     {
-        gfxCmdQueue = appender!(GfxCmd[]);
+        gfxCmdQueue = appender!(Command[]);
         gfxCmdQueue.reserve(512);
         enforce(imguiRenderGLInit(fontPath, fontTextureSize));
     }
@@ -202,10 +193,10 @@ class ImGui
     private void addGfxCmdScissor(int x, int y, int w, int h)
     {
         // dfmt off
-        GfxCmd cmd = {
-            type: IMGUI_GFXCMD_SCISSOR,
+        Command cmd = {
+            type: Type.SCISSOR,
             flags: x < 0 ? 0 : 1,
-            rect: imguiGfxRect(x, y, w, h),
+            rect: Rect(x, y, w, h),
         };
         // dfmt on
         gfxCmdQueue.put(cmd);
@@ -214,10 +205,10 @@ class ImGui
     private void addGfxCmdRect(int x, int y, int w, int h, RGBA color)
     {
         // dfmt off
-        GfxCmd cmd = {
-            type: IMGUI_GFXCMD_RECT,
+        Command cmd = {
+            type: Type.RECT,
             color: color.toPackedRGBA(),
-            rect: imguiGfxRect(x, y, w, h),
+            rect: Rect(x, y, w, h),
         };
         // dfmt on
         gfxCmdQueue.put(cmd);
@@ -226,10 +217,10 @@ class ImGui
     public void addGfxCmdLine(int x1, int y1, int x2, int y2, int r, RGBA color)
     {
         // dfmt off
-        GfxCmd cmd = {
-            type: IMGUI_GFXCMD_LINE,
+        Command cmd = {
+            type: Type.LINE,
             color: color.toPackedRGBA(),
-            line: imguiGfxLine(x1, y1, x2, y2, r),
+            line: Line(x1, y1, x2, y2, r),
         };
         // dfmt on
         gfxCmdQueue.put(cmd);
@@ -238,10 +229,10 @@ class ImGui
     private void addGfxCmdRoundedRect(int x, int y, int w, int h, int r, RGBA color)
     {
         // dfmt off
-        GfxCmd cmd = {
-            type: IMGUI_GFXCMD_RECT,
+        Command cmd = {
+            type: Type.RECT,
             color: color.toPackedRGBA(),
-            rect: imguiGfxRect(x, y, w, h, r),
+            rect: Rect(x, y, w, h, r),
         };
         // dfmt on
         gfxCmdQueue.put(cmd);
@@ -250,11 +241,11 @@ class ImGui
     private void addGfxCmdTriangle(int x, int y, int w, int h, int flags, RGBA color)
     {
         // dfmt off
-        GfxCmd cmd = {
-            type: IMGUI_GFXCMD_TRIANGLE,
+        Command cmd = {
+            type: Type.TRIANGLE,
             flags: cast(byte) flags,
             color: color.toPackedRGBA(),
-            rect: imguiGfxRect(x, y, w, h),
+            rect: Rect(x, y, w, h),
         };
         // dfmt on
         gfxCmdQueue.put(cmd);
@@ -263,10 +254,10 @@ class ImGui
     private void addGfxCmdText(int x, int y, int align_, const(char)[] text, RGBA color)
     {
         // dfmt off
-        GfxCmd cmd = {
-            type: IMGUI_GFXCMD_TEXT,
+        Command cmd = {
+            type: Type.TEXT,
             color: color.toPackedRGBA(),
-            text: imguiGfxText(x, y, align_, text),
+            text: Text(x, y, align_, text),
         };
         // dfmt on
         gfxCmdQueue.put(cmd);

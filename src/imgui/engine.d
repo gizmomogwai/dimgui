@@ -37,28 +37,27 @@ struct Sizes
     enum AREA_HEADER = 35;
 }
 // Pull render interface.
-alias imguiGfxCmdType = int;
-enum : imguiGfxCmdType
+enum Type
 {
-    IMGUI_GFXCMD_RECT,
-    IMGUI_GFXCMD_TRIANGLE,
-    IMGUI_GFXCMD_LINE,
-    IMGUI_GFXCMD_TEXT,
-    IMGUI_GFXCMD_SCISSOR,
+    RECT,
+    TRIANGLE,
+    LINE,
+    TEXT,
+    SCISSOR,
 }
 
-struct imguiGfxRect
+struct Rect
 {
     int x, y, w, h, r;
 }
 
-struct imguiGfxText
+struct Text
 {
     int x, y, align_;
     const(char[]) text;
 }
 
-struct imguiGfxLine
+struct Line
 {
     int x0, y0, x1, y1, r;
     bool outside(int height)
@@ -67,18 +66,17 @@ struct imguiGfxLine
     }
 }
 
-struct GfxCmd
+struct Command
 {
-    char type;
+    Type type;
     char flags;
-    byte[2] padding;
     uint color;
 
     union
     {
-        imguiGfxLine line;
-        imguiGfxRect rect;
-        imguiGfxText text;
+        Line line;
+        Rect rect;
+        Text text;
     }
 }
 
