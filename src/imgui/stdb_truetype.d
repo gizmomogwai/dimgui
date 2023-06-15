@@ -366,7 +366,7 @@ enum  // platformID
     STBTT_PLATFORM_ID_MAC = 1,
     STBTT_PLATFORM_ID_ISO = 2,
     STBTT_PLATFORM_ID_MICROSOFT = 3
-};
+}
 
 enum  // encodingID for STBTT_PLATFORM_ID_UNICODE
 {
@@ -375,7 +375,7 @@ enum  // encodingID for STBTT_PLATFORM_ID_UNICODE
     STBTT_UNICODE_EID_ISO_10646 = 2,
     STBTT_UNICODE_EID_UNICODE_2_0_BMP = 3,
     STBTT_UNICODE_EID_UNICODE_2_0_FULL = 4
-};
+}
 
 enum  // encodingID for STBTT_PLATFORM_ID_MICROSOFT
 {
@@ -383,7 +383,7 @@ enum  // encodingID for STBTT_PLATFORM_ID_MICROSOFT
     STBTT_MS_EID_UNICODE_BMP = 1,
     STBTT_MS_EID_SHIFTJIS = 2,
     STBTT_MS_EID_UNICODE_FULL = 10
-};
+}
 
 enum  // encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes
 {
@@ -395,7 +395,7 @@ enum  // encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes
     STBTT_MAC_EID_GREEK = 6,
     STBTT_MAC_EID_KOREAN = 3,
     STBTT_MAC_EID_RUSSIAN = 7
-};
+}
 
 enum  // languageID for STBTT_PLATFORM_ID_MICROSOFT; same as LCID...
 {
@@ -412,7 +412,7 @@ enum  // languageID for STBTT_PLATFORM_ID_MICROSOFT; same as LCID...
     STBTT_MS_LANG_SPANISH = 0x0409,
     STBTT_MS_LANG_HEBREW = 0x040d,
     STBTT_MS_LANG_SWEDISH = 0x041D
-};
+}
 
 enum  // languageID for STBTT_PLATFORM_ID_MAC
 {
@@ -430,7 +430,7 @@ enum  // languageID for STBTT_PLATFORM_ID_MAC
     STBTT_MAC_LANG_CHINESE_SIMPLIFIED = 33,
     STBTT_MAC_LANG_ITALIAN = 3,
     STBTT_MAC_LANG_CHINESE_TRAD = 19
-};
+}
 
 //////////////////////////////////////////////////////////////////////////
 //
