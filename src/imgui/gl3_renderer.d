@@ -606,44 +606,39 @@ void renderGLDraw(Command[] commands, int width, int height)
             break;
         case Type.LINE:
             drawLine(cmd.line.x0, cmd.line.y0, cmd.line.x1, cmd.line.y1,
-                    cmd.line.r, 1.0f, RGBA(255, 0, 0, 255).toPackedRGBA); //cmd.color);
+                    cmd.line.r, 1.0f, cmd.color);
             break;
-        case Type.TRIANGLE:
-            if (cmd.flags == 1)
-            {
-                const float[3 * 2] verts = [
-                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f,
-                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
-                    cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f, cmd.rect.x + 0.5f,
-                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
+        case Type.TRIANGLE_DOWN:
+            // dfmt off
+            const float[3 * 2] verts =
+                [
+                  cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
+                  cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f, cmd.rect.y + 0.5f,
+                  cmd.rect.x + 0.5f + cmd.rect.w - 1, cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
-                drawPolygon(verts, 1.0f, cmd.color);
-            }
-
-            if (cmd.flags == 2)
-            {
-                const float[3 * 2] verts = [
-                    cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
-                    cmd.rect.x + 0.5f + cmd.rect.w / 2 - 0.5f, cmd.rect.y + 0.5f,
-                    cmd.rect.x + 0.5f + cmd.rect.w - 1,
-                    cmd.rect.y + 0.5f + cmd.rect.h - 1,
+            // dfmt on
+            drawPolygon(verts, 1.0f, cmd.color);
+            break;
+        case Type.TRIANGLE_RIGHT:
+            // dfmt off
+            const float[3 * 2] verts =
+                [
+                  cmd.rect.x + 0.5f, cmd.rect.y + 0.5f,
+                  cmd.rect.x + 0.5f + cmd.rect.w - 1, cmd.rect.y + 0.5f + cmd.rect.h / 2 - 0.5f,
+                  cmd.rect.x + 0.5f, cmd.rect.y + 0.5f + cmd.rect.h - 1,
                 ];
-                drawPolygon(verts, 1.0f, cmd.color);
-            }
+            // dfmt on
+            drawPolygon(verts, 1.0f, cmd.color);
             break;
         case Type.TEXT:
             drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.color);
             break;
         case Type.SCISSOR:
-            if (cmd.flags)
-            {
-                glEnable(GL_SCISSOR_TEST);
-                glScissor(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h);
-            }
-            else
-            {
-                glDisable(GL_SCISSOR_TEST);
-            }
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(cmd.rect.x, cmd.rect.y, cmd.rect.w, cmd.rect.h);
+            break;
+        case Type.DISABLE_SCISSOR:
+            glDisable(GL_SCISSOR_TEST);
             break;
         }
     }

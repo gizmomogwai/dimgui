@@ -43,8 +43,9 @@ struct GUI
         int x = BORDER;
         static ScrollAreaContext scrollArea1;
         enum scrollArea1W = 400;
+
         gui.beginScrollArea(scrollArea1, "Scroll area 1", x, BORDER,
-                scrollArea1W, window.height - 2 * BORDER);
+                            scrollArea1W, window.height - 2 * BORDER);
         x += scrollArea1W;
 
         if (gui.button("Button"))
@@ -141,6 +142,21 @@ struct GUI
         }
         +/
         gui.endScrollArea(scrollArea1);
+
+        x += BORDER;
+        static ScrollAreaContext scrollArea2;
+        int scrollArea2W = 400;
+        gui.beginScrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W, window.height-2*BORDER);
+        static bool collapsed = false;
+        gui.collapse("Test1", "Test2", &collapsed);
+        if (!collapsed)
+        {
+            for (int i=0; i<10; ++i)
+            {
+                gui.button("Button %s".format(i));
+            }
+        }
+        gui.endScrollArea(scrollArea2);
         gui.endFrame();
 
         /+

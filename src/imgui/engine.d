@@ -40,10 +40,12 @@ struct Sizes
 enum Type
 {
     RECT,
-    TRIANGLE,
+    TRIANGLE_DOWN,
+    TRIANGLE_RIGHT,
     LINE,
     TEXT,
     SCISSOR,
+    DISABLE_SCISSOR,
 }
 
 struct Rect
@@ -69,9 +71,7 @@ struct Line
 struct Command
 {
     Type type;
-    char flags;
     uint color;
-
     union
     {
         Line line;
