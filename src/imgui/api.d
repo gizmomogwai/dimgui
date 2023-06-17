@@ -142,9 +142,7 @@ void addScissor(Commands commands, ref Rect r)
 
 void addDisableScissor(Commands commands)
 {
-    Command cmd = {
-        type: Type.DISABLE_SCISSOR,
-    };
+    Command cmd = {type: Type.DISABLE_SCISSOR,};
     commands.put(cmd);
 }
 
@@ -171,6 +169,7 @@ void addRoundedRect(Commands commands, int x, int y, int w, int h, int r, RGBA c
     // dfmt on
     commands.put(cmd);
 }
+
 void addLine(Commands commands, int x1, int y1, int x2, int y2, int r, RGBA color)
 {
     // dfmt off
@@ -194,6 +193,7 @@ void addDownTriangle(Commands commands, int x, int y, int w, int h, RGBA color)
     // dfmt on
     commands.put(cmd);
 }
+
 void addRightTriangle(Commands commands, int x, int y, int w, int h, RGBA color)
 {
     // dfmt off
@@ -219,12 +219,10 @@ void addText(Commands commands, int x, int y, int alignment, const(char)[] text,
     commands.put(cmd);
 }
 
-
 alias Commands = Appender!(Command[]);
 class ImGui
 {
     GuiState state;
-
     Commands commands;
 
     this(string fontPath, uint fontTextureSize = 1024)
@@ -283,7 +281,6 @@ class ImGui
         commands.clear;
     }
 
-
     /**
        Begin the definition of a new scrollable area.
 
@@ -304,9 +301,10 @@ class ImGui
 
        $(D true) if the mouse was located inside the scrollable area.
     */
-    public bool beginScrollArea(ref ScrollAreaContext context, string title, int xPos, int yPos, int width, int height,
-            bool scrollHorizontal = false, int scrolledHorizontalPixels = 2000,
-            const ref ColorScheme colorScheme = defaultColorScheme)
+    public bool scrollArea(ref ScrollAreaContext context, string title, int xPos, int yPos,
+            int width, int height, void delegate() builder, bool scrollHorizontal = false,
+            int scrolledHorizontalPixels = 2000,
+            const ref ColorScheme colorScheme = defaultColorScheme,)
     {
         state.areaId++;
         state.widgetId = 0;
@@ -354,6 +352,8 @@ class ImGui
                 TextAlign.left, title, colorScheme.scroll.area.text);
 
         commands.addScissor(context.viewport);
+        builder();
+        endScrollArea(context);
         return context.insideScrollArea;
     }
 
@@ -495,7 +495,7 @@ class ImGui
 
        colorScheme = Optionally override the current default color scheme when creating this element.
     */
-    public void endScrollArea(ref ScrollAreaContext context,
+    private void endScrollArea(ref ScrollAreaContext context,
             const ref ColorScheme colorScheme = defaultColorScheme)
     {
         // scrollbars are 2 scroll_area_paddings wide, with 0.5 before and after .. totalling 3 * scroll_area_paddings
@@ -894,7 +894,8 @@ class ImGui
 
         auto color = state.isIdActive(id) ? colorScheme.slider.thumbPress
             : (state.isIdHot(id) ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
-        commands.addRoundedRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH, Sizes.SLIDER_HEIGHT, 4, color);
+        commands.addRoundedRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH,
+                Sizes.SLIDER_HEIGHT, 4, color);
 
         // TODO: fix this, take a look at 'nicenum'.
         // todo: this should display sub 0.1 if the step is low enough.

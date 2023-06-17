@@ -44,23 +44,23 @@ struct GUI
         static ScrollAreaContext scrollArea1;
         enum scrollArea1W = 400;
 
-        gui.beginScrollArea(scrollArea1, "Scroll area 1", x, BORDER,
-                            scrollArea1W, window.height - 2 * BORDER);
-        x += scrollArea1W;
+        gui.scrollArea(scrollArea1, "Scroll area 1", x, BORDER, scrollArea1W,
+                window.height - 2 * BORDER, () {
+            x += scrollArea1W;
 
-        if (gui.button("Button"))
-        {
-            writeln("button pressed");
-        }
+            if (gui.button("Button"))
+            {
+                writeln("button pressed");
+            }
 
-        gui.button("Disabled button", Enabled.no);
-        gui.item("Item");
-        gui.item("Disabled item", Enabled.no);
-        for (int i = 0; i < 1000; ++i)
-        {
-            gui.item("Item %s".format(i), Enabled.no);
-        }
-        /+
+            gui.button("Disabled button", Enabled.no);
+            gui.item("Item");
+            gui.item("Disabled item", Enabled.no);
+            for (int i = 0; i < 1000; ++i)
+            {
+                gui.item("Item %s".format(i), Enabled.no);
+            }
+            /+
         if (imguiCheck("Checkbox", &checkState1))
             lastInfo = "Toggled the checkbox to: '%s'".format(checkState1 ? "On" : "Off");
 
@@ -141,22 +141,23 @@ struct GUI
             imguiLabel("long text abcdefghijklmnopqrstuvwxyz %d".format(i));
         }
         +/
-        gui.endScrollArea(scrollArea1);
+        });
 
         x += BORDER;
         static ScrollAreaContext scrollArea2;
         int scrollArea2W = 400;
-        gui.beginScrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W, window.height-2*BORDER);
-        static bool collapsed = false;
-        gui.collapse("Test1", "Test2", &collapsed);
-        if (!collapsed)
-        {
-            for (int i=0; i<10; ++i)
+        gui.scrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W,
+                window.height - 2 * BORDER, () {
+            static bool collapsed = false;
+            gui.collapse("Test1", "Test2", &collapsed);
+            if (!collapsed)
             {
-                gui.button("Button %s".format(i));
+                for (int i = 0; i < 10; ++i)
+                {
+                    gui.button("Button %s".format(i));
+                }
             }
-        }
-        gui.endScrollArea(scrollArea2);
+        });
         gui.endFrame();
 
         /+
