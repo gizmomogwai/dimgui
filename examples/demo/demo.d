@@ -35,10 +35,9 @@ struct GUI
 
         auto mouse = window.getMouseInfo();
         auto scrollInfo = window.getAndResetScrollInfo();
-        gui.beginFrame(MouseInfo(mouse.x, mouse.y, mouse.button,
-                cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
-                window.width, window.height, 0);
-
+        gui.frame(
+            MouseInfo(mouse.x, mouse.y, mouse.button, cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
+            window.width, window.height, 0, () {
         enum BORDER = 10;
         int x = BORDER;
         static ScrollAreaContext scrollArea1;
@@ -158,7 +157,7 @@ struct GUI
                 }
             }
         });
-        gui.endFrame();
+            });
 
         /+
         const graphicsXPos = xCursor + 10;

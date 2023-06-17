@@ -272,13 +272,15 @@ class ImGui
        which may not be automatically handled by your input library's text
        input functionality (e.g. GLFW's getUnicode() does not do this).
     */
-    public void beginFrame(MouseInfo mouseInfo, int width, int height, dchar unicodeChar = 0)
+    public void frame(MouseInfo mouseInfo, int width, int height, dchar unicodeChar, void delegate() builder)
     {
         state.updateInput(mouseInfo, unicodeChar);
         state.beginFrame();
         state.width = width;
         state.height = height;
         commands.clear;
+        builder();
+        state.clearInput();
     }
 
     /**
@@ -1145,11 +1147,6 @@ class ImGui
             RGBA color = defaultColorScheme.generic.roundRect)
     {
         commands.addRoundedRect(x, y, width, height, r, color);
-    }
-    /** End the list of batched commands for the current frame. */
-    public void endFrame()
-    {
-        state.clearInput();
     }
 
     /** Render all of the batched commands for the current frame. */
