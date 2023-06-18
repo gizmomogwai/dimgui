@@ -182,11 +182,11 @@ void addLine(Commands commands, int x1, int y1, int x2, int y2, int r, RGBA colo
     commands.put(cmd);
 }
 
-void addDownTriangle(Commands commands, int x, int y, int w, int h, RGBA color)
+void addArrowDown(Commands commands, int x, int y, int w, int h, RGBA color)
 {
     // dfmt off
     Command cmd = {
-        type: Type.TRIANGLE_DOWN,
+        type: Type.ARROW_DOWN,
         color: color.toPackedRGBA(),
         rect: Rect(x, y, w, h),
     };
@@ -194,11 +194,11 @@ void addDownTriangle(Commands commands, int x, int y, int w, int h, RGBA color)
     commands.put(cmd);
 }
 
-void addRightTriangle(Commands commands, int x, int y, int w, int h, RGBA color)
+void addArrowRight(Commands commands, int x, int y, int w, int h, RGBA color)
 {
     // dfmt off
     Command cmd = {
-        type: Type.TRIANGLE_RIGHT,
+        type: Type.ARROW_RIGHT,
         color: color.toPackedRGBA(),
         rect: Rect(x, y, w, h),
     };
@@ -751,24 +751,23 @@ class ImGui
             *checkState = !(*checkState);
         }
 
-        auto triangleColor = (*checkState) ? (state.isIdActive(id)
-                ? colorScheme.collapse.doHide : colorScheme.collapse.shown) : state.isIdActive(id)
-            ? colorScheme.collapse.doShow : colorScheme.collapse.hidden;
+        // dfmt off
+        auto color = enabled ?
+            (state.isIdHot(id) ? colorScheme.collapse.textHover : colorScheme.collapse.text)
+            : colorScheme.collapse.textDisabled;
+        // dfmt on
         if (*checkState)
         {
-            commands.addRightTriangle(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE, triangleColor);
+            commands.addArrowRight(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE, color);
         }
         else
         {
-            commands.addDownTriangle(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE, triangleColor);
+            commands.addArrowDown(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE, color);
         }
 
-        auto textColor = enabled ? (state.isIdHot(id)
-                ? colorScheme.collapse.textHover : colorScheme.collapse.text)
-            : colorScheme.collapse.textDisabled;
         commands.addText(x + Sizes.BUTTON_HEIGHT,
                 y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                TextAlign.left, label, textColor);
+                TextAlign.left, label, color);
 
         if (subtext)
         {

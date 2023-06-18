@@ -151,8 +151,8 @@ struct ColorScheme
         RGBA shown = RGBA(255, 255, 255, 200);
         RGBA hidden = RGBA(255, 255, 255, 200);
 
-        RGBA doShow = RGBA(255, 255, 255, 255);
-        RGBA doHide = RGBA(255, 255, 255, 255);
+        RGBA doShow = RGBA(255, 196, 0, 255);
+        RGBA doHide = RGBA(255, 196, 0, 255);
 
         RGBA text = RGBA(255, 255, 255, 200);
         RGBA textHover = RGBA(255, 196, 0, 255);

@@ -608,7 +608,7 @@ void renderGLDraw(Command[] commands, int width, int height)
             drawLine(cmd.line.x0, cmd.line.y0, cmd.line.x1, cmd.line.y1,
                     cmd.line.r, 1.0f, cmd.color);
             break;
-        case Type.TRIANGLE_DOWN:
+        case Type.ARROW_DOWN:
             // dfmt off
             const float[3 * 2] verts =
                 [
@@ -619,7 +619,7 @@ void renderGLDraw(Command[] commands, int width, int height)
             // dfmt on
             drawPolygon(verts, 1.0f, cmd.color);
             break;
-        case Type.TRIANGLE_RIGHT:
+        case Type.ARROW_RIGHT:
             // dfmt off
             const float[3 * 2] verts =
                 [
