@@ -26,7 +26,7 @@ struct Sizes
     enum BUTTON_HEIGHT = 60;
     enum SLIDER_HEIGHT = 40;
     enum SLIDER_MARKER_WIDTH = 10;
-    enum CHECK_SIZE = TEXT_HEIGHT- TEXT_BASELINE - 10;
+    enum CHECK_SIZE = TEXT_HEIGHT - TEXT_BASELINE - 10;
     enum DEFAULT_SPACING = 4;
     enum TEXT_HEIGHT = 35;
     enum TEXT_BASELINE = 5;

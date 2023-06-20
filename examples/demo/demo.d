@@ -35,31 +35,31 @@ struct GUI
 
         auto mouse = window.getMouseInfo();
         auto scrollInfo = window.getAndResetScrollInfo();
-        gui.frame(
-            MouseInfo(mouse.x, mouse.y, mouse.button, cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
-            window.width, window.height, 0, () {
-        enum BORDER = 10;
-        int x = BORDER;
-        static ScrollAreaContext scrollArea1;
-        enum scrollArea1W = 400;
+        gui.frame(MouseInfo(mouse.x, mouse.y, mouse.button,
+                cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
+                window.width, window.height, 0, () {
+            enum BORDER = 10;
+            int x = BORDER;
+            static ScrollAreaContext scrollArea1;
+            enum scrollArea1W = 400;
 
-        gui.scrollArea(scrollArea1, "Scroll area 1", x, BORDER, scrollArea1W,
-                window.height - 2 * BORDER, () {
-            x += scrollArea1W;
+            gui.scrollArea(scrollArea1, "Scroll area 1", x, BORDER,
+                scrollArea1W, window.height - 2 * BORDER, () {
+                x += scrollArea1W;
 
-            if (gui.button("Button"))
-            {
-                writeln("button pressed");
-            }
+                if (gui.button("Button"))
+                {
+                    writeln("button pressed");
+                }
 
-            gui.button("Disabled button", Enabled.no);
-            gui.item("Item");
-            gui.item("Disabled item", Enabled.no);
-            for (int i = 0; i < 1000; ++i)
-            {
-                gui.item("Item %s".format(i), Enabled.no);
-            }
-            /+
+                gui.button("Disabled button", Enabled.no);
+                gui.item("Item");
+                gui.item("Disabled item", Enabled.no);
+                for (int i = 0; i < 1000; ++i)
+                {
+                    gui.item("Item %s".format(i), Enabled.no);
+                }
+                /+
         if (imguiCheck("Checkbox", &checkState1))
             lastInfo = "Toggled the checkbox to: '%s'".format(checkState1 ? "On" : "Off");
 
@@ -140,24 +140,24 @@ struct GUI
             imguiLabel("long text abcdefghijklmnopqrstuvwxyz %d".format(i));
         }
         +/
-        });
-
-        x += BORDER;
-        static ScrollAreaContext scrollArea2;
-        int scrollArea2W = 400;
-        gui.scrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W,
-                window.height - 2 * BORDER, () {
-            static bool collapsed = false;
-            gui.collapse("Test1", "Test2", &collapsed);
-            if (!collapsed)
-            {
-                for (int i = 0; i < 10; ++i)
-                {
-                    gui.button("Button %s".format(i));
-                }
-            }
-        });
             });
+
+            x += BORDER;
+            static ScrollAreaContext scrollArea2;
+            int scrollArea2W = 400;
+            gui.scrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W,
+                window.height - 2 * BORDER, () {
+                static bool collapsed = false;
+                gui.collapse("Test1", "Test2", &collapsed);
+                if (!collapsed)
+                {
+                    for (int i = 0; i < 10; ++i)
+                    {
+                        gui.button("Button %s".format(i));
+                    }
+                }
+            });
+        });
 
         /+
         const graphicsXPos = xCursor + 10;
