@@ -53,6 +53,12 @@ struct Rect
     int x, y, w, h, r;
 }
 
+struct Vector2i
+{
+    int x;
+    int y;
+}
+
 struct Text
 {
     int x, y, align_;

@@ -28,7 +28,7 @@ import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.range : Appender, appender, empty;
 import std.conv : to;
-import imgui.engine : Sizes, GuiState, Command, Type, Rect, Line, Text;
+import imgui.engine : Sizes, GuiState, Command, Type, Rect, Line, Text, Vector2i;
 import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
@@ -88,8 +88,7 @@ bool inside(Rect r, ref GuiState state, bool checkScroll = true)
 
 struct ScrollAreaContext
 {
-    int xOffset;
-    int yOffset;
+    Vector2i offset;
     int scrolledContentTop;
     int scrolledContentBottom;
     int getScrolledContentHeight()
@@ -334,7 +333,7 @@ class ImGui
                 yPos + Sizes.SCROLL_BAR_SIZE, max(1, width - Sizes.SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
                 max(1, height - Sizes.AREA_HEADER - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
 
-        state.widgetX = xPos + Sizes.SCROLL_AREA_PADDING - context.xOffset;
+        state.widgetX = xPos + Sizes.SCROLL_AREA_PADDING - context.offset.x;
 
         localContext.verticalScrollbar = Rect(xPos + width - Sizes.SCROLL_BAR_SIZE, yPos + Sizes.SCROLL_BAR_SIZE,
                 Sizes.SCROLL_BAR_SIZE, height - Sizes.AREA_HEADER - Sizes.SCROLL_BAR_SIZE);
@@ -343,17 +342,17 @@ class ImGui
         if (context.reveal.active)
         {
             // dfmt off
-            context.yOffset = cast(int)(
-              yPos + height - Sizes.AREA_HEADER + context.yOffset
+            context.offset.y = cast(int)(
+              yPos + height - Sizes.AREA_HEADER + context.offset.y
               - context.reveal.yOffset
               - localContext.viewport.h * context.reveal.percentage);
             // dfmt on
-            context.yOffset.clamp(0, context.getScrolledContentHeight() - localContext.viewport.h);
+            context.offset.y.clamp(0, context.getScrolledContentHeight() - localContext.viewport.h);
             context.reveal.active = false;
         }
         localContext.scrolledHorizontalPixels = scrolledHorizontalPixels;
 
-        state.widgetY = yPos + height - Sizes.AREA_HEADER + context.yOffset;
+        state.widgetY = yPos + height - Sizes.AREA_HEADER + context.offset.y;
         state.widgetW = scrollHorizontal ? localContext.scrolledHorizontalPixels
             : width - Sizes.SCROLL_AREA_PADDING * 4;
 
@@ -419,7 +418,7 @@ class ImGui
                 {
                     float u = state.dragOrigY + (state.mouseInfo.y - state.dragY) / cast(float) range;
                     u.clamp(0, 1);
-                    context.yOffset = cast(int)((1 - u) * (scrolledPixels - scroller.h));
+                    context.offset.y = cast(int)((1 - u) * (scrolledPixels - scroller.h));
                 }
             }
 
@@ -448,7 +447,7 @@ class ImGui
         if (visible)
         {
             float percentageOfStart = (localContext.scrolledHorizontalPixels
-                    ? context.xOffset / localContext.scrolledHorizontalPixels.to!float : 0.0f);
+                    ? context.offset.x / localContext.scrolledHorizontalPixels.to!float : 0.0f);
             percentageOfStart.clamp(0, 1);
 
             // Handle scroll bar logic.
@@ -477,7 +476,7 @@ class ImGui
                 {
                     float u = state.dragOrigX + (state.mouseInfo.x - state.dragX) / cast(float) range;
                     u.clamp(0, 1);
-                    context.xOffset = cast(int)(u * (localContext.scrolledHorizontalPixels - scroller.w));
+                    context.offset.x = cast(int)(u * (localContext.scrolledHorizontalPixels - scroller.w));
                 }
             }
 
@@ -521,16 +520,16 @@ class ImGui
             {
                 if (state.mouseInfo.dy)
                 {
-                    context.yOffset += 20 * state.mouseInfo.dy;
-                    context.yOffset.clamp(0, vertical.pixels - localContext.viewport.h);
+                    context.offset.y += 20 * state.mouseInfo.dy;
+                    context.offset.y.clamp(0, vertical.pixels - localContext.viewport.h);
                 }
             }
             if (horizontal.visible)
             {
                 if (state.mouseInfo.dx)
                 {
-                    context.xOffset += 20 * state.mouseInfo.dx;
-                    context.xOffset.clamp(0, horizontal.pixels - localContext.viewport.w);
+                    context.offset.x += 20 * state.mouseInfo.dx;
+                    context.offset.x.clamp(0, horizontal.pixels - localContext.viewport.w);
                 }
             }
         }
