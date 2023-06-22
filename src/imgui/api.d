@@ -89,12 +89,7 @@ bool inside(Rect r, ref GuiState state, bool checkScroll = true)
 struct ScrollAreaContext
 {
     Vector2i offset;
-    int scrolledContentTop;
-    int scrolledContentBottom;
-    int getScrolledContentHeight()
-    {
-        return scrolledContentTop - scrolledContentBottom;
-    }
+    int scrolledContentHeight;
 
     static struct RevealInfo
     {
@@ -107,10 +102,11 @@ struct ScrollAreaContext
     RevealInfo reveal;
 }
 
-struct LocalScrollAreaContext
+private struct LocalScrollAreaContext
 {
     uint verticalScrollId;
     uint horizontalScrollId;
+    int scrolledContentTop;
 
     // The total area of the scrollarea component (including scrollbars and content)
     Rect scrollAreaRect;
@@ -342,12 +338,15 @@ class ImGui
         if (context.reveal.active)
         {
             // dfmt off
-            context.offset.y = cast(int)(
-              yPos + height - Sizes.AREA_HEADER + context.offset.y
-              - context.reveal.yOffset
-              - localContext.viewport.h * context.reveal.percentage);
+            context.offset.y = (
+              cast(int)(yPos
+                        + height
+                        - Sizes.AREA_HEADER
+                        + context.offset.y
+                        - context.reveal.yOffset
+                        - localContext.viewport.h * context.reveal.percentage)
+            ).clamp(0, context.scrolledContentHeight - localContext.viewport.h);
             // dfmt on
-            context.offset.y.clamp(0, context.getScrolledContentHeight() - localContext.viewport.h);
             context.reveal.active = false;
         }
         localContext.scrolledHorizontalPixels = scrolledHorizontalPixels;
@@ -356,8 +355,7 @@ class ImGui
         state.widgetW = scrollHorizontal ? localContext.scrolledHorizontalPixels
             : width - Sizes.SCROLL_AREA_PADDING * 4;
 
-
-        context.scrolledContentTop = state.widgetY;
+        localContext.scrolledContentTop = state.widgetY;
 
         localContext.insideScrollArea = state.inRect(xPos, yPos, width, height, false);
         state.insideCurrentScroll = localContext.insideScrollArea;
@@ -384,24 +382,25 @@ class ImGui
     private auto endScrollAreaVerticalScroller(ref ScrollAreaContext context,
             ref LocalScrollAreaContext localContext, const ref ColorScheme colorScheme)
     {
-        context.scrolledContentBottom = state.widgetY;
-        auto scroller = localContext.verticalScrollbar.verticalScrollbarRect;
-        int scrolledPixels = context.getScrolledContentHeight();
+        const int scrolledContentBottom = state.widgetY;
+        context.scrolledContentHeight = localContext.scrolledContentTop - scrolledContentBottom;
+        const scroller = localContext.verticalScrollbar.verticalScrollbarRect;
+        const scrolledPixels = context.scrolledContentHeight;
 
-        float percentageVisible = cast(float) scroller.h / cast(float) scrolledPixels;
-        bool visible = percentageVisible < 1;
+        const percentageVisible = cast(float) scroller.h / cast(float) scrolledPixels;
+        const visible = percentageVisible < 1;
         if (visible)
         {
-            float percentageOfStart = cast(float)(scroller.y - context.scrolledContentBottom) / cast(
-                    float) scrolledPixels;
-            percentageOfStart.clamp(0, 1);
+            const float percentageOfStart = (cast(float)(
+                    scroller.y - scrolledContentBottom) / cast(float) scrolledPixels).clamp(0.0f,
+                    1.0f);
 
             // Handle scroll bar logic.
-            auto nob = Rect(scroller.x, scroller.y + cast(int)(percentageOfStart * scroller.h),
+            const nob = Rect(scroller.x, scroller.y + cast(int)(percentageOfStart * scroller.h),
                     scroller.w, cast(int)(percentageVisible * scroller.h));
 
             const int range = scroller.h - (nob.h - 1);
-            uint hid = localContext.verticalScrollId;
+            const uint hid = localContext.verticalScrollId;
             state.buttonLogic(hid, nob.inside(state));
 
             if (state.isIdActive(hid))
@@ -416,13 +415,13 @@ class ImGui
 
                 if (state.dragY != state.mouseInfo.y)
                 {
-                    float u = state.dragOrigY + (state.mouseInfo.y - state.dragY) / cast(float) range;
-                    u.clamp(0, 1);
+                    float u = (state.dragOrigY + (state.mouseInfo.y - state.dragY) / cast(float) range).clamp(0.0f,
+                            1.0f);
                     context.offset.y = cast(int)((1 - u) * (scrolledPixels - scroller.h));
                 }
             }
 
-            auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress
+            const RGBA color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress
                 : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover
                         : colorScheme.scroll.bar.thumb);
 
@@ -439,16 +438,18 @@ class ImGui
     private auto endScrollAreaHorizontalScroller(ref ScrollAreaContext context,
             ref LocalScrollAreaContext localContext, const ref ColorScheme colorScheme)
     {
-        auto scroller = localContext.horizontalScrollbar.horizontalScrollbarRect;
+        const Rect scroller = localContext.horizontalScrollbar.horizontalScrollbarRect;
 
-        float percentageVisible = (localContext.scrolledHorizontalPixels
+        const float percentageVisible = (localContext.scrolledHorizontalPixels
                 ? scroller.w / localContext.scrolledHorizontalPixels.to!float : 1.0f);
-        bool visible = percentageVisible < 1;
+        const bool visible = percentageVisible < 1;
         if (visible)
         {
-            float percentageOfStart = (localContext.scrolledHorizontalPixels
-                    ? context.offset.x / localContext.scrolledHorizontalPixels.to!float : 0.0f);
-            percentageOfStart.clamp(0, 1);
+            // dfmt off
+            const float percentageOfStart = (
+              (localContext.scrolledHorizontalPixels ? context.offset.x / localContext.scrolledHorizontalPixels.to!float : 0.0f)
+            ).clamp(0, 1);
+            // dfmt on
 
             // Handle scroll bar logic.
             auto visibleStart = percentageOfStart * (
@@ -459,7 +460,7 @@ class ImGui
                     cast(int) visibleWidth, scroller.h);
 
             const int range = scroller.w - (nob.w - 1);
-            uint hid = localContext.horizontalScrollId;
+            const uint hid = localContext.horizontalScrollId;
             state.buttonLogic(hid, nob.inside(state));
 
             if (state.isIdActive(hid))
@@ -467,16 +468,17 @@ class ImGui
 
                 if (state.wentActive)
                 {
-                    float u = cast(float)(nob.x - scroller.x) / cast(float) range;
+                    const u = cast(float)(nob.x - scroller.x) / cast(float) range;
                     state.dragX = state.mouseInfo.x;
                     state.dragOrigX = u;
                 }
 
                 if (state.dragX != state.mouseInfo.x)
                 {
-                    float u = state.dragOrigX + (state.mouseInfo.x - state.dragX) / cast(float) range;
-                    u.clamp(0, 1);
-                    context.offset.x = cast(int)(u * (localContext.scrolledHorizontalPixels - scroller.w));
+                    const u = (state.dragOrigX + (state.mouseInfo.x - state.dragX) / cast(float) range).clamp(0,
+                            1);
+                    context.offset.x = cast(int)(
+                            u * (localContext.scrolledHorizontalPixels - scroller.w));
                 }
             }
 
@@ -520,16 +522,16 @@ class ImGui
             {
                 if (state.mouseInfo.dy)
                 {
-                    context.offset.y += 20 * state.mouseInfo.dy;
-                    context.offset.y.clamp(0, vertical.pixels - localContext.viewport.h);
+                    context.offset.y = (context.offset.y + 20 * state.mouseInfo.dy)
+                        .clamp(0, vertical.pixels - localContext.viewport.h);
                 }
             }
             if (horizontal.visible)
             {
                 if (state.mouseInfo.dx)
                 {
-                    context.offset.x += 20 * state.mouseInfo.dx;
-                    context.offset.x.clamp(0, horizontal.pixels - localContext.viewport.w);
+                    context.offset.x = (context.offset.x + 20 * state.mouseInfo.dx)
+                        .clamp(0, horizontal.pixels - localContext.viewport.w);
                 }
             }
         }
@@ -866,8 +868,7 @@ class ImGui
 
         const int range = w - Sizes.SLIDER_MARKER_WIDTH;
 
-        float u = (*sliderState - minValue) / (maxValue - minValue);
-        u.clamp(0, 1);
+        float u = ((*sliderState - minValue) / (maxValue - minValue)).clamp(0, 1);
 
         int m = cast(int)(u * range);
 
@@ -886,8 +887,8 @@ class ImGui
 
             if (state.dragX != state.mouseInfo.x)
             {
-                u = state.dragOrigX + cast(float)(state.mouseInfo.x - state.dragX) / cast(float) range;
-                u.clamp(0, 1);
+                u = (state.dragOrigX + cast(float)(state.mouseInfo.x - state.dragX) / cast(float) range).clamp(0,
+                        1);
 
                 *sliderState = minValue + u * (maxValue - minValue);
                 *sliderState = floor(*sliderState / stepValue + 0.5f) * stepValue; // Snap to stepValue
@@ -1159,14 +1160,15 @@ class ImGui
 
 }
 
-public void clamp(T)(ref T value, const T minValue, const T maxValue)
+public T clamp(T)(const T value, const T minValue, const T maxValue)
 {
     if (value < minValue)
     {
-        value = minValue;
+        return minValue;
     }
     else if (value > maxValue)
     {
-        value = maxValue;
+        return maxValue;
     }
+    return value;
 }
