@@ -17,25 +17,10 @@
  */
 module imgui.engine;
 
-import imgui.api : MouseInfo, MouseButton;
+import imgui.api : MouseInfo, MouseButton, Sizes;
 
 package:
 
-struct Sizes
-{
-    enum BUTTON_HEIGHT = 60;
-    enum SLIDER_HEIGHT = 40;
-    enum SLIDER_MARKER_WIDTH = 10;
-    enum CHECK_SIZE = TEXT_HEIGHT - TEXT_BASELINE - 10;
-    enum DEFAULT_SPACING = 4;
-    enum TEXT_HEIGHT = 35;
-    enum TEXT_BASELINE = 5;
-    enum SCROLL_AREA_PADDING = 6;
-    enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING * 3;
-    enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING * 2;
-    enum INDENT_SIZE = 16;
-    enum AREA_HEADER = 35;
-}
 // Pull render interface.
 enum Type
 {
@@ -57,6 +42,11 @@ struct Vector2i
 {
     int x;
     int y;
+}
+struct Vector2f
+{
+    float x;
+    float y;
 }
 
 struct Text
@@ -115,9 +105,11 @@ public:
     uint hotToBe;
 
     bool wentActive;
-    int dragX, dragY;
-    float dragOrigX, dragOrigY;
-    int widgetX, widgetY, widgetW = 100;
+    Vector2i drag;
+    Vector2f dragOrigin;
+    int widgetX;
+    int widgetY;
+    int widgetW = 100;
     bool insideCurrentScroll;
 
     uint areaId;

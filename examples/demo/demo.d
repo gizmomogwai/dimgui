@@ -156,6 +156,8 @@ struct GUI
                         gui.button("Button %s".format(i));
                     }
                 }
+                static float sliderValue = 50;
+                gui.slider("A Slider", &sliderValue, 0, 100, 0.1);
             });
         });
 

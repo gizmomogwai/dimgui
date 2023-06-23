@@ -28,11 +28,27 @@ import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.range : Appender, appender, empty;
 import std.conv : to;
-import imgui.engine : Sizes, GuiState, Command, Type, Rect, Line, Text, Vector2i;
+import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i;
 import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
 import std.exception : enforce;
+
+struct Sizes
+{
+    enum BUTTON_HEIGHT = 60;
+    enum SLIDER_HEIGHT = 60;
+    enum SLIDER_MARKER_WIDTH = 10;
+    enum CHECK_SIZE = TEXT_HEIGHT - TEXT_BASELINE - 10;
+    enum DEFAULT_SPACING = 4;
+    enum TEXT_HEIGHT = 35;
+    enum TEXT_BASELINE = 5;
+    enum SCROLL_AREA_PADDING = 6;
+    enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING * 3;
+    enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING * 2;
+    enum INDENT_SIZE = 16;
+    enum AREA_HEADER = 35;
+}
 
 ///
 enum TextAlign
@@ -408,14 +424,14 @@ class ImGui
 
                 if (state.wentActive)
                 {
-                    float u = cast(float)(nob.y - scroller.y) / cast(float) range;
-                    state.dragY = state.mouseInfo.y;
-                    state.dragOrigY = u;
+                    const float u = cast(float)(nob.y - scroller.y) / cast(float) range;
+                    state.drag.y = state.mouseInfo.y;
+                    state.dragOrigin.y = u;
                 }
 
-                if (state.dragY != state.mouseInfo.y)
+                if (state.drag.y != state.mouseInfo.y)
                 {
-                    float u = (state.dragOrigY + (state.mouseInfo.y - state.dragY) / cast(float) range).clamp(0.0f,
+                    const float u = (state.dragOrigin.y + (state.mouseInfo.y - state.drag.y) / cast(float) range).clamp(0.0f,
                             1.0f);
                     context.offset.y = cast(int)((1 - u) * (scrolledPixels - scroller.h));
                 }
@@ -452,12 +468,9 @@ class ImGui
             // dfmt on
 
             // Handle scroll bar logic.
-            auto visibleStart = percentageOfStart * (
-                    localContext.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE);
-            auto visibleWidth = percentageVisible * (
-                    localContext.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE);
-            auto nob = Rect(cast(int)(scroller.x + visibleStart), scroller.y,
-                    cast(int) visibleWidth, scroller.h);
+            const float visibleStart = percentageOfStart * (localContext.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE);
+            const float visibleWidth = percentageVisible * (localContext.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE);
+            const Rect nob = Rect(cast(int)(scroller.x + visibleStart), scroller.y, cast(int) visibleWidth, scroller.h);
 
             const int range = scroller.w - (nob.w - 1);
             const uint hid = localContext.horizontalScrollId;
@@ -468,21 +481,23 @@ class ImGui
 
                 if (state.wentActive)
                 {
-                    const u = cast(float)(nob.x - scroller.x) / cast(float) range;
-                    state.dragX = state.mouseInfo.x;
-                    state.dragOrigX = u;
+                    const float u = cast(float)(nob.x - scroller.x) / cast(float) range;
+                    state.drag.x = state.mouseInfo.x;
+                    state.dragOrigin.x = u;
                 }
 
-                if (state.dragX != state.mouseInfo.x)
+                if (state.drag.x != state.mouseInfo.x)
                 {
-                    const u = (state.dragOrigX + (state.mouseInfo.x - state.dragX) / cast(float) range).clamp(0,
-                            1);
+                    // dfmt off
+                    const float u = (state.dragOrigin.x + (state.mouseInfo.x - state.drag.x) / cast(float) range)
+                        .clamp(0, 1);
+                    // dfmt on
                     context.offset.x = cast(int)(
                             u * (localContext.scrolledHorizontalPixels - scroller.w));
                 }
             }
 
-            auto color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress
+            const RGBA color = state.isIdActive(hid) ? colorScheme.scroll.bar.thumbPress
                 : (state.isIdHot(hid) ? colorScheme.scroll.bar.thumbHover
                         : colorScheme.scroll.bar.thumb);
             // horizontal bar
@@ -512,8 +527,8 @@ class ImGui
 
         commands.addDisableScissor();
 
-        auto vertical = endScrollAreaVerticalScroller(context, localContext, colorScheme);
-        auto horizontal = endScrollAreaHorizontalScroller(context, localContext, colorScheme);
+        const vertical = endScrollAreaVerticalScroller(context, localContext, colorScheme);
+        const horizontal = endScrollAreaHorizontalScroller(context, localContext, colorScheme);
 
         // Handle mouse scrolling.
         if (localContext.insideScrollArea) // && !anyActive())
@@ -565,12 +580,12 @@ class ImGui
             const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
-        uint id = (state.areaId << 16) | state.widgetId;
+        const uint id = (state.areaId << 16) | state.widgetId;
 
-        int x = state.widgetX;
-        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
-        int w = state.widgetW;
-        int h = Sizes.BUTTON_HEIGHT;
+        const int x = state.widgetX;
+        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int w = state.widgetW;
+        const int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
         if ((y > state.height) || (y + h < 0))
@@ -578,12 +593,12 @@ class ImGui
             return false;
         }
 
-        const over = enabled && state.inRect(x, y, w, h);
+        const bool over = enabled && state.inRect(x, y, w, h);
         commands.addRoundedRect(x, y, w, h, 10, state.isIdActive(id)
                 ? colorScheme.button.backPress : colorScheme.button.back);
 
-        auto color = enabled ? (state.isIdHot(id)
-                ? colorScheme.button.textHover : colorScheme.button.text)
+        const RGBA color = enabled ? (state.isIdHot(id)
+                                      ? colorScheme.button.textHover : colorScheme.button.text)
             : colorScheme.button.textDisabled;
         commands.addText(x + Sizes.BUTTON_HEIGHT / 2,
                 y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
@@ -615,16 +630,16 @@ class ImGui
        writeln(checkState);  // check the current state
        -----
     */
-    public bool checkbox(string label, bool* checkState, Enabled enabled = Enabled.yes,
+    public bool checkbox(const string label, bool* checkState, const Enabled enabled = Enabled.yes,
             const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
-        uint id = (state.areaId << 16) | state.widgetId;
+        const uint id = (state.areaId << 16) | state.widgetId;
 
-        int x = state.widgetX;
-        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
-        int w = state.widgetW;
-        int h = Sizes.BUTTON_HEIGHT;
+        const int x = state.widgetX;
+        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int w = state.widgetW;
+        const int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
         // TODO vertical clipping (see button)
         if ((y > state.height) || (y + h < 0))
@@ -632,8 +647,8 @@ class ImGui
             return false;
         }
 
-        bool over = enabled && state.inRect(x, y, w, h);
-        bool res = state.buttonLogic(id, over);
+        const bool over = enabled && state.inRect(x, y, w, h);
+        const bool res = state.buttonLogic(id, over);
 
         if (res)
         {
@@ -650,14 +665,14 @@ class ImGui
         // dfmt on
         if (*checkState)
         {
-            auto color = enabled ? (state.isIdActive(id)
+            const RGBA color = enabled ? (state.isIdActive(id)
                     ? colorScheme.checkbox.checked : colorScheme.checkbox.doUncheck)
                 : colorScheme.checkbox.disabledChecked;
             commands.addRoundedRect(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE,
                     Sizes.CHECK_SIZE / 2 - 1, color);
         }
 
-        auto color = enabled ? (state.isIdHot(id)
+        const RGBA color = enabled ? (state.isIdHot(id)
                 ? colorScheme.checkbox.textHover : colorScheme.checkbox.text)
             : colorScheme.checkbox.textDisabled;
         commands.addText(x + Sizes.BUTTON_HEIGHT,
@@ -686,12 +701,12 @@ class ImGui
             const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
-        uint id = (state.areaId << 16) | state.widgetId;
+        const uint id = (state.areaId << 16) | state.widgetId;
 
-        int x = state.widgetX;
-        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
-        int w = state.widgetW;
-        int h = Sizes.BUTTON_HEIGHT;
+        const int x = state.widgetX;
+        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int w = state.widgetW;
+        const int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
 
         if ((y > state.height) || (y + h < 0))
@@ -700,8 +715,8 @@ class ImGui
         }
 
         // TODO vertical clipping see button
-        const over = enabled && state.inRect(x, y, w, h);
-        const res = state.buttonLogic(id, over);
+        const bool over = enabled && state.inRect(x, y, w, h);
+        const bool res = state.buttonLogic(id, over);
 
         if (state.isIdHot(id))
         {
@@ -737,19 +752,19 @@ class ImGui
             Enabled enabled = Enabled.yes, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
-        uint id = (state.areaId << 16) | state.widgetId;
+        const uint id = (state.areaId << 16) | state.widgetId;
 
-        int x = state.widgetX;
-        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
-        int w = state.widgetW;
-        int h = Sizes.BUTTON_HEIGHT;
+        const int x = state.widgetX;
+        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int w = state.widgetW;
+        const int h = Sizes.BUTTON_HEIGHT;
         state.widgetY -= Sizes.BUTTON_HEIGHT; // + DEFAULT_SPACING;
 
         const int cx = x + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
         const int cy = y + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
 
-        bool over = enabled && state.inRect(x, y, w, h);
-        bool res = state.buttonLogic(id, over);
+        const bool over = enabled && state.inRect(x, y, w, h);
+        const bool res = state.buttonLogic(id, over);
 
         if (res)
         {
@@ -757,7 +772,7 @@ class ImGui
         }
 
         // dfmt off
-        auto color = enabled ?
+        const RGBA color = enabled ?
             (state.isIdHot(id) ? colorScheme.collapse.textHover : colorScheme.collapse.text)
             : colorScheme.collapse.textDisabled;
         // dfmt on
@@ -829,6 +844,15 @@ class ImGui
                 TextAlign.right, label, colorScheme.value.text);
     }
 
+    private static string formatSliderValue(float step, float value)
+    {
+        int digits = cast(int)(ceil(log10(step)));
+        char[16] fmtBuf;
+        auto fmt = sformat(fmtBuf, "%%.%df", digits >= 0 ? 0 : -digits);
+        char[32] msgBuf;
+        return sformat(msgBuf, fmt, value).idup;
+    }
+
     /**
        Define a new slider.
 
@@ -852,12 +876,12 @@ class ImGui
             Enabled enabled = Enabled.yes, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         state.widgetId++;
-        uint id = (state.areaId << 16) | state.widgetId;
+        const uint id = (state.areaId << 16) | state.widgetId;
 
-        int x = state.widgetX;
-        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
-        int w = state.widgetW;
-        int h = Sizes.SLIDER_HEIGHT;
+        const int x = state.widgetX;
+        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int w = state.widgetW;
+        const int h = Sizes.SLIDER_HEIGHT;
         state.widgetY -= Sizes.SLIDER_HEIGHT + Sizes.DEFAULT_SPACING;
         if ((y > state.height) || (y + h < 0))
         {
@@ -872,22 +896,22 @@ class ImGui
 
         int m = cast(int)(u * range);
 
-        bool over = enabled && state.inRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH,
+        const bool over = enabled && state.inRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH,
                 Sizes.SLIDER_HEIGHT);
-        bool res = state.buttonLogic(id, over);
+        const bool res = state.buttonLogic(id, over);
         bool valChanged = false;
 
         if (state.isIdActive(id))
         {
             if (state.wentActive)
             {
-                state.dragX = state.mouseInfo.x;
-                state.dragOrigX = u;
+                state.drag.x = state.mouseInfo.x;
+                state.dragOrigin.x = u;
             }
 
-            if (state.dragX != state.mouseInfo.x)
+            if (state.drag.x != state.mouseInfo.x)
             {
-                u = (state.dragOrigX + cast(float)(state.mouseInfo.x - state.dragX) / cast(float) range).clamp(0,
+                u = (state.dragOrigin.x + cast(float)(state.mouseInfo.x - state.drag.x) / cast(float) range).clamp(0,
                         1);
 
                 *sliderState = minValue + u * (maxValue - minValue);
@@ -897,32 +921,27 @@ class ImGui
             }
         }
 
-        auto color = state.isIdActive(id) ? colorScheme.slider.thumbPress
+        const RGBA color = state.isIdActive(id) ? colorScheme.slider.thumbPress
             : (state.isIdHot(id) ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
-        commands.addRoundedRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH,
+        commands.addRoundedRect(x, y, Sizes.SLIDER_MARKER_WIDTH+m,
                 Sizes.SLIDER_HEIGHT, 4, color);
 
-        // TODO: fix this, take a look at 'nicenum'.
-        // todo: this should display sub 0.1 if the step is low enough.
-        int digits = cast(int)(ceil(log10(stepValue)));
-        char[16] fmtBuf;
-        auto fmt = sformat(fmtBuf, "%%.%df", digits >= 0 ? 0 : -digits);
-        char[32] msgBuf;
-        string msg = sformat(msgBuf, fmt, *sliderState).idup;
+        const string message = formatSliderValue(stepValue, *sliderState);
 
-        auto sliderTextColor = enabled ? (state.isIdHot(id)
-                ? colorScheme.slider.textHover : colorScheme.slider.text)
+        // dfmt off
+        const RGBA sliderTextColor = enabled ?
+            (state.isIdHot(id) ? colorScheme.slider.textHover : colorScheme.slider.text)
             : colorScheme.slider.textDisabled;
-        auto sliderValueColor = enabled ? (state.isIdHot(id)
-                ? colorScheme.slider.valueHover : colorScheme.slider.value)
+        const RGBA sliderValueColor = enabled ?
+            (state.isIdHot(id) ? colorScheme.slider.valueHover : colorScheme.slider.value)
             : colorScheme.slider.valueDisabled;
         commands.addText(x + Sizes.SLIDER_HEIGHT / 2,
-                y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                TextAlign.left, label, sliderTextColor);
+                         y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+                         TextAlign.left, label, sliderTextColor);
         commands.addText(x + w - Sizes.SLIDER_HEIGHT / 2,
-                y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                TextAlign.right, msg, sliderValueColor);
-
+                         y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+                         TextAlign.right, message, sliderValueColor);
+        // dfmt on
         return res || valChanged;
     }
 

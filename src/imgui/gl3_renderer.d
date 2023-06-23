@@ -25,8 +25,8 @@ import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer,
     glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
 import core.stdc.stdlib : free, malloc;
 import core.stdc.string : memset;
-import imgui.api : RGBA, TextAlign;
-import imgui.engine : Command, Type, Sizes;
+import imgui.api : RGBA, TextAlign, Sizes;
+import imgui.engine : Command, Type;
 import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad,
     stbtt_BakeFontBitmap, STBTT_ifloor;
 import std.exception : enforce;
