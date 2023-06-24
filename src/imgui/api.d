@@ -17,12 +17,19 @@
  */
 module imgui.api;
 
-/**
+/++
    imgui is an immediate mode GUI. See also:
    http://sol.gfxile.net/imgui/
 
    This module contains the API of the library.
-*/
+   Coordinates start with 0,0 in the lower left corner of the screen and
+
+    ^
+   0,3
+    |
+    |
+   0,0--3,0->
++/
 import std.algorithm : max;
 import std.math : floor, ceil, log10;
 import std.string : sformat;
@@ -44,10 +51,10 @@ struct Sizes
     enum TEXT_HEIGHT = 35;
     enum TEXT_BASELINE = 5;
     enum SCROLL_AREA_PADDING = 6;
+    enum SCROLL_AREA_HEADER = 35;
     enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING * 3;
     enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING * 2;
     enum INDENT_SIZE = 16;
-    enum AREA_HEADER = 35;
 }
 
 ///
@@ -343,12 +350,12 @@ class ImGui
         localContext.scrollAreaRect = Rect(xPos, yPos, width, height);
         localContext.viewport = Rect(xPos + Sizes.SCROLL_AREA_PADDING,
                 yPos + Sizes.SCROLL_BAR_SIZE, max(1, width - Sizes.SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
-                max(1, height - Sizes.AREA_HEADER - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
+                max(1, height - Sizes.SCROLL_AREA_HEADER - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
 
         state.widgetX = xPos + Sizes.SCROLL_AREA_PADDING - context.offset.x;
 
         localContext.verticalScrollbar = Rect(xPos + width - Sizes.SCROLL_BAR_SIZE, yPos + Sizes.SCROLL_BAR_SIZE,
-                Sizes.SCROLL_BAR_SIZE, height - Sizes.AREA_HEADER - Sizes.SCROLL_BAR_SIZE);
+                Sizes.SCROLL_BAR_SIZE, height - Sizes.SCROLL_AREA_HEADER - Sizes.SCROLL_BAR_SIZE);
         localContext.horizontalScrollbar = Rect(localContext.scrollAreaRect.x, localContext.scrollAreaRect.y,
                 localContext.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE, Sizes.SCROLL_BAR_SIZE);
         if (context.reveal.active)
@@ -357,7 +364,7 @@ class ImGui
             context.offset.y = (
               cast(int)(yPos
                         + height
-                        - Sizes.AREA_HEADER
+                        - Sizes.SCROLL_AREA_HEADER
                         + context.offset.y
                         - context.reveal.yOffset
                         - localContext.viewport.h * context.reveal.percentage)
@@ -367,7 +374,7 @@ class ImGui
         }
         localContext.scrolledHorizontalPixels = scrolledHorizontalPixels;
 
-        state.widgetY = yPos + height - Sizes.AREA_HEADER + context.offset.y;
+        state.widgetY = yPos + height - Sizes.SCROLL_AREA_HEADER + context.offset.y;
         state.widgetW = scrollHorizontal ? localContext.scrolledHorizontalPixels
             : width - Sizes.SCROLL_AREA_PADDING * 4;
 
@@ -378,8 +385,8 @@ class ImGui
 
         commands.addRoundedRect(xPos, yPos, width, height, 6, colorScheme.scroll.area.back);
 
-        commands.addText(xPos + Sizes.AREA_HEADER / 2,
-                yPos + height - Sizes.AREA_HEADER / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(xPos + Sizes.SCROLL_AREA_HEADER / 2,
+                yPos + height - Sizes.SCROLL_AREA_HEADER / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, title, colorScheme.scroll.area.text);
 
         commands.addScissor(localContext.viewport);
@@ -924,7 +931,8 @@ class ImGui
         const RGBA color = state.isIdActive(id) ? colorScheme.slider.thumbPress
             : (state.isIdHot(id) ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
         commands.addRoundedRect(x, y, Sizes.SLIDER_MARKER_WIDTH+m,
-                Sizes.SLIDER_HEIGHT, 4, color);
+                                Sizes.SLIDER_HEIGHT, 4, colorScheme.slider.thumb);
+        commands.addRoundedRect(x+m, y, Sizes.SLIDER_MARKER_WIDTH, Sizes.SLIDER_HEIGHT, 4, color);
 
         const string message = formatSliderValue(stepValue, *sliderState);
 
@@ -937,7 +945,7 @@ class ImGui
             : colorScheme.slider.valueDisabled;
         commands.addText(x + Sizes.SLIDER_HEIGHT / 2,
                          y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                         TextAlign.left, label, sliderTextColor);
+                         TextAlign.left, label, sliderValueColor);
         commands.addText(x + w - Sizes.SLIDER_HEIGHT / 2,
                          y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                          TextAlign.right, message, sliderValueColor);
