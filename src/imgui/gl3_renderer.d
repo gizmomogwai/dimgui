@@ -17,12 +17,17 @@
  */
 module imgui.gl3_renderer;
 
-import bindbc.opengl : GLuint, glBindTexture, glBindVertexArray, glBindBuffer,
+import bindbc.opengl : GLint, GLuint, glBindTexture, glBindVertexArray, glBindBuffer,
     glBufferData, glDrawArrays, loadOpenGL, GL_TEXTURE_2D,
     GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport, glDeleteTextures,
     glDeleteVertexArrays, glDeleteBuffers, glDeleteProgram,
-    glViewport, glUseProgram, glActiveTexture, glUniform2f, glUniform1i,
+    glViewport, glUseProgram, glActiveTexture, glUniform1f, glUniform2f, glUniform1i,
     glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
+import bindbc.opengl : glGetError, GLenum, GL_NO_ERROR, GL_INVALID_ENUM,
+    GL_INVALID_VALUE, GL_INVALID_OPERATION, GL_OUT_OF_MEMORY, glGetIntegerv, glGetShaderiv, GLchar, GLsizei, glGetShaderInfoLog, GL_COMPILE_STATUS,
+    GLfloat;
+import std.string : format;
+import std.array : join;
 import core.stdc.stdlib : free, malloc;
 import core.stdc.string : memset;
 import imgui.api : RGBA, TextAlign, Sizes;
@@ -33,7 +38,7 @@ import std.exception : enforce;
 import std.file : read;
 import std.math : sqrt, PI, cos, sin;
 import std.algorithm : min;
-
+import std.conv : to;
 private:
 // Draw up to 65536 unicode glyphs.  What this will actually do is draw *only glyphs the
 // font supports* until it will run out of glyphs or texture space (determined by
@@ -80,6 +85,7 @@ GLuint[3] g_vbos = [0, 0, 0];
 GLuint g_program = 0;
 GLuint g_programViewportLocation = 0;
 GLuint g_programTextureLocation = 0;
+GLuint g_globalAlphaLocation = 0;
 
 /** Globals end. */
 
@@ -314,6 +320,56 @@ void loadBindBCOpenGL()
     (result == GLSupport.gl33).enforce("need opengl 3.3 support");
 }
 
+void checkOglErrors()
+{
+    string[] errors;
+    GLenum error = glGetError();
+    while (error != GL_NO_ERROR)
+    {
+        errors ~= "OGL error %s (%s)".format(error, glGetErrorString(error));
+        error = glGetError();
+    }
+    if (errors.length > 0)
+    {
+        throw new Exception(errors.join("\n"));
+    }
+}
+private string glGetErrorString(GLenum error)
+{
+    switch (error)
+    {
+    case GL_INVALID_ENUM:
+        return "GL_INVALID_ENUM";
+    case GL_INVALID_VALUE:
+        return "GL_INVALID_VALUE";
+    case GL_INVALID_OPERATION:
+        return "GL_INVALID_OPERATION";
+        //case GL_INVALID_FRAMEBUFFER_OPERATION:
+        //return "GL_INVALID_FRAMEBUFFER_OPERATION";
+    case GL_OUT_OF_MEMORY:
+        return "GL_OUT_OF_MEMORY";
+    default:
+        throw new Exception("Unknown OpenGL error code %s".format(error));
+    }
+}
+
+void checkShader(GLuint shader)
+{
+            GLint success;
+            shader.glGetShaderiv(GL_COMPILE_STATUS, &success);
+            checkOglErrors;
+            if (!success)
+            {
+                GLchar[1024] infoLog;
+                GLsizei logLen;
+                shader.glGetShaderInfoLog(1024, &logLen, infoLog.ptr);
+                checkOglErrors;
+
+                auto errors = (infoLog[0 .. logLen - 1]).to!string;
+                success.enforce("Error compiling shader\n  errors: '%s'".format(errors));
+            }
+}
+
 bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
 {
     import bindbc.opengl;
@@ -374,55 +430,75 @@ bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
     glBufferData(GL_ARRAY_BUFFER, 0, null, GL_STATIC_DRAW);
     g_program = glCreateProgram();
 
-    string vs = `
+    string vertexShader = `
 #version 150
-uniform vec2 Viewport;
-in vec2 VertexPosition;
-in vec2 VertexTexCoord;
-in vec4 VertexColor;
-out vec2 texCoord;
-out vec4 vertexColor;
-void main(void)
-{
-    vertexColor = VertexColor;
-    texCoord = VertexTexCoord;
-    gl_Position = vec4(VertexPosition * 2.0 / Viewport - 1.0, 0.f, 1.0);
-}`;
-    GLuint vso = glCreateShader(GL_VERTEX_SHADER);
-    auto vsPtr = vs.ptr;
-    glShaderSource(vso, 1, &vsPtr, null);
-    glCompileShader(vso);
-    glAttachShader(g_program, vso);
-
-    string fs = `
-#version 150
-in vec2 texCoord;
+uniform vec2 viewport;
+in vec2 vertexPosition;
+in vec2 vertexTextureCoordinate;
 in vec4 vertexColor;
-uniform sampler2D Texture;
-out vec4  Color;
+out vec2 textureCoordinate;
+out vec4 color;
 void main(void)
 {
-    float alpha = texture(Texture, texCoord).r;
-    Color = vec4(vertexColor.rgb, vertexColor.a * alpha);
+    textureCoordinate = vertexTextureCoordinate;
+    color = vertexColor;
+    gl_Position = vec4(vertexPosition * 2.0 / viewport - 1.0, 0.f, 1.0);
 }`;
-    GLuint fso = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
+    auto vertexShaderCStr = vertexShader.ptr;
+    glShaderSource(vertexShaderObject, 1, &vertexShaderCStr, null);
+    glCompileShader(vertexShaderObject);
+    vertexShaderObject.checkShader;
+    checkOglErrors;
+    glAttachShader(g_program, vertexShaderObject);
 
-    auto fsPtr = fs.ptr;
-    glShaderSource(fso, 1, &fsPtr, null);
-    glCompileShader(fso);
-    glAttachShader(g_program, fso);
+    string fragmentShader = `
+#version 150
+in vec2 textureCoordinate;
+in vec4 color;
+uniform sampler2D sampler;
+uniform float globalAlpha;
+out vec4 fragmentColor;
+void main(void)
+{
+    float alpha = texture(sampler, textureCoordinate).r;
+    fragmentColor = vec4(color.rgb, color.a * alpha * globalAlpha);
+}`;
+    GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
 
-    glBindAttribLocation(g_program, 0, "VertexPosition");
-    glBindAttribLocation(g_program, 1, "VertexTexCoord");
-    glBindAttribLocation(g_program, 2, "VertexColor");
-    glBindFragDataLocation(g_program, 0, "Color");
+    auto fragmentShaderCStr = fragmentShader.ptr;
+    glShaderSource(fragmentShaderObject, 1, &fragmentShaderCStr, null);
+    glCompileShader(fragmentShaderObject);
+    fragmentShaderObject.checkShader;
+    checkOglErrors;
+    glAttachShader(g_program, fragmentShaderObject);
+
+    glBindAttribLocation(g_program, 0, "vertexPosition");
+    glBindAttribLocation(g_program, 1, "vertexTexCoord");
+    glBindAttribLocation(g_program, 2, "vertexColor");
+    glBindFragDataLocation(g_program, 0, "fragmentColor");
     glLinkProgram(g_program);
-    glDeleteShader(vso);
-    glDeleteShader(fso);
+    GLint success;
+    g_program.glGetProgramiv(GL_LINK_STATUS, &success);
+    if (success == 0)
+    {
+        static GLchar[1024] logBuff;
+        static GLsizei logLen;
+        g_program.glGetProgramInfoLog(logBuff.sizeof, &logLen, logBuff.ptr);
+        throw new Exception("Error: linking program: %s".format(
+                              logBuff[0 .. logLen - 1].to!string));
+    }
+
+    checkOglErrors;
+    glDeleteShader(vertexShaderObject);
+    glDeleteShader(fragmentShaderObject);
 
     glUseProgram(g_program);
-    g_programViewportLocation = glGetUniformLocation(g_program, "Viewport");
-    g_programTextureLocation = glGetUniformLocation(g_program, "Texture");
+    checkOglErrors;
+    g_programViewportLocation = glGetUniformLocation(g_program, "viewport");
+    g_programTextureLocation = glGetUniformLocation(g_program, "sampler");
+    g_globalAlphaLocation = glGetUniformLocation(g_program, "globalAlpha");
+    checkOglErrors;
 
     glUseProgram(0);
 
@@ -576,13 +652,14 @@ void drawText(float x, float y, const(char)[] text, int align_, uint color)
     }
 }
 
-void renderGLDraw(Command[] commands, int width, int height)
+void renderGLDraw(Command[] commands, int width, int height, float globalAlpha=1.0)
 {
     glViewport(0, 0, width, height);
     glUseProgram(g_program);
     glActiveTexture(GL_TEXTURE0);
     glUniform2f(g_programViewportLocation, width, height);
     glUniform1i(g_programTextureLocation, 0);
+    glUniform1f(g_globalAlphaLocation, globalAlpha);
 
     glDisable(GL_SCISSOR_TEST);
 

@@ -1180,9 +1180,9 @@ class ImGui
     }
 
     /** Render all of the batched commands for the current frame. */
-    public void render()
+    public void render(float globalAlpha)
     {
-        renderGLDraw(commands[], state.width, state.height);
+        renderGLDraw(commands[], state.width, state.height, globalAlpha);
     }
 
 }
