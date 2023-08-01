@@ -35,12 +35,13 @@ import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.range : Appender, appender, empty;
 import std.conv : to;
-import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i;
+import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i, GlobalAlpha;
 import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
 import std.exception : enforce;
-
+import std.datetime.systime : SysTime, Clock;
+import deetween : Tween, easeLinear, TweenMode;
 struct Sizes
 {
     enum BUTTON_HEIGHT = 60;
@@ -57,6 +58,11 @@ struct Sizes
     enum INDENT_SIZE = 16;
 }
 
+struct Animations
+{
+    enum DURATION = 0.3;
+
+}
 ///
 enum TextAlign
 {
@@ -108,12 +114,50 @@ bool inside(Rect r, ref GuiState state, bool checkScroll = true)
         && state.mouseInfo.x <= r.x + r.w && state.mouseInfo.y >= r.y
         && state.mouseInfo.y <= r.y + r.h;
 }
+            class Animation {
+                Tween animation;
+                SysTime startOfAnimation;
+                this(Tween tween)
+                {
+                    this.animation = tween;
+                    startOfAnimation = Clock.currTime;
+                }
+                auto hasFinished()
+                {
+                    return animation.hasFinished;
+                }
+                void elapsedTime(float elapsedTime)
+                {
+                    animation.elapsedTime(elapsedTime);
+                }
+                auto now()
+                {
+                    return animation.now;
+                }
+                void tick(SysTime now)
+                {
+                    animation.elapsedTime((now-startOfAnimation).total!"msecs"/1000.0f);
+                }
+            }
 
 struct ScrollAreaContext
 {
     Vector2i offset;
     int scrolledContentHeight;
-
+    Animation animation;
+    float alpha;
+    void animate(SysTime t)
+    {
+        if (animation !is null)
+        {
+            animation.tick(t);
+            alpha = animation.now;
+        }
+    }
+    bool isVisible()
+    {
+        return alpha > 0.0f;
+    }
     static struct RevealInfo
     {
         bool active;
@@ -122,6 +166,22 @@ struct ScrollAreaContext
         int oldYOffset;
     }
 
+    /// Toggle visibility (usually with animation of alpha)
+    void toggle()
+    {
+        if (animation is null)
+        {
+            animation = new Animation(Tween(0, 1, Animations.DURATION, &easeLinear, TweenMode.bomb));
+        }
+        else if (animation.animation.b == 1.0f)
+        {
+            animation = new Animation(Tween(animation.now, 0, Animations.DURATION, &easeLinear, TweenMode.bomb));
+        }
+        else
+        {
+            animation = new Animation(Tween(animation.now, 1, Animations.DURATION, &easeLinear, TweenMode.bomb));
+        }
+    }
     RevealInfo reveal;
 }
 
@@ -220,6 +280,17 @@ void addArrowRight(Commands commands, int x, int y, int w, int h, RGBA color)
         color: color.toPackedRGBA(),
         rect: Rect(x, y, w, h),
     };
+    // dfmt on
+    commands.put(cmd);
+}
+void addGlobalAlpha(Commands commands, float alpha)
+{
+    // dfmt off
+    Command cmd =
+        {
+            type: Type.GLOBAL_ALPHA,
+            alpha: GlobalAlpha(alpha),
+        };
     // dfmt on
     commands.put(cmd);
 }
@@ -342,6 +413,7 @@ class ImGui
         state.areaId++;
         state.widgetId = 0;
 
+        commands.addGlobalAlpha(context.alpha);
         LocalScrollAreaContext localContext;
 
         localContext.verticalScrollId = (state.areaId << 16) | 0;
@@ -1180,9 +1252,9 @@ class ImGui
     }
 
     /** Render all of the batched commands for the current frame. */
-    public void render(float globalAlpha)
+    public void render()
     {
-        renderGLDraw(commands[], state.width, state.height, globalAlpha);
+        renderGLDraw(commands[], state.width, state.height);
     }
 
 }

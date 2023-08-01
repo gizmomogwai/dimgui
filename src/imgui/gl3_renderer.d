@@ -39,6 +39,7 @@ import std.file : read;
 import std.math : sqrt, PI, cos, sin;
 import std.algorithm : min;
 import std.conv : to;
+
 private:
 // Draw up to 65536 unicode glyphs.  What this will actually do is draw *only glyphs the
 // font supports* until it will run out of glyphs or texture space (determined by
@@ -652,14 +653,13 @@ void drawText(float x, float y, const(char)[] text, int align_, uint color)
     }
 }
 
-void renderGLDraw(Command[] commands, int width, int height, float globalAlpha=1.0)
+void renderGLDraw(Command[] commands, int width, int height)
 {
     glViewport(0, 0, width, height);
     glUseProgram(g_program);
     glActiveTexture(GL_TEXTURE0);
     glUniform2f(g_programViewportLocation, width, height);
     glUniform1i(g_programTextureLocation, 0);
-    glUniform1f(g_globalAlphaLocation, globalAlpha);
 
     glDisable(GL_SCISSOR_TEST);
 
@@ -716,6 +716,9 @@ void renderGLDraw(Command[] commands, int width, int height, float globalAlpha=1
             break;
         case Type.DISABLE_SCISSOR:
             glDisable(GL_SCISSOR_TEST);
+            break;
+        case Type.GLOBAL_ALPHA:
+            glUniform1f(g_globalAlphaLocation, cmd.alpha.alpha);
             break;
         }
     }

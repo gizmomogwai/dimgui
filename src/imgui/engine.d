@@ -31,6 +31,7 @@ enum Type
     TEXT,
     SCISSOR,
     DISABLE_SCISSOR,
+    GLOBAL_ALPHA,
 }
 
 struct Rect
@@ -64,6 +65,10 @@ struct Line
     }
 }
 
+struct GlobalAlpha
+{
+    float alpha;
+}
 struct Command
 {
     Type type;
@@ -73,6 +78,7 @@ struct Command
         Line line;
         Rect rect;
         Text text;
+        GlobalAlpha alpha;
     }
 }
 
