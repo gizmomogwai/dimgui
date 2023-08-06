@@ -28,7 +28,7 @@
     "dependencies": {
         "bindbc-opengl": "~>1.0.0",
         "bindbc-glfw": "~>1.0.0",
-        "deetween": "~master"
+        "deetween": "~main"
     },
 
     "libs-linux": [

@@ -171,15 +171,15 @@ struct ScrollAreaContext
     {
         if (animation is null)
         {
-            animation = new Animation(Tween(0, 1, Animations.DURATION, &easeLinear, TweenMode.bomb));
+            animation = new Animation(Tween(0, 1, Animations.DURATION, TweenMode.bomb));
         }
         else if (animation.animation.b == 1.0f)
         {
-            animation = new Animation(Tween(animation.now, 0, Animations.DURATION, &easeLinear, TweenMode.bomb));
+            animation = new Animation(Tween(animation.now, 0, Animations.DURATION, TweenMode.bomb));
         }
         else
         {
-            animation = new Animation(Tween(animation.now, 1, Animations.DURATION, &easeLinear, TweenMode.bomb));
+            animation = new Animation(Tween(animation.now, 1, Animations.DURATION, TweenMode.bomb));
         }
     }
     RevealInfo reveal;
