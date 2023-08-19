@@ -1,10 +1,9 @@
 module demo;
 
-import std.exception;
-import std.file;
-import std.path;
-import std.stdio;
-import std.string;
+import std.file : thisExePath;
+import std.path : dirName, buildPath;
+import std.stdio : writeln;
+import std.string : format;
 
 import bindbc.opengl;
 import bindbc.glfw;
@@ -21,11 +20,14 @@ struct GUI
         this.window = window;
         string fontPath = thisExePath().dirName().buildPath("../").buildPath("DroidSans.ttf");
         gui = new ImGui(fontPath);
+        textEntered = textInputBuffer[0 .. 0];
     }
 
     string lastInfo;
+    char[128] textInputBuffer;
+    char[] textEntered;
 
-    void render()
+    void render(int unicode)
     {
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -37,19 +39,24 @@ struct GUI
         auto scrollInfo = window.getAndResetScrollInfo();
         gui.frame(MouseInfo(mouse.x, mouse.y, mouse.button,
                 cast(int) scrollInfo.xOffset, cast(int) scrollInfo.yOffset),
-                window.width, window.height, 0, () {
+                window.width, window.height, unicode, () {
             enum BORDER = 10;
             int x = BORDER;
             static ScrollAreaContext scrollArea1;
+            scrollArea1.alpha = 1.0;
             enum scrollArea1W = 400;
 
             gui.scrollArea(scrollArea1, "Scroll area 1", x, BORDER,
                 scrollArea1W, window.height - 2 * BORDER, () {
                 x += scrollArea1W;
 
+                if (gui.textInput("Text input:", textInputBuffer, textEntered))
+                {
+                    writeln("Text entered: ", textEntered);
+                }
                 if (gui.button("Button"))
                 {
-                    writeln("button pressed");
+                    writeln("Button pressed");
                 }
 
                 gui.button("Disabled button", Enabled.no);
@@ -59,6 +66,7 @@ struct GUI
                 {
                     gui.item("Item %s".format(i), Enabled.no);
                 }
+
                 /+
         if (imguiCheck("Checkbox", &checkState1))
             lastInfo = "Toggled the checkbox to: '%s'".format(checkState1 ? "On" : "Off");
@@ -68,11 +76,6 @@ struct GUI
 
         enforce(!imguiCheck("Inactive enabled checkbox", &checkState3, Enabled.no));
 
-        if (imguiTextInput("Text input:", textInputBuffer, textEntered))
-        {
-            lastTextEntered = textEntered.idup;
-            textEntered = textInputBuffer[0 .. 0];
-        }
         imguiLabel("Entered text: " ~ lastTextEntered);
 
         if (imguiCollapse("Collapse", collapseState1 ? "max" : "min", &collapseState1))
@@ -144,6 +147,7 @@ struct GUI
 
             x += BORDER;
             static ScrollAreaContext scrollArea2;
+            scrollArea2.alpha = 1.0;
             int scrollArea2W = 400;
             gui.scrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W,
                 window.height - 2 * BORDER, () {
@@ -198,13 +202,24 @@ int main(string[] args)
 {
     int width = 1024, height = 768;
 
-    Window window = new Window((Window w, int key, int /+scancode+/ , int action, int /+mods+/ ) {
-        if ((key == '1') && (action == GLFW_RELEASE))
+    dchar unicode;
+    Window window = new Window((Window w, int key, int scancode, int action, int /+mods+/ ) {
+        if (action != GLFW_PRESS)
         {
-            writeln("1 pressed");
             return;
         }
-    });
+        switch (key)
+        {
+        case GLFW_KEY_ENTER:
+            unicode = 0x0d;
+            break;
+        case GLFW_KEY_BACKSPACE:
+            unicode = 0x08;
+            break;
+        default:
+            break;
+        }
+    }, (Window w, uint code) { unicode = code; });
     scope (exit)
     {
         // destroy(window);
@@ -217,8 +232,8 @@ int main(string[] args)
 
     while (!window.window.glfwWindowShouldClose())
     {
-        gui.render();
-
+        gui.render(unicode);
+        unicode = 0;
         /* Swap front and back buffers. */
         window.window.glfwSwapBuffers();
 

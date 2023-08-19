@@ -16,7 +16,8 @@ import bindbc.glfw : GLFW_VISIBLE, GLFW_OPENGL_DEBUG_CONTEXT, GLFW_CONTEXT_VERSI
     GLFW_OPENGL_FORWARD_COMPAT, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE, glfwCreateWindow;
 import bindbc.glfw : glfwSetWindowUserPointer, glfwSetFramebufferSizeCallback,
     glfwSetWindowSize, glfwSetScrollCallback, glfwSetWindowPos,
-    glfwMakeContextCurrent, glfwSwapInterval, glfwShowWindow, glfwGetWindowUserPointer;
+    glfwSetKeyCallback, glfwSetCharCallback, glfwMakeContextCurrent,
+    glfwSwapInterval, glfwShowWindow, glfwGetWindowUserPointer;
 
 void loadBindBCGlfw()
 {
@@ -62,6 +63,8 @@ class Window
     ScrollInfo scroll;
     alias KeyCallback = void delegate(Window w, int key, int scancode, int action, int mods);
     KeyCallback keyCallback;
+    alias CharCallback = void delegate(Window w, uint unicode);
+    CharCallback charCallback;
 
     ScrollInfo getAndResetScrollInfo()
     {
@@ -101,11 +104,12 @@ class Window
         return MouseInfo(cast(int) mouseX, height - cast(int) mouseY, buttonState);
     }
 
-    this(KeyCallback keyCallback, int width = 800, int height = 600)
+    this(KeyCallback keyCallback, CharCallback charCallback, int width = 800, int height = 600)
     {
         import std.stdio : writeln;
 
         this.keyCallback = keyCallback;
+        this.charCallback = charCallback;
         loadBindBCGlfw();
         glfwInit();
 
@@ -126,7 +130,8 @@ class Window
         window = glfwCreateWindow(width, height, "test", null, null);
         enforce(window);
         window.glfwSetWindowUserPointer(cast(void*) this);
-        //window.glfwSetKeyCallback(&staticKeyCallback);
+        window.glfwSetKeyCallback(&staticKeyCallback);
+        window.glfwSetCharCallback(&staticCharCallback);
         window.glfwSetFramebufferSizeCallback(&staticSizeCallback);
         window.glfwSetWindowSize(width, height);
         window.glfwSetScrollCallback(&staticScrollCallback);
@@ -167,6 +172,19 @@ class Window
 
 extern (C)
 {
+    void staticCharCallback(GLFWwindow* window, uint unicode) nothrow
+    {
+        try
+        {
+            auto w = cast(Window) window.glfwGetWindowUserPointer();
+            w.charCallback(w, unicode);
+        }
+        catch (Throwable t)
+        {
+            assert(0);
+        }
+    }
+
     void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) nothrow
     {
         try

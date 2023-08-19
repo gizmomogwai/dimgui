@@ -18,7 +18,6 @@
 module imgui.engine;
 
 import imgui.api : MouseInfo, MouseButton, Sizes;
-
 package:
 
 // Pull render interface.
@@ -44,6 +43,7 @@ struct Vector2i
     int x;
     int y;
 }
+
 struct Vector2f
 {
     float x;
@@ -69,6 +69,7 @@ struct GlobalAlpha
 {
     float alpha;
 }
+
 struct Command
 {
     Type type;
@@ -204,15 +205,18 @@ public:
     bool buttonLogic(uint id, bool over)
     {
         bool res = false;
-
         // process down
         if (!anyActive())
         {
             if (over)
+            {
                 setHot(id);
+            }
 
             if (isIdHot(id) && leftPressed)
+            {
                 setActive(id);
+            }
         }
 
         // if button is active, then react on left up
@@ -251,6 +255,7 @@ public:
             {
                 setHot(id);
             }
+
             if (forceInputable || isIdHot(id) && leftPressed)
             {
                 setInputable(id);

@@ -17,15 +17,16 @@
  */
 module imgui.gl3_renderer;
 
-import bindbc.opengl : GLint, GLuint, glBindTexture, glBindVertexArray, glBindBuffer,
-    glBufferData, glDrawArrays, loadOpenGL, GL_TEXTURE_2D,
-    GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport, glDeleteTextures,
-    glDeleteVertexArrays, glDeleteBuffers, glDeleteProgram,
-    glViewport, glUseProgram, glActiveTexture, glUniform1f, glUniform2f, glUniform1i,
-    glDisable, glEnable, glScissor, GL_TEXTURE0, GL_SCISSOR_TEST;
+import bindbc.opengl : GLint, GLuint, glBindTexture, glBindVertexArray,
+    glBindBuffer, glBufferData, glDrawArrays, loadOpenGL,
+    GL_TEXTURE_2D, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport,
+    glDeleteTextures, glDeleteVertexArrays, glDeleteBuffers,
+    glDeleteProgram, glViewport, glUseProgram, glActiveTexture,
+    glUniform1f, glUniform2f, glUniform1i, glDisable, glEnable, glScissor,
+    GL_TEXTURE0, GL_SCISSOR_TEST;
 import bindbc.opengl : glGetError, GLenum, GL_NO_ERROR, GL_INVALID_ENUM,
-    GL_INVALID_VALUE, GL_INVALID_OPERATION, GL_OUT_OF_MEMORY, glGetIntegerv, glGetShaderiv, GLchar, GLsizei, glGetShaderInfoLog, GL_COMPILE_STATUS,
-    GLfloat;
+    GL_INVALID_VALUE, GL_INVALID_OPERATION, GL_OUT_OF_MEMORY,
+    glGetIntegerv, glGetShaderiv, GLchar, GLsizei, glGetShaderInfoLog, GL_COMPILE_STATUS, GLfloat;
 import std.string : format;
 import std.array : join;
 import core.stdc.stdlib : free, malloc;
@@ -335,6 +336,7 @@ void checkOglErrors()
         throw new Exception(errors.join("\n"));
     }
 }
+
 private string glGetErrorString(GLenum error)
 {
     switch (error)
@@ -356,19 +358,19 @@ private string glGetErrorString(GLenum error)
 
 void checkShader(GLuint shader)
 {
-            GLint success;
-            shader.glGetShaderiv(GL_COMPILE_STATUS, &success);
-            checkOglErrors;
-            if (!success)
-            {
-                GLchar[1024] infoLog;
-                GLsizei logLen;
-                shader.glGetShaderInfoLog(1024, &logLen, infoLog.ptr);
-                checkOglErrors;
+    GLint success;
+    shader.glGetShaderiv(GL_COMPILE_STATUS, &success);
+    checkOglErrors;
+    if (!success)
+    {
+        GLchar[1024] infoLog;
+        GLsizei logLen;
+        shader.glGetShaderInfoLog(1024, &logLen, infoLog.ptr);
+        checkOglErrors;
 
-                auto errors = (infoLog[0 .. logLen - 1]).to!string;
-                success.enforce("Error compiling shader\n  errors: '%s'".format(errors));
-            }
+        auto errors = (infoLog[0 .. logLen - 1]).to!string;
+        success.enforce("Error compiling shader\n  errors: '%s'".format(errors));
+    }
 }
 
 bool imguiRenderGLInit(const(char)[] fontpath, const uint fontTextureSize)
@@ -486,8 +488,7 @@ void main(void)
         static GLchar[1024] logBuff;
         static GLsizei logLen;
         g_program.glGetProgramInfoLog(logBuff.sizeof, &logLen, logBuff.ptr);
-        throw new Exception("Error: linking program: %s".format(
-                              logBuff[0 .. logLen - 1].to!string));
+        throw new Exception("Error: linking program: %s".format(logBuff[0 .. logLen - 1].to!string));
     }
 
     checkOglErrors;

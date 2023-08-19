@@ -44,7 +44,7 @@ struct ColorScheme
                 (&checkbox.text).only, (&checkbox.textHover).only,
                 (&checkbox.textDisabled).only, (&item.hover).only,
                 (&item.press).only, (&item.text).only, (&item.textDisabled)
-                .only, (&collapse.shown).only, (&collapse.hidden).only,
+                    .only, (&collapse.shown).only, (&collapse.hidden).only,
                 (&collapse.doShow).only, (&collapse.doHide).only,
                 (&collapse.textHover).only, (&collapse.text).only,
                 (&collapse.textDisabled).only, (&collapse.subtext).only,
