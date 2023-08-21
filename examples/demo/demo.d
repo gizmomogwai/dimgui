@@ -20,12 +20,10 @@ struct GUI
         this.window = window;
         string fontPath = thisExePath().dirName().buildPath("../").buildPath("DroidSans.ttf");
         gui = new ImGui(fontPath);
-        textEntered = textInputBuffer[0 .. 0];
     }
 
     string lastInfo;
-    char[128] textInputBuffer;
-    char[] textEntered;
+  string input;
 
     void render(int unicode)
     {
@@ -50,9 +48,9 @@ struct GUI
                 scrollArea1W, window.height - 2 * BORDER, () {
                 x += scrollArea1W;
 
-                if (gui.textInput("Text input:", textInputBuffer, textEntered))
+                if (gui.textInput("Text input:", input))
                 {
-                    writeln("Text entered: ", textEntered);
+                    writeln("Text entered: ", input);
                 }
                 if (gui.button("Button"))
                 {

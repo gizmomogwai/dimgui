@@ -34,7 +34,7 @@ import std.algorithm : max;
 import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.range : Appender, appender, empty;
-import std.conv : to;
+import std.conv : to, text;
 import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i, GlobalAlpha;
 import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
@@ -42,7 +42,8 @@ import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
 import std.exception : enforce;
 import std.datetime.systime : SysTime, Clock;
 import deetween : Tween, easeLinear, TweenMode;
-
+import std.uni : byCodePoint;
+import std.array : array;
 struct Sizes
 {
     enum BUTTON_HEIGHT = 60;
@@ -1112,13 +1113,9 @@ class ImGui
      * }
      * --------------------
      */
-    public bool textInput(string label, char[] buffer, ref char[] usedSlice,
+    public bool textInput(string label, ref string buffer,
             bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
     {
-        assert(buffer.ptr == usedSlice.ptr && buffer.length >= usedSlice.length,
-                "The usedSlice parameter on imguiTextInput must be a slice to the buffer "
-                ~ "parameter");
-
         // Label
         state.widgetId++;
         uint id = (state.areaId << 16) | state.widgetId;
@@ -1131,9 +1128,9 @@ class ImGui
         // Handle control input if any (Backspace to erase characters, Enter to confirm).
         // Backspace
         if (state.isIdInputable(id) && state.unicode == 0x08
-                && state.unicode != state.lastUnicode && !usedSlice.empty)
+                && state.unicode != state.lastUnicode && !buffer.empty)
         {
-            usedSlice = usedSlice[0 .. $ - 1];
+            buffer = buffer.byCodePoint.array[0..$-1].text;
         }
         // Pressing Enter "confirms" the input.
         else if (state.isIdInputable(id) && state.unicode == 0x0D
@@ -1150,11 +1147,7 @@ class ImGui
             char[4] codePoints;
             const codePointCount = std.utf.encode(codePoints, state.unicode);
             // Only add the character into the buffer if we can fit it there.
-            if (buffer.length - usedSlice.length >= codePointCount)
-            {
-                usedSlice = buffer[0 .. usedSlice.length + codePointCount];
-                usedSlice[$ - codePointCount .. $] = codePoints[0 .. codePointCount];
-            }
+            buffer ~= codePoints[0..codePointCount];
         }
         // Draw buffer data
         uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
@@ -1168,7 +1161,7 @@ class ImGui
                 : colorScheme.textInput.backDisabled);
         commands.addText(x + Sizes.DEFAULT_SPACING * 2,
                 y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                TextAlign.left, usedSlice, state.isIdInputable(id)
+                TextAlign.left, buffer, state.isIdInputable(id)
                 ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
 
         state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
