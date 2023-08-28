@@ -25,7 +25,7 @@ struct GUI
     string lastInfo;
   string input;
 
-    void render(int unicode)
+    void render(dchar unicode)
     {
         glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -214,6 +214,9 @@ int main(string[] args)
         case GLFW_KEY_BACKSPACE:
             unicode = 0x08;
             break;
+            case GLFW_KEY_ESCAPE:
+              unicode = 0x27;
+              break;
         default:
             break;
         }

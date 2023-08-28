@@ -386,7 +386,7 @@ class ImGui
        input functionality (e.g. GLFW's getUnicode() does not do this).
     */
     public void frame(MouseInfo mouseInfo, int width, int height,
-            dchar unicodeChar, void delegate() builder)
+            ref dchar unicodeChar, void delegate() builder)
     {
         state.updateInput(mouseInfo, unicodeChar);
         state.beginFrame();
@@ -394,8 +394,10 @@ class ImGui
         state.height = height;
         commands.clear;
         builder();
+        unicodeChar = 0;
         state.clearInput();
     }
+    
 
     /**
        Begin the definition of a new scrollable area.
@@ -1131,6 +1133,7 @@ class ImGui
                 && state.unicode != state.lastUnicode && !buffer.empty)
         {
             buffer = buffer.byCodePoint.array[0..$-1].text;
+            state.unicode = 0;
         }
         // Pressing Enter "confirms" the input.
         else if (state.isIdInputable(id) && state.unicode == 0x0D
@@ -1138,6 +1141,13 @@ class ImGui
         {
             state.inputable = 0;
             res = true;
+            state.unicode = 0;
+        }
+        else if (state.isIdInputable(id) && state.unicode == 0x27 && state.unicode != state.lastUnicode)
+        {
+            state.inputable = 0;
+            res = false;
+            state.unicode = 0;
         }
         else if (state.isIdInputable(id) && state.unicode != 0 && state.unicode != state
                 .lastUnicode)
@@ -1148,6 +1158,7 @@ class ImGui
             const codePointCount = std.utf.encode(codePoints, state.unicode);
             // Only add the character into the buffer if we can fit it there.
             buffer ~= codePoints[0..codePointCount];
+            state.unicode = 0;
         }
         // Draw buffer data
         uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
@@ -1168,6 +1179,21 @@ class ImGui
         return res;
     }
 
+    public void hotKey(dchar key, void delegate() callback)
+    {
+        if (state.unicode == key)
+        {
+            callback();
+            state.unicode = 0;
+        }
+    }
+    public void hotKey(dchar[] keys, void delegate() callback)
+    {
+        foreach (key; keys)
+        {
+            hotKey(key, callback);
+        }
+    }
     /** Add horizontal indentation for elements to be added. */
     public void indent()
     {
