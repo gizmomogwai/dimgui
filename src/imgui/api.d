@@ -420,24 +420,33 @@ class ImGui
        $(D true) if the mouse was located inside the scrollable area.
     */
     public bool scrollArea(ref ScrollAreaContext context, string title, int xPos, int yPos,
-            int width, int height, void delegate() builder, bool scrollHorizontal = false,
-            int scrolledHorizontalPixels = 2000,
-            const ref ColorScheme colorScheme = defaultColorScheme,)
+                           int width, int height, void delegate() header, void delegate() builder, bool scrollHorizontal = false,
+                           int scrolledHorizontalPixels = 2000,
+                           const ref ColorScheme colorScheme = defaultColorScheme,)
     {
+        state.inScroll = false;
         state.areaId++;
         state.widgetId = 0;
         commands.addGlobalAlpha(context.alpha);
-        LocalScrollAreaContext localContext;
+        commands.addRoundedRect(xPos, yPos, width, height, 6, colorScheme.scroll.area.back);
 
-        localContext.verticalScrollId = (state.areaId << 16) | 0;
-        localContext.horizontalScrollId = (state.areaId << 16) | 1;
+        state.widgetX = xPos + Sizes.SCROLL_AREA_PADDING - context.offset.x;
+        state.widgetY = yPos + height;
+        state.widgetW = width - 2 * Sizes.SCROLL_AREA_PADDING;
+        int oldYPos = yPos;
+        header();
+        state.inScroll = true;
+        LocalScrollAreaContext localContext;
         state.widgetId++;
+        localContext.verticalScrollId = (state.areaId << 16) | state.widgetId;
+        state.widgetId++;
+        localContext.horizontalScrollId = (state.areaId << 16) | state.widgetId;
+        state.widgetId++;
+        height = state.widgetY - yPos;
         localContext.scrollAreaRect = Rect(xPos, yPos, width, height);
         localContext.viewport = Rect(xPos + Sizes.SCROLL_AREA_PADDING,
                 yPos + Sizes.SCROLL_BAR_SIZE, max(1, width - Sizes.SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
                 max(1, height - Sizes.SCROLL_AREA_HEADER - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
-
-        state.widgetX = xPos + Sizes.SCROLL_AREA_PADDING - context.offset.x;
 
         localContext.verticalScrollbar = Rect(xPos + width - Sizes.SCROLL_BAR_SIZE, yPos + Sizes.SCROLL_BAR_SIZE,
                 Sizes.SCROLL_BAR_SIZE, height - Sizes.SCROLL_AREA_HEADER - Sizes.SCROLL_BAR_SIZE);
@@ -460,15 +469,11 @@ class ImGui
         localContext.scrolledHorizontalPixels = scrolledHorizontalPixels;
 
         state.widgetY = yPos + height - Sizes.SCROLL_AREA_HEADER + context.offset.y;
-        state.widgetW = scrollHorizontal ? localContext.scrolledHorizontalPixels
-            : width - Sizes.SCROLL_AREA_PADDING * 4;
 
         localContext.scrolledContentTop = state.widgetY;
 
         localContext.insideScrollArea = state.inRect(xPos, yPos, width, height, false);
         state.insideCurrentScroll = localContext.insideScrollArea;
-
-        commands.addRoundedRect(xPos, yPos, width, height, 6, colorScheme.scroll.area.back);
 
         commands.addText(xPos + Sizes.SCROLL_AREA_HEADER / 2,
                 yPos + height - Sizes.SCROLL_AREA_HEADER / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
@@ -677,7 +682,6 @@ class ImGui
     {
         state.widgetId++;
         const uint id = (state.areaId << 16) | state.widgetId;
-
         const int x = state.widgetX;
         const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
         const int w = state.widgetW;
@@ -689,7 +693,7 @@ class ImGui
             return false;
         }
 
-        const bool over = enabled && state.inRect(x, y, w, h);
+        const bool over = enabled && state.inRect(x, y, w, h, state.inScroll);
         commands.addRoundedRect(x, y, w, h, 10, state.isIdActive(id)
                 ? colorScheme.button.backPress : colorScheme.button.back);
 
@@ -1116,7 +1120,7 @@ class ImGui
      * --------------------
      */
     public bool textInput(string label, ref string buffer,
-            bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
+                          bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         // Label
         state.widgetId++;
@@ -1129,10 +1133,15 @@ class ImGui
         bool res = false;
         // Handle control input if any (Backspace to erase characters, Enter to confirm).
         // Backspace
-        if (state.isIdInputable(id) && state.unicode == 0x08
-                && state.unicode != state.lastUnicode && !buffer.empty)
+        if (state.isIdInputable(id)
+            && state.unicode == 0x08
+            && state.unicode != state.lastUnicode
+            )
         {
-            buffer = buffer.byCodePoint.array[0..$-1].text;
+            if (!buffer.empty)
+            {
+                buffer = buffer.byCodePoint.array[0..$-1].text;
+            }
             state.unicode = 0;
         }
         // Pressing Enter "confirms" the input.
@@ -1165,11 +1174,11 @@ class ImGui
         x += labelLen;
         int w = state.widgetW - labelLen - Sizes.DEFAULT_SPACING * 2;
         int h = Sizes.BUTTON_HEIGHT;
-        bool over = state.inRect(x, y, w, h);
+        bool over = state.inRect(x, y, w, h, state.inScroll);
         state.textInputLogic(id, over, forceInputable);
         commands.addRoundedRect(x + Sizes.DEFAULT_SPACING, y, w, h, 10,
-                state.isIdInputable(id) ? colorScheme.textInput.back
-                : colorScheme.textInput.backDisabled);
+                                state.isIdInputable(id) ? colorScheme.textInput.back
+                                : colorScheme.textInput.backDisabled);
         commands.addText(x + Sizes.DEFAULT_SPACING * 2,
                 y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, buffer, state.isIdInputable(id)

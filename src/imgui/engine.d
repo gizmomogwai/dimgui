@@ -121,6 +121,7 @@ public:
 
     uint areaId;
     uint widgetId;
+    bool inScroll;
     bool anyActive()
     {
         return active != 0;

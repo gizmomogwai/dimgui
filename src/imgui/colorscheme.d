@@ -231,4 +231,4 @@ struct ColorScheme
     default by GUI element creation functions unless
     you explicitly pass a custom color scheme.
 */
-__gshared ColorScheme defaultColorScheme;
+ColorScheme defaultColorScheme;

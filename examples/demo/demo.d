@@ -44,8 +44,12 @@ struct GUI
             scrollArea1.alpha = 1.0;
             enum scrollArea1W = 400;
 
-            gui.scrollArea(scrollArea1, "Scroll area 1", x, BORDER,
-                scrollArea1W, window.height - 2 * BORDER, () {
+            gui.scrollArea(scrollArea1, "Scroll area 1", x, BORDER*5,
+                           scrollArea1W, window.height - 6 * BORDER, () {
+                             if (gui.button("static header")) {
+                               writeln("Static header pressed");
+                             }
+                           }, () {
                 x += scrollArea1W;
 
                 if (gui.textInput("Text input:", input))
@@ -148,7 +152,8 @@ struct GUI
             scrollArea2.alpha = 1.0;
             int scrollArea2W = 400;
             gui.scrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W,
-                window.height - 2 * BORDER, () {
+                           window.height - 2 * BORDER, (){
+                           }, () {
                 static bool collapsed = false;
                 gui.collapse("Test1", "Test2", &collapsed);
                 if (!collapsed)
