@@ -30,7 +30,7 @@ module imgui.api;
     |
    0,0--3,0->
 +/
-import std.algorithm : max;
+import std.algorithm : max, min;
 import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.range : Appender, appender, empty;
@@ -455,14 +455,14 @@ class ImGui
         if (context.reveal.active)
         {
             // dfmt off
-            context.offset.y = (
-              cast(int)(yPos
-                        + height
-                        - Sizes.SCROLL_AREA_HEADER
-                        + context.offset.y
-                        - context.reveal.yOffset
-                        - localContext.viewport.h * context.reveal.percentage)
-            ).clamp(0, context.scrolledContentHeight - localContext.viewport.h);
+            context.offset.y =
+                cast(int)(yPos
+                          + height
+                          - Sizes.SCROLL_AREA_HEADER
+                          + context.offset.y
+                          - context.reveal.yOffset
+                          - localContext.viewport.h * context.reveal.percentage)
+                .clamp(0, context.scrolledContentHeight - localContext.viewport.h);
             // dfmt on
             context.reveal.active = false;
         }
@@ -894,7 +894,7 @@ class ImGui
                     y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                     TextAlign.right, subtext, colorScheme.collapse.subtext);
         }
-        return res;
+        return *checkState;
     }
 
     /**
@@ -1300,8 +1300,11 @@ class ImGui
 
 }
 
-public T clamp(T)(const T value, const T minValue, const T maxValue)
+// like std.algorithm.comparison : clamp, but border1 and border2 need not be in the right order
+public T clamp(T)(const T value, const T border1, const T border2)
 {
+    T minValue = min(border1, border2);
+    T maxValue = max(border1, border2);
     if (value < minValue)
     {
         return minValue;
