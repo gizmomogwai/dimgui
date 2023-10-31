@@ -44,10 +44,15 @@ struct GUI
             scrollArea1.alpha = 1.0;
             enum scrollArea1W = 400;
 
-            gui.scrollArea(scrollArea1, "Scroll area 1", x, BORDER*5,
-                           scrollArea1W, window.height - 6 * BORDER, () {
+            gui.scrollArea(scrollArea1, x, BORDER,
+                           scrollArea1W, window.height - 2 * BORDER, () {
+                               gui.label("a label");
                              if (gui.button("static header")) {
                                writeln("Static header pressed");
+                             }
+                             if (gui.button("static header 2"))
+                             {
+                                 writeln("Static header 2 pressed");
                              }
                            }, () {
                 x += scrollArea1W;
@@ -61,6 +66,11 @@ struct GUI
                     writeln("Button pressed");
                 }
 
+                gui.pushLayout(new ColumnLayout([-200, -50, 0]));
+                gui.button("XXL");
+                gui.button("M");
+                gui.button("S");
+                gui.popLayout();
                 gui.button("Disabled button", Enabled.no);
                 gui.item("Item");
                 gui.item("Disabled item", Enabled.no);
@@ -151,22 +161,28 @@ struct GUI
             static ScrollAreaContext scrollArea2;
             scrollArea2.alpha = 1.0;
             int scrollArea2W = 400;
-            gui.scrollArea(scrollArea2, "Collapsible", x, BORDER, scrollArea2W,
-                           window.height - 2 * BORDER, (){
-                           }, () {
-                static bool collapsed = false;
-                gui.collapse("Test1", "Test2", &collapsed);
-                if (!collapsed)
-                {
-                    for (int i = 0; i < 10; ++i)
-                    {
-                        gui.button("Button %s".format(i));
-                    }
-                }
-                static float sliderValue = 50;
-                gui.slider("A Slider", &sliderValue, 0, 100, 0.1);
-            });
-        });
+            gui.scrollArea(scrollArea2, x, BORDER, scrollArea2W,
+                           window.height - 2 * BORDER,
+                           ()
+                           {
+                               gui.label("scrollArea2");
+                           },
+                           ()
+                           {
+                               static bool collapsed = false;
+                               gui.collapse("Test1", "Test2", &collapsed);
+                               if (!collapsed)
+                               {
+                                   for (int i = 0; i < 10; ++i)
+                                   {
+                                       gui.button("Button %s".format(i));
+                                       gui.value("Value %s".format(i));
+                                   }
+                               }
+                               static float sliderValue = 50;
+                               gui.slider("A Slider", &sliderValue, 0, 100, 0.1);
+                           });
+                  });
 
         /+
         const graphicsXPos = xCursor + 10;

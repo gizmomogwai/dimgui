@@ -17,7 +17,8 @@
  */
 module imgui.engine;
 
-import imgui.api : MouseInfo, MouseButton, Sizes;
+import imgui.api : MouseInfo, MouseButton, Sizes, Layout;
+import std.range : popBack;
 package:
 
 // Pull render interface.
@@ -122,6 +123,24 @@ public:
     uint areaId;
     uint widgetId;
     bool inScroll;
+
+    Layout[] layoutStack;
+
+    void pushLayout(Layout l)
+    {
+        l.push(this);
+        layoutStack.assumeSafeAppend() ~= l;
+    }
+    void popLayout()
+    {
+        layoutStack[$-1].pop(this);
+        layoutStack.popBack();
+    }
+    Layout layout()
+    {
+        return layoutStack[$-1];
+    }
+
     bool anyActive()
     {
         return active != 0;

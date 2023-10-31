@@ -46,15 +46,13 @@ import std.uni : byCodePoint;
 import std.array : array;
 struct Sizes
 {
-    enum BUTTON_HEIGHT = 60;
-    enum SLIDER_HEIGHT = 60;
+    enum LINE_HEIGHT = 60;
     enum SLIDER_MARKER_WIDTH = 10;
     enum CHECK_SIZE = TEXT_HEIGHT - TEXT_BASELINE - 10;
     enum DEFAULT_SPACING = 4;
     enum TEXT_HEIGHT = 35;
     enum TEXT_BASELINE = 5;
     enum SCROLL_AREA_PADDING = 6;
-    enum SCROLL_AREA_HEADER = 35;
     enum SCROLL_BAR_SIZE = SCROLL_AREA_PADDING * 3;
     enum SCROLL_BAR_HANDLE_SIZE = SCROLL_AREA_PADDING * 2;
     enum INDENT_SIZE = 16;
@@ -332,6 +330,83 @@ private auto horizontalScrollbarRect(const ref Rect scrollbar)
             scrollbar.w, Sizes.SCROLL_BAR_HANDLE_SIZE);
 }
 
+class Layout
+{
+    GuiState initialGuiState;
+
+    void push(ref GuiState state)
+    {
+        this.initialGuiState = state;
+    }
+
+    void pop(ref GuiState state)
+    {
+    }
+
+    // called after each widget
+    void update(ref GuiState state)
+    {
+    }
+}
+
+class LineLayout : Layout
+{
+    override void push(ref GuiState state)
+    {
+        super.push(state);
+    }
+    override void pop(ref GuiState state)
+    {
+    }
+    override void update(ref GuiState state)
+    {
+        state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
+    }
+}
+
+class ColumnLayout : Layout
+{
+    int[] columns;
+    int index;
+    this(int[] columns)
+    {
+        this.columns = columns;
+        this.index = 0;
+    }
+    override void push(ref GuiState state)
+    {
+        super.push(state);
+        if (columns[index] < 0)
+        {
+            state.widgetW = initialGuiState.widgetW + columns[index] - Sizes.DEFAULT_SPACING;
+        }
+    }
+    override void pop(ref GuiState state)
+    {
+        state.widgetW = initialGuiState.widgetW;
+        state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
+        state.widgetX = initialGuiState.widgetX;
+    }
+
+    override void update(ref GuiState state)
+    {
+        index++;
+        if (index < columns.length)
+        {
+            state.widgetX = state.widgetX + state.widgetW + Sizes.DEFAULT_SPACING;
+            if (columns[index] < 0)
+            {
+                state.widgetW = state.widgetW + columns[index] - Sizes.DEFAULT_SPACING;
+            }
+            else
+            {
+                state.widgetW = initialGuiState.widgetW - state.widgetW - Sizes.DEFAULT_SPACING;
+            }
+        }
+    }
+}
+
+
 alias Commands = Appender!(Command[]);
 class ImGui
 {
@@ -397,7 +472,6 @@ class ImGui
         unicodeChar = 0;
         state.clearInput();
     }
-    
 
     /**
        Begin the definition of a new scrollable area.
@@ -419,7 +493,7 @@ class ImGui
 
        $(D true) if the mouse was located inside the scrollable area.
     */
-    public bool scrollArea(ref ScrollAreaContext context, string title, int xPos, int yPos,
+    public bool scrollArea(ref ScrollAreaContext context, int xPos, int yPos,
                            int width, int height, void delegate() header, void delegate() builder, bool scrollHorizontal = false,
                            int scrolledHorizontalPixels = 2000,
                            const ref ColorScheme colorScheme = defaultColorScheme,)
@@ -433,7 +507,7 @@ class ImGui
         state.widgetX = xPos + Sizes.SCROLL_AREA_PADDING - context.offset.x;
         state.widgetY = yPos + height;
         state.widgetW = width - 2 * Sizes.SCROLL_AREA_PADDING;
-        int oldYPos = yPos;
+        state.pushLayout(new LineLayout());
         header();
         state.inScroll = true;
         LocalScrollAreaContext localContext;
@@ -446,10 +520,10 @@ class ImGui
         localContext.scrollAreaRect = Rect(xPos, yPos, width, height);
         localContext.viewport = Rect(xPos + Sizes.SCROLL_AREA_PADDING,
                 yPos + Sizes.SCROLL_BAR_SIZE, max(1, width - Sizes.SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
-                max(1, height - Sizes.SCROLL_AREA_HEADER - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
+                max(1, height - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
 
         localContext.verticalScrollbar = Rect(xPos + width - Sizes.SCROLL_BAR_SIZE, yPos + Sizes.SCROLL_BAR_SIZE,
-                Sizes.SCROLL_BAR_SIZE, height - Sizes.SCROLL_AREA_HEADER - Sizes.SCROLL_BAR_SIZE);
+                Sizes.SCROLL_BAR_SIZE, height - Sizes.SCROLL_BAR_SIZE);
         localContext.horizontalScrollbar = Rect(localContext.scrollAreaRect.x, localContext.scrollAreaRect.y,
                 localContext.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE, Sizes.SCROLL_BAR_SIZE);
         if (context.reveal.active)
@@ -458,7 +532,6 @@ class ImGui
             context.offset.y =
                 cast(int)(yPos
                           + height
-                          - Sizes.SCROLL_AREA_HEADER
                           + context.offset.y
                           - context.reveal.yOffset
                           - localContext.viewport.h * context.reveal.percentage)
@@ -468,19 +541,15 @@ class ImGui
         }
         localContext.scrolledHorizontalPixels = scrolledHorizontalPixels;
 
-        state.widgetY = yPos + height - Sizes.SCROLL_AREA_HEADER + context.offset.y;
+        state.widgetY = yPos + height + context.offset.y;
 
         localContext.scrolledContentTop = state.widgetY;
 
         localContext.insideScrollArea = state.inRect(xPos, yPos, width, height, false);
         state.insideCurrentScroll = localContext.insideScrollArea;
-
-        commands.addText(xPos + Sizes.SCROLL_AREA_HEADER / 2,
-                yPos + height - Sizes.SCROLL_AREA_HEADER / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                TextAlign.left, title, colorScheme.scroll.area.text);
-
         commands.addScissor(localContext.viewport);
         builder();
+        state.popLayout();
         endScrollArea(context, localContext);
         return localContext.insideScrollArea;
     }
@@ -655,6 +724,14 @@ class ImGui
         state.insideCurrentScroll = false;
     }
 
+    public void pushLayout(Layout layout)
+    {
+        state.pushLayout(layout);
+    }
+    public void popLayout()
+    {
+        state.popLayout();
+    }
     /++
        Define a new button.
 
@@ -683,10 +760,10 @@ class ImGui
         state.widgetId++;
         const uint id = (state.areaId << 16) | state.widgetId;
         const int x = state.widgetX;
-        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.LINE_HEIGHT;
         const int w = state.widgetW;
-        const int h = Sizes.BUTTON_HEIGHT;
-        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
+        const int h = Sizes.LINE_HEIGHT;
+        state.layout.update(state);
 
         if ((y > state.height) || (y + h < 0))
         {
@@ -700,8 +777,8 @@ class ImGui
         const RGBA color = enabled ? (state.isIdHot(id)
                 ? colorScheme.button.textHover : colorScheme.button.text)
             : colorScheme.button.textDisabled;
-        commands.addText(x + Sizes.BUTTON_HEIGHT / 2,
-                y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x + Sizes.LINE_HEIGHT / 2,
+                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, label, color);
         return state.buttonLogic(id, over);
     }
@@ -736,11 +813,10 @@ class ImGui
         const uint id = (state.areaId << 16) | state.widgetId;
 
         const int x = state.widgetX;
-        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.LINE_HEIGHT;
         const int w = state.widgetW;
-        const int h = Sizes.BUTTON_HEIGHT;
-        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
-        // TODO vertical clipping (see button)
+        const int h = Sizes.LINE_HEIGHT;
+        state.layout.update(state);
         if ((y > state.height) || (y + h < 0))
         {
             return false;
@@ -754,8 +830,8 @@ class ImGui
             *checkState = !(*checkState);
         }
 
-        const int cx = x + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
-        const int cy = y + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
+        const int cx = x + Sizes.LINE_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
+        const int cy = y + Sizes.LINE_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
 
         // dfmt off
         commands.addRoundedRect(cx - 3, cy - 3,
@@ -774,8 +850,8 @@ class ImGui
         const RGBA color = enabled ? (state.isIdHot(id)
                 ? colorScheme.checkbox.textHover : colorScheme.checkbox.text)
             : colorScheme.checkbox.textDisabled;
-        commands.addText(x + Sizes.BUTTON_HEIGHT,
-                y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x + Sizes.LINE_HEIGHT,
+                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, label, color);
 
         return res;
@@ -803,10 +879,10 @@ class ImGui
         const uint id = (state.areaId << 16) | state.widgetId;
 
         const int x = state.widgetX;
-        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.LINE_HEIGHT;
         const int w = state.widgetW;
-        const int h = Sizes.BUTTON_HEIGHT;
-        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
+        const int h = Sizes.LINE_HEIGHT;
+        state.layout.update(state);
 
         if ((y > state.height) || (y + h < 0))
         {
@@ -822,8 +898,8 @@ class ImGui
             commands.addRoundedRect(x, y, w, h, 10, state.isIdActive(id)
                     ? colorScheme.item.press : colorScheme.item.hover);
         }
-        commands.addText(x + Sizes.BUTTON_HEIGHT / 2,
-                y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x + Sizes.LINE_HEIGHT / 2,
+                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, label, enabled ? colorScheme.item.text
                 : colorScheme.item.textDisabled);
 
@@ -854,13 +930,13 @@ class ImGui
         const uint id = (state.areaId << 16) | state.widgetId;
 
         const int x = state.widgetX;
-        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.LINE_HEIGHT;
         const int w = state.widgetW;
-        const int h = Sizes.BUTTON_HEIGHT;
-        state.widgetY -= Sizes.BUTTON_HEIGHT; // + DEFAULT_SPACING;
+        const int h = Sizes.LINE_HEIGHT;
+        state.layout.update(state);
 
-        const int cx = x + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
-        const int cy = y + Sizes.BUTTON_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
+        const int cx = x + Sizes.LINE_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
+        const int cy = y + Sizes.LINE_HEIGHT / 2 - Sizes.CHECK_SIZE / 2;
 
         const bool over = enabled && state.inRect(x, y, w, h);
         const bool res = state.buttonLogic(id, over);
@@ -884,14 +960,14 @@ class ImGui
             commands.addArrowDown(cx, cy, Sizes.CHECK_SIZE, Sizes.CHECK_SIZE, color);
         }
 
-        commands.addText(x + Sizes.BUTTON_HEIGHT,
-                y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x + Sizes.LINE_HEIGHT,
+                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, label, color);
 
         if (subtext)
         {
-            commands.addText(x + w - Sizes.BUTTON_HEIGHT / 2,
-                    y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+            commands.addText(x + w - Sizes.LINE_HEIGHT / 2,
+                    y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                     TextAlign.right, subtext, colorScheme.collapse.subtext);
         }
         return *checkState;
@@ -908,14 +984,14 @@ class ImGui
     public void label(string label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         const int x = state.widgetX;
-        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
-        const int h = Sizes.BUTTON_HEIGHT;
-        state.widgetY -= Sizes.BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.LINE_HEIGHT;
+        const int h = Sizes.LINE_HEIGHT;
+        state.layout.update(state);
         if ((y > state.height) || (y + h < 0))
         {
             return;
         }
-        commands.addText(x, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x, y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, label, colorScheme.label.text);
     }
 
@@ -930,16 +1006,16 @@ class ImGui
     public void value(string label, const ref ColorScheme colorScheme = defaultColorScheme)
     {
         const int x = state.widgetX;
-        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.LINE_HEIGHT;
         const int w = state.widgetW;
-        const int h = Sizes.BUTTON_HEIGHT;
-        state.widgetY -= Sizes.BUTTON_HEIGHT;
+        const int h = Sizes.LINE_HEIGHT;
+        state.layout.update(state);
         if ((y > state.height) || (y + h < 0))
         {
             return;
         }
-        commands.addText(x + w - Sizes.BUTTON_HEIGHT / 2,
-                y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x + w - Sizes.LINE_HEIGHT / 2,
+                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.right, label, colorScheme.value.text);
     }
 
@@ -978,10 +1054,10 @@ class ImGui
         const uint id = (state.areaId << 16) | state.widgetId;
 
         const int x = state.widgetX;
-        const int y = state.widgetY - Sizes.BUTTON_HEIGHT;
+        const int y = state.widgetY - Sizes.LINE_HEIGHT;
         const int w = state.widgetW;
-        const int h = Sizes.SLIDER_HEIGHT;
-        state.widgetY -= Sizes.SLIDER_HEIGHT + Sizes.DEFAULT_SPACING;
+        const int h = Sizes.LINE_HEIGHT;
+        state.layout.update(state);
         if ((y > state.height) || (y + h < 0))
         {
             return false;
@@ -996,7 +1072,7 @@ class ImGui
         int m = cast(int)(u * range);
 
         const bool over = enabled && state.inRect(x + m, y,
-                Sizes.SLIDER_MARKER_WIDTH, Sizes.SLIDER_HEIGHT);
+                Sizes.SLIDER_MARKER_WIDTH, Sizes.LINE_HEIGHT);
         const bool res = state.buttonLogic(id, over);
         bool valChanged = false;
 
@@ -1023,9 +1099,9 @@ class ImGui
         const RGBA color = state.isIdActive(id) ? colorScheme.slider.thumbPress
             : (state.isIdHot(id) ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
         commands.addRoundedRect(x, y, Sizes.SLIDER_MARKER_WIDTH + m,
-                Sizes.SLIDER_HEIGHT, 4, colorScheme.slider.thumb);
+                Sizes.LINE_HEIGHT, 4, colorScheme.slider.thumb);
         commands.addRoundedRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH,
-                Sizes.SLIDER_HEIGHT, 4, color);
+                Sizes.LINE_HEIGHT, 4, color);
 
         const string message = formatSliderValue(stepValue, *sliderState);
 
@@ -1036,11 +1112,11 @@ class ImGui
         const RGBA sliderValueColor = enabled ?
             (state.isIdHot(id) ? colorScheme.slider.valueHover : colorScheme.slider.value)
             : colorScheme.slider.valueDisabled;
-        commands.addText(x + Sizes.SLIDER_HEIGHT / 2,
-                         y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x + Sizes.LINE_HEIGHT / 2,
+                         y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                          TextAlign.left, label, sliderValueColor);
-        commands.addText(x + w - Sizes.SLIDER_HEIGHT / 2,
-                         y + Sizes.SLIDER_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        commands.addText(x + w - Sizes.LINE_HEIGHT / 2,
+                         y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                          TextAlign.right, message, sliderValueColor);
         // dfmt on
         return res || valChanged;
@@ -1126,8 +1202,8 @@ class ImGui
         state.widgetId++;
         uint id = (state.areaId << 16) | state.widgetId;
         int x = state.widgetX;
-        int y = state.widgetY - Sizes.BUTTON_HEIGHT;
-        commands.addText(x, y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+        int y = state.widgetY - Sizes.LINE_HEIGHT;
+        commands.addText(x, y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, label, colorScheme.textInput.label);
 
         bool res = false;
@@ -1173,18 +1249,18 @@ class ImGui
         uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
         x += labelLen;
         int w = state.widgetW - labelLen - Sizes.DEFAULT_SPACING * 2;
-        int h = Sizes.BUTTON_HEIGHT;
+        int h = Sizes.LINE_HEIGHT;
         bool over = state.inRect(x, y, w, h, state.inScroll);
         state.textInputLogic(id, over, forceInputable);
         commands.addRoundedRect(x + Sizes.DEFAULT_SPACING, y, w, h, 10,
                                 state.isIdInputable(id) ? colorScheme.textInput.back
                                 : colorScheme.textInput.backDisabled);
         commands.addText(x + Sizes.DEFAULT_SPACING * 2,
-                y + Sizes.BUTTON_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, buffer, state.isIdInputable(id)
                 ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
 
-        state.widgetY -= Sizes.BUTTON_HEIGHT + Sizes.DEFAULT_SPACING;
+        state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
         return res;
     }
 
