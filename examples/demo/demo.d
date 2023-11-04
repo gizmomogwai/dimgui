@@ -27,6 +27,7 @@ class GUI(T)
     ~this()
     {
     }
+
     string lastInfo;
     string input;
 
@@ -49,17 +50,17 @@ class GUI(T)
             scrollArea1.alpha = 1.0;
             enum scrollArea1W = 400;
 
-            gui.scrollArea(scrollArea1, x, BORDER,
-                           scrollArea1W, window.height - 2 * BORDER, () {
-                               gui.label("a label");
-                             if (gui.button("static header")) {
-                               writeln("Static header pressed");
-                             }
-                             if (gui.button("static header 2"))
-                             {
-                                 writeln("Static header 2 pressed");
-                             }
-                           }, () {
+            gui.scrollArea(scrollArea1, x, BORDER, scrollArea1W, window.height - 2 * BORDER, () {
+                gui.label("a label");
+                if (gui.button("static header"))
+                {
+                    writeln("Static header pressed");
+                }
+                if (gui.button("static header 2"))
+                {
+                    writeln("Static header 2 pressed");
+                }
+            }, () {
                 x += scrollArea1W;
 
                 if (gui.textInput("Text input:", input))
@@ -166,28 +167,23 @@ class GUI(T)
             static ScrollAreaContext scrollArea2;
             scrollArea2.alpha = 1.0;
             int scrollArea2W = 400;
-            gui.scrollArea(scrollArea2, x, BORDER, scrollArea2W,
-                           window.height - 2 * BORDER,
-                           ()
-                           {
-                               gui.label("scrollArea2");
-                           },
-                           ()
-                           {
-                               static bool collapsed = false;
-                               gui.collapse("Test1", "Test2", &collapsed);
-                               if (!collapsed)
-                               {
-                                   for (int i = 0; i < 10; ++i)
-                                   {
-                                       gui.button("Button %s".format(i));
-                                       gui.value("Value %s".format(i));
-                                   }
-                               }
-                               static float sliderValue = 50;
-                               gui.slider("A Slider", &sliderValue, 0, 100, 0.1);
-                           });
-                  });
+            gui.scrollArea(scrollArea2, x, BORDER, scrollArea2W, window.height - 2 * BORDER, () {
+                gui.label("scrollArea2");
+            }, () {
+                static bool collapsed = false;
+                gui.collapse("Test1", "Test2", &collapsed);
+                if (!collapsed)
+                {
+                    for (int i = 0; i < 10; ++i)
+                    {
+                        gui.button("Button %s".format(i));
+                        gui.value("Value %s".format(i));
+                    }
+                }
+                static float sliderValue = 50;
+                gui.slider("A Slider", &sliderValue, 0, 100, 0.1);
+            });
+        });
 
         /+
         const graphicsXPos = xCursor + 10;
@@ -240,9 +236,9 @@ int main(string[] args)
         case GLFW_KEY_BACKSPACE:
             unicode = 0x08;
             break;
-            case GLFW_KEY_ESCAPE:
-              unicode = 0x27;
-              break;
+        case GLFW_KEY_ESCAPE:
+            unicode = 0x27;
+            break;
         default:
             break;
         }

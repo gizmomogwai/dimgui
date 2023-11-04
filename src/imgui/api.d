@@ -38,6 +38,7 @@ import std.format : format;
 import std.range : Appender, appender, empty;
 import std.conv : to, text;
 import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i, GlobalAlpha;
+
 //import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
@@ -98,7 +99,6 @@ uint toPackedRGBA(RGBA color)
         (color.a << 24);
     // dfmt on
 }
-
 
 struct MouseInfo
 {
@@ -364,9 +364,11 @@ class LineLayout : Layout
     {
         super.push(state);
     }
+
     override void pop(ref GuiState state)
     {
     }
+
     override void update(ref GuiState state)
     {
         state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
@@ -382,6 +384,7 @@ class ColumnLayout : Layout
         this.columns = columns;
         this.index = 0;
     }
+
     override void push(ref GuiState state)
     {
         super.push(state);
@@ -390,6 +393,7 @@ class ColumnLayout : Layout
             state.widgetW = initialGuiState.widgetW + columns[index] - Sizes.DEFAULT_SPACING;
         }
     }
+
     override void pop(ref GuiState state)
     {
         state.widgetW = initialGuiState.widgetW;
@@ -424,6 +428,7 @@ class HotKey
         this.keys = keys;
         this.description = description;
     }
+
     void toString(Sink)(Sink sink)
     {
         foreach (index, key; keys)
@@ -530,10 +535,10 @@ class ImGui(T)
 
        $(D true) if the mouse was located inside the scrollable area.
     */
-    public bool scrollArea(ref ScrollAreaContext context, int xPos, int yPos,
-                           int width, int height, void delegate() header, void delegate() builder, bool scrollHorizontal = false,
-                           int scrolledHorizontalPixels = 2000,
-                           const ref ColorScheme colorScheme = defaultColorScheme,)
+    public bool scrollArea(ref ScrollAreaContext context, int xPos, int yPos, int width,
+            int height, void delegate() header, void delegate() builder, bool scrollHorizontal = false,
+            int scrolledHorizontalPixels = 2000,
+            const ref ColorScheme colorScheme = defaultColorScheme,)
     {
         state.inScroll = false;
         state.areaId++;
@@ -559,8 +564,9 @@ class ImGui(T)
                 yPos + Sizes.SCROLL_BAR_SIZE, max(1, width - Sizes.SCROLL_AREA_PADDING * 4), // The max() ensures we never have zero- or negative-sized scissor rectangle when the window is very small,
                 max(1, height - Sizes.SCROLL_BAR_SIZE)); // avoiding a segfault.
 
-        localContext.verticalScrollbar = Rect(xPos + width - Sizes.SCROLL_BAR_SIZE, yPos + Sizes.SCROLL_BAR_SIZE,
-                Sizes.SCROLL_BAR_SIZE, height - Sizes.SCROLL_BAR_SIZE);
+        localContext.verticalScrollbar = Rect(xPos + width - Sizes.SCROLL_BAR_SIZE,
+                yPos + Sizes.SCROLL_BAR_SIZE, Sizes.SCROLL_BAR_SIZE,
+                height - Sizes.SCROLL_BAR_SIZE);
         localContext.horizontalScrollbar = Rect(localContext.scrollAreaRect.x, localContext.scrollAreaRect.y,
                 localContext.scrollAreaRect.w - Sizes.SCROLL_BAR_SIZE, Sizes.SCROLL_BAR_SIZE);
         if (context.reveal.active)
@@ -765,6 +771,7 @@ class ImGui(T)
     {
         state.pushLayout(layout);
     }
+
     public void popLayout()
     {
         state.popLayout();
@@ -1137,8 +1144,7 @@ class ImGui(T)
             : (state.isIdHot(id) ? colorScheme.slider.thumbHover : colorScheme.slider.thumb);
         commands.addRoundedRect(x, y, Sizes.SLIDER_MARKER_WIDTH + m,
                 Sizes.LINE_HEIGHT, 4, colorScheme.slider.thumb);
-        commands.addRoundedRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH,
-                Sizes.LINE_HEIGHT, 4, color);
+        commands.addRoundedRect(x + m, y, Sizes.SLIDER_MARKER_WIDTH, Sizes.LINE_HEIGHT, 4, color);
 
         const string message = formatSliderValue(stepValue, *sliderState);
 
@@ -1232,8 +1238,8 @@ class ImGui(T)
      * }
      * --------------------
      */
-    public bool textInput(string label, ref string buffer,
-                          bool forceInputable = false, const ref ColorScheme colorScheme = defaultColorScheme)
+    public bool textInput(string label, ref string buffer, bool forceInputable = false,
+            const ref ColorScheme colorScheme = defaultColorScheme)
     {
         // Label
         state.widgetId++;
@@ -1246,14 +1252,11 @@ class ImGui(T)
         bool res = false;
         // Handle control input if any (Backspace to erase characters, Enter to confirm).
         // Backspace
-        if (state.isIdInputable(id)
-            && state.unicode == 0x08
-            && state.unicode != state.lastUnicode
-            )
+        if (state.isIdInputable(id) && state.unicode == 0x08 && state.unicode != state.lastUnicode)
         {
             if (!buffer.empty)
             {
-                buffer = buffer.byCodePoint.array[0..$-1].text;
+                buffer = buffer.byCodePoint.array[0 .. $ - 1].text;
             }
             state.unicode = 0;
         }
@@ -1265,7 +1268,8 @@ class ImGui(T)
             res = true;
             state.unicode = 0;
         }
-        else if (state.isIdInputable(id) && state.unicode == 0x27 && state.unicode != state.lastUnicode)
+        else if (state.isIdInputable(id) && state.unicode == 0x27
+                && state.unicode != state.lastUnicode)
         {
             state.inputable = 0;
             res = false;
@@ -1279,7 +1283,7 @@ class ImGui(T)
             char[4] codePoints;
             const codePointCount = std.utf.encode(codePoints, state.unicode);
             // Only add the character into the buffer if we can fit it there.
-            buffer ~= codePoints[0..codePointCount];
+            buffer ~= codePoints[0 .. codePointCount];
             state.unicode = 0;
         }
         // Draw buffer data
@@ -1290,8 +1294,8 @@ class ImGui(T)
         bool over = state.inRect(x, y, w, h, state.inScroll);
         state.textInputLogic(id, over, forceInputable);
         commands.addRoundedRect(x + Sizes.DEFAULT_SPACING, y, w, h, 10,
-                                state.isIdInputable(id) ? colorScheme.textInput.back
-                                : colorScheme.textInput.backDisabled);
+                state.isIdInputable(id) ? colorScheme.textInput.back
+                : colorScheme.textInput.backDisabled);
         commands.addText(x + Sizes.DEFAULT_SPACING * 2,
                 y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, buffer, state.isIdInputable(id)

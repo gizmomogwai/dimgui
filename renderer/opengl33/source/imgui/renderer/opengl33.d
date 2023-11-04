@@ -24,19 +24,24 @@ import bindbc.opengl : GLint, GLuint, glBindTexture, glBindVertexArray,
     glDeleteTextures, glDeleteVertexArrays, glDeleteBuffers,
     glDeleteProgram, glViewport, glUseProgram, glActiveTexture,
     glUniform1f, glUniform2f, glUniform1i, glDisable, glEnable, glScissor,
-    GL_TEXTURE0, GL_SCISSOR_TEST, glGenTextures, glTexImage2D, GL_RED, GL_UNSIGNED_BYTE, glTexParameteri, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, glGenVertexArrays, glGenBuffers, glEnableVertexAttribArray, glVertexAttribPointer, GL_FLOAT, GL_FALSE, glCreateProgram, glCreateShader, glShaderSource, glCompileShader, glAttachShader, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, glBindAttribLocation, glLinkProgram, glGetProgramiv, glGetProgramInfoLog, glDeleteShader, glGetUniformLocation, glBindFragDataLocation, GL_LINK_STATUS;
-import bindbc.opengl : glGetError, GLenum, GL_NO_ERROR, GL_INVALID_ENUM,
+    GL_TEXTURE0, GL_SCISSOR_TEST, glGenTextures, glTexImage2D, GL_RED,
+    GL_UNSIGNED_BYTE, glTexParameteri, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER,
+    GL_LINEAR, glGenVertexArrays, glGenBuffers, glEnableVertexAttribArray,
+    glVertexAttribPointer, GL_FLOAT, GL_FALSE, glCreateProgram, glCreateShader,
+    glShaderSource, glCompileShader, glAttachShader, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
+    glBindAttribLocation, glLinkProgram, glGetProgramiv, glGetProgramInfoLog,
+    glDeleteShader, glGetUniformLocation, glBindFragDataLocation,
+    GL_LINK_STATUS, glGetError, GLenum, GL_NO_ERROR, GL_INVALID_ENUM,
     GL_INVALID_VALUE, GL_INVALID_OPERATION, GL_OUT_OF_MEMORY,
     glGetIntegerv, glGetShaderiv, GLchar, GLsizei, glGetShaderInfoLog, GL_COMPILE_STATUS, GLfloat;
 import std.string : format;
 import std.array : join;
 import core.stdc.string : memset;
 import imgui.api : TextAlign, Sizes;
-import imgui.fonts : MAX_CHARACTER_COUNT, g_max_character_count, maxCharacterCount, FIRST_CHARACTER, g_cdata, getTextLength, g_tabStops;
-
+import imgui.fonts : MAX_CHARACTER_COUNT, g_max_character_count,
+    maxCharacterCount, FIRST_CHARACTER, g_cdata, getTextLength, g_tabStops;
 import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad,
     stbtt_BakeFontBitmap, STBTT_ifloor;
-
 import imgui.colorscheme : RGBA;
 import imgui.engine : Command, Type;
 import std.exception : enforce;
@@ -124,9 +129,8 @@ void checkShader(GLuint shader)
     }
 }
 
-
 void getBakedQuad(stbtt_bakedchar* chardata, int pw, int ph, int char_index,
-                  float* xpos, float* ypos, stbtt_aligned_quad* q)
+        float* xpos, float* ypos, stbtt_aligned_quad* q)
 {
     stbtt_bakedchar* b = chardata + char_index;
     int round_x = STBTT_ifloor(*xpos + b.xoff);
@@ -145,11 +149,11 @@ void getBakedQuad(stbtt_bakedchar* chardata, int pw, int ph, int char_index,
     *xpos += b.xadvance;
 }
 
-
 /++
  + Opengl33 Driver for api.ImGui(T)
  +/
-public class Opengl33 {
+public class Opengl33
+{
 
     private enum uint FONT_TEXTURE_SIZE = 1024;
 
@@ -189,7 +193,7 @@ public class Opengl33 {
         ubyte[] bmap = new ubyte[FONT_TEXTURE_SIZE * FONT_TEXTURE_SIZE];
 
         const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, Sizes.TEXT_HEIGHT, bmap.ptr, FONT_TEXTURE_SIZE,
-                                            FONT_TEXTURE_SIZE, FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
+                FONT_TEXTURE_SIZE, FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
         // If result is negative, we baked less than max characters so update the max
         // character count.
         if (result < 0)
@@ -201,7 +205,7 @@ public class Opengl33 {
         glGenTextures(1, &fontTexture);
         glBindTexture(GL_TEXTURE_2D, fontTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FONT_TEXTURE_SIZE,
-                     FONT_TEXTURE_SIZE, 0, GL_RED, GL_UNSIGNED_BYTE, bmap.ptr);
+                FONT_TEXTURE_SIZE, 0, GL_RED, GL_UNSIGNED_BYTE, bmap.ptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -287,7 +291,8 @@ void main(void)
             static GLchar[1024] logBuff;
             static GLsizei logLen;
             program.glGetProgramInfoLog(logBuff.sizeof, &logLen, logBuff.ptr);
-            throw new Exception("Error: linking program: %s".format(logBuff[0 .. logLen - 1].to!string));
+            throw new Exception("Error: linking program: %s".format(
+                    logBuff[0 .. logLen - 1].to!string));
         }
 
         checkOglErrors;
@@ -303,6 +308,7 @@ void main(void)
 
         glUseProgram(0);
     }
+
     public ~this()
     {
         if (fontTexture)
@@ -350,12 +356,12 @@ void main(void)
                 else
                 {
                     drawRoundedRect(cmd.rect.x + 0.5f, y, cmd.rect.w - 1, h,
-                                    cmd.rect.r, 1.0f, cmd.color);
+                            cmd.rect.r, 1.0f, cmd.color);
                 }
                 break;
             case Type.LINE:
                 drawLine(cmd.line.x0, cmd.line.y0, cmd.line.x1, cmd.line.y1,
-                         cmd.line.r, 1.0f, cmd.color);
+                        cmd.line.r, 1.0f, cmd.color);
                 break;
             case Type.ARROW_DOWN:
                 // dfmt off
@@ -380,7 +386,8 @@ void main(void)
                 drawPolygon(verts, 1.0f, cmd.color);
                 break;
             case Type.TEXT:
-                drawText(cmd.text.x, cmd.text.y, cmd.text.text, cmd.text.align_, cmd.color);
+                drawText(cmd.text.x, cmd.text.y, cmd.text.text,
+                        cmd.text.align_, cmd.color);
                 break;
             case Type.SCISSOR:
                 glEnable(GL_SCISSOR_TEST);
@@ -437,14 +444,16 @@ void main(void)
 
         drawPolygon(verts, fth, col);
     }
+
     private void drawRect(float x, float y, float w, float h, float fth, uint col)
     {
         const float[4 * 2] verts = [
-          x + 0.5f, y + 0.5f, x + w - 0.5f, y + 0.5f, x + w - 0.5f, y + h - 0.5f,
-          x + 0.5f, y + h - 0.5f,
+            x + 0.5f, y + 0.5f, x + w - 0.5f, y + 0.5f, x + w - 0.5f, y + h - 0.5f,
+            x + 0.5f, y + h - 0.5f,
         ];
         drawPolygon(verts, fth, col);
     }
+
     private void drawRoundedRect(float x, float y, float w, float h, float r, float fth, uint col)
     {
         const uint n = CIRCLE_VERTS / 4;
@@ -476,7 +485,7 @@ void main(void)
             *v++ = y + r + cverts[i * 2 + 1] * r;
         }
 
-            *v++ = x + w - r + cverts[0] * r;
+        *v++ = x + w - r + cverts[0] * r;
         *v++ = y + r + cverts[1] * r;
 
         drawPolygon(verts, fth, col);
@@ -524,19 +533,19 @@ void main(void)
             {
                 stbtt_aligned_quad q;
                 getBakedQuad(g_cdata.ptr, FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE,
-                             c - FIRST_CHARACTER, &x, &y, &q);
+                        c - FIRST_CHARACTER, &x, &y, &q);
 
                 float[12] v = [
-                  q.x0, q.y0, q.x1, q.y1, q.x1, q.y0, q.x0, q.y0, q.x0, q.y1, q.x1,
-                  q.y1,
+                    q.x0, q.y0, q.x1, q.y1, q.x1, q.y0, q.x0, q.y0, q.x0, q.y1,
+                    q.x1, q.y1,
                 ];
                 float[12] uv = [
-                  q.s0, q.t0, q.s1, q.t1, q.s1, q.t0, q.s0, q.t0, q.s0, q.t1, q.s1,
-                  q.t1,
+                    q.s0, q.t0, q.s1, q.t1, q.s1, q.t0, q.s0, q.t0, q.s0, q.t1,
+                    q.s1, q.t1,
                 ];
                 float[24] cArr = [
-                  r, g, b, a, r, g, b, a, r, g, b, a, r, g, b, a, r, g, b, a, r, g,
-                  b, a,
+                    r, g, b, a, r, g, b, a, r, g, b, a, r, g, b, a, r, g, b, a, r,
+                    g, b, a,
                 ];
                 glBindVertexArray(vao);
                 glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
@@ -555,12 +564,12 @@ void main(void)
         const numCoords = min(TEMP_COORD_COUNT, coords.length / 2);
 
         const float[4] colf = [
-          (col & 0xff) / 255.0f, ((col >> 8) & 0xff) / 255.0f,
-          ((col >> 16) & 0xff) / 255.0f, ((col >> 24) & 0xff) / 255.0f
+            (col & 0xff) / 255.0f, ((col >> 8) & 0xff) / 255.0f,
+            ((col >> 16) & 0xff) / 255.0f, ((col >> 24) & 0xff) / 255.0f
         ];
         const float[4] colTransf = [
-          (col & 0xff) / 255.0f, ((col >> 8) & 0xff) / 255.0f, ((col >> 16) & 0xff) / 255.0f,
-          0f
+            (col & 0xff) / 255.0f, ((col >> 8) & 0xff) / 255.0f, ((col >> 16) & 0xff) / 255.0f,
+            0f
         ];
 
         int vSize = numCoords * 12 + (numCoords - 2) * 6;

@@ -19,6 +19,7 @@ module imgui.engine;
 
 import imgui.api : MouseInfo, MouseButton, Sizes, Layout, HotKey;
 import std.range : popBack, empty;
+
 package:
 
 // Pull render interface.
@@ -144,14 +145,16 @@ public:
         l.push(this);
         layoutStack.assumeSafeAppend() ~= l;
     }
+
     void popLayout()
     {
-        layoutStack[$-1].pop(this);
+        layoutStack[$ - 1].pop(this);
         layoutStack.popBack();
     }
+
     Layout layout()
     {
-        return layoutStack[$-1];
+        return layoutStack[$ - 1];
     }
 
     bool anyActive()

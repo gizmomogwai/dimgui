@@ -2,6 +2,7 @@ module imgui.fonts;
 
 import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad,
     stbtt_BakeFontBitmap, STBTT_ifloor;
+
 immutable float[4] g_tabStops = [150, 210, 270, 330];
 
 enum MAX_CHARACTER_COUNT = 1024 * 16 * 4;
