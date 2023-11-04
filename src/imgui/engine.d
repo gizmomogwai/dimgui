@@ -17,8 +17,8 @@
  */
 module imgui.engine;
 
-import imgui.api : MouseInfo, MouseButton, Sizes, Layout;
-import std.range : popBack;
+import imgui.api : MouseInfo, MouseButton, Sizes, Layout, HotKey;
+import std.range : popBack, empty;
 package:
 
 // Pull render interface.
@@ -125,6 +125,19 @@ public:
     bool inScroll;
 
     Layout[] layoutStack;
+
+    HotKey[] hotkeys;
+
+    void clearHotkeys()
+    {
+        hotkeys.length = 0;
+        hotkeys.assumeSafeAppend();
+    }
+
+    void add(HotKey hotkey)
+    {
+        hotkeys ~= hotkey;
+    }
 
     void pushLayout(Layout l)
     {
@@ -296,7 +309,7 @@ public:
      */
     void updateInput(MouseInfo mouseInfo, dchar unicodeChar)
     {
-        import imgui.gl3_renderer : maxCharacterCount;
+        import imgui.fonts : maxCharacterCount;
 
         bool left = (mouseInfo.buttons & MouseButton.left) != 0;
 
@@ -317,7 +330,7 @@ public:
     // Separate from gl3_renderer.getTextLength so api doesn't directly call renderer.
     float getTextLength(const(char)[] text)
     {
-        import imgui.gl3_renderer : getTextLength;
+        import imgui.fonts : getTextLength;
 
         return getTextLength(text);
     }

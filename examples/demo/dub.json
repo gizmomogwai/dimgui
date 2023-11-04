@@ -25,6 +25,8 @@
     "mainSourceFile": "demo.d",
 
     "dependencies": {
-        "dimgui": {"path": "../../", "version": "~master"}
+        "dimgui:opengl33": {"path": "../../renderers/opengl33", "version": "~master"}
     },
+    "versions" : ["GL_33"]
+
 }

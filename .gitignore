@@ -25,3 +25,5 @@
 *.modTime
 .sandbox
 .dub
+*.lst
+/renderer/opengl33/opengl33-test-library

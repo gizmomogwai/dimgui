@@ -30,13 +30,15 @@ module imgui.api;
     |
    0,0--3,0->
 +/
-import std.algorithm : max, min;
+import std.algorithm : max, min, map;
+import std.array : join;
 import std.math : floor, ceil, log10;
 import std.string : sformat;
+import std.format : format;
 import std.range : Appender, appender, empty;
 import std.conv : to, text;
 import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i, GlobalAlpha;
-import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
+//import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
 import std.typecons : tuple;
 import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
 import std.exception : enforce;
@@ -44,6 +46,7 @@ import std.datetime.systime : SysTime, Clock;
 import deetween : Tween, easeLinear, TweenMode;
 import std.uni : byCodePoint;
 import std.array : array;
+
 struct Sizes
 {
     enum LINE_HEIGHT = 60;
@@ -85,11 +88,17 @@ enum Enabled : bool
     yes,
 }
 
-/** Destroy the imgui library. */
-void imguiDestroy()
+uint toPackedRGBA(RGBA color)
 {
-    imguiRenderGLDestroy();
+    // dfmt off
+    return
+        (color.r <<  0) |
+        (color.g <<  8) |
+        (color.b << 16) |
+        (color.a << 24);
+    // dfmt on
 }
+
 
 struct MouseInfo
 {
@@ -406,18 +415,45 @@ class ColumnLayout : Layout
     }
 }
 
+class HotKey
+{
+    dchar[] keys;
+    string description;
+    this(dchar[] keys, string description)
+    {
+        this.keys = keys;
+        this.description = description;
+    }
+    void toString(Sink)(Sink sink)
+    {
+        foreach (index, key; keys)
+        {
+            if (index > 0)
+            {
+                sink(", ");
+            }
+            sink("'");
+            sink(key.to!string);
+            sink("'");
+        }
+        sink(": ");
+        sink(description);
+    }
+
+}
 
 alias Commands = Appender!(Command[]);
-class ImGui
+class ImGui(T)
 {
     GuiState state;
     Commands commands;
 
+    T implementation;
     this(string fontPath, uint fontTextureSize = 1024)
     {
         commands = appender!(Command[]);
         commands.reserve(512);
-        enforce(imguiRenderGLInit(fontPath, fontTextureSize));
+        implementation = new T(fontPath, fontTextureSize);
     }
 
     /**
@@ -471,6 +507,7 @@ class ImGui
         builder();
         unicodeChar = 0;
         state.clearInput();
+        state.clearHotkeys();
     }
 
     /**
@@ -1264,33 +1301,29 @@ class ImGui
         return res;
     }
 
-    public void hotKey(dchar key, void delegate() callback)
+    public void hotKey(dchar key, string description, void delegate() callback)
     {
+        if (description !is null)
+        {
+            state.add(new HotKey([key], description));
+        }
         if (state.unicode == key)
         {
             callback();
             state.unicode = 0;
         }
     }
-    public void hotKey(dchar[] keys, void delegate() callback)
+
+    public void hotKey(dchar[] keys, string description, void delegate() callback)
     {
+        if (description !is null)
+        {
+            state.add(new HotKey(keys, description));
+        }
         foreach (key; keys)
         {
-            hotKey(key, callback);
+            hotKey(key, null, callback);
         }
-    }
-    /** Add horizontal indentation for elements to be added. */
-    public void indent()
-    {
-        state.widgetX += Sizes.INDENT_SIZE;
-        state.widgetW -= Sizes.INDENT_SIZE;
-    }
-
-    /** Remove horizontal indentation for elements to be added. */
-    public void unindent()
-    {
-        state.widgetX -= Sizes.INDENT_SIZE;
-        state.widgetW += Sizes.INDENT_SIZE;
     }
 
     /** Add vertical space as a separator below the last element. */
@@ -1371,7 +1404,7 @@ class ImGui
     /** Render all of the batched commands for the current frame. */
     public void render()
     {
-        renderGLDraw(commands[], state.width, state.height);
+        implementation.render(commands[], state.width, state.height);
     }
 
 }

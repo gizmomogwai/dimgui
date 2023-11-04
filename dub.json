@@ -26,8 +26,6 @@
     ],
 
     "dependencies": {
-        "bindbc-opengl": "~>1.0.0",
-        "bindbc-glfw": "~>1.0.0",
         "deetween": "~>0.0.6"
     },
 
@@ -47,7 +45,7 @@
     "lflags-windows-x86": ["/LIBPATH:$PACKAGE_DIR\\lib\\x86"],
     "lflags-windows-x86_64": ["/LIBPATH:$PACKAGE_DIR\\lib\\x86-64"],
 
-    "subPackages": [ "examples/demo" ],
+    "subPackages": [ "examples/demo", "renderer/opengl33" ],
 
     "versions": ["GL_33"]
 }

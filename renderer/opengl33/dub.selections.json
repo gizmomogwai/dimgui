@@ -1,9 +1,10 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"bindbc-glfw": "1.0.2",
+		"bindbc-glfw": "1.0.3",
 		"bindbc-loader": "1.0.3",
 		"bindbc-opengl": "1.0.5",
-		"deetween": "~main"
+		"deetween": "0.0.6",
+		"dimgui": "1.0.3+commit.63.ga54d664"
 	}
 }

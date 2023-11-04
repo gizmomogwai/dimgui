@@ -9,21 +9,26 @@ import bindbc.opengl;
 import bindbc.glfw;
 
 import imgui;
+import imgui.renderer.opengl33 : Opengl33;
+
 import window;
 
-struct GUI
+class GUI(T)
 {
-    ImGui gui;
+    ImGui!T gui;
     Window window;
     this(Window window)
     {
         this.window = window;
         string fontPath = thisExePath().dirName().buildPath("../").buildPath("DroidSans.ttf");
-        gui = new ImGui(fontPath);
+        gui = new ImGui!T(fontPath);
     }
 
+    ~this()
+    {
+    }
     string lastInfo;
-  string input;
+    string input;
 
     void render(dchar unicode)
     {
@@ -248,7 +253,7 @@ int main(string[] args)
         glfwTerminate();
     }
 
-    GUI gui = GUI(window);
+    scope gui = new GUI!(Opengl33)(window);
 
     //glfwSwapInterval(1);
 
@@ -262,9 +267,6 @@ int main(string[] args)
         /* Poll for and process events. */
         glfwPollEvents();
     }
-
-    // Clean UI
-    imguiDestroy();
 
     return 0;
 }

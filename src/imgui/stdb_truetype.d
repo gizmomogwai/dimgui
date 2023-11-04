@@ -12,7 +12,6 @@ import core.stdc.string : memcpy, memset, strlen;
 import std.exception : enforce;
 import std.math : floor, sqrt, ceil;
 
-import imgui.gl3_renderer : imguimalloc, imguifree;
 
 package:
 
@@ -33,6 +32,18 @@ int STBTT_ifloor(X)(X x)
 int STBTT_iceil(X)(X x)
 {
     return cast(int) ceil(x);
+}
+
+void* imguimalloc(size_t size, void*  /*userptr*/ )
+{
+    import core.stdc.stdlib : malloc;
+    return malloc(size);
+}
+
+void imguifree(void* ptr, void*  /*userptr*/ )
+{
+    import core.stdc.stdlib : free;
+    free(ptr);
 }
 
 alias STBTT_malloc = imguimalloc;
