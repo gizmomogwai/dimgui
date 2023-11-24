@@ -48,6 +48,10 @@ import deetween : Tween, easeLinear, TweenMode;
 import std.uni : byCodePoint;
 import std.array : array;
 
+version (unittest)
+{
+    import unit_threaded : should;
+}
 struct Sizes
 {
     enum LINE_HEIGHT = 60;
@@ -201,6 +205,90 @@ struct ScrollAreaContext
     }
 
     RevealInfo reveal;
+}
+
+struct Editor {
+    string buffer;
+    dchar[] codePoints;
+    ulong cursor; // index for insert backspace delete operations into codepoints
+
+    static auto from(string s)
+    {
+        Editor result;
+        result.codePoints = s.byCodePoint.array;
+        result.cursor = result.codePoints.length;
+        result.buffer = result.codePoints.text;
+        return result;
+    }
+
+    auto insert(dchar unicode)
+    {
+        codePoints = codePoints[0..cursor] ~ unicode ~ codePoints[cursor..codePoints.length];
+        cursor++;
+        buffer = codePoints.text;
+        return this;
+    }
+    auto backspace()
+    {
+        // abcC -> abC
+        // abCc -> aCc
+        // Cabc -> Cabc
+        if (cursor == 0)
+        {
+            return this;
+        }
+
+        codePoints = codePoints[0..cursor-1] ~ codePoints[cursor..$];
+        cursor--;
+        buffer = codePoints.text;
+
+        return this;
+    }
+    auto getPixelOffset()
+    {
+        import imgui.fonts : g_max_character_count, FIRST_CHARACTER, g_cdata;
+
+        // TODO copy from opengl33
+        enum uint FONT_TEXTURE_SIZE = 1024;
+
+        // TODO copy from opengl33
+        float result = 0;
+        foreach (dchar c; codePoints[0..cursor])
+        {
+            if (c >= FIRST_CHARACTER && c < FIRST_CHARACTER + g_max_character_count)
+            {
+                result += g_cdata[c - FIRST_CHARACTER].xadvance;
+            }
+        }
+        return result;
+    }
+    void moveLeft()
+    {
+        if (cursor == 0)
+        {
+            return;
+        }
+        cursor--;
+    }
+    void moveRight()
+    {
+        cursor = min(codePoints.length, cursor + 1);
+    }
+}
+
+@("Editor backspace") unittest
+{
+    Editor editor = Editor.from("test");
+    editor.backspace();
+    editor.buffer.should == "tes";
+    editor.cursor.should == 3;
+}
+
+@("Editor insert") unittest
+{
+    Editor editor = Editor.from("test");
+    editor.insert(cast(dchar)'1');
+    editor.buffer.should == "test1";
 }
 
 private struct LocalScrollAreaContext
@@ -1165,79 +1253,6 @@ class ImGui(T)
         return res || valChanged;
     }
 
-    /** Define a text input field.
-     *
-     * Params:
-     *
-     * text           = Label that will be placed beside the text input field.
-     * buffer         = Buffer to store entered text.
-     * usedSlice      = Slice of buffer that stores text entered so far.
-     * forceInputable = Force the text input field to be inputable regardless of whether it
-     *                  has been selected by the user? Useful to e.g. make a text field
-     *                  inputable immediately after it appears in a newly opened dialog.
-     * colorScheme    = Optionally override the current default color scheme for this element.
-     *
-     * Returns: true if the user has entered and confirmed the text (by pressing Enter), false
-     *          otherwise.
-     *
-     * Example (using GLFW):
-     * --------------------
-     * static dchar staticUnicode;
-     * // Buffer to store text input
-     * char[128] textInputBuffer;
-     * // Slice of textInputBuffer
-     * char[] textEntered;
-     *
-     * extern(C) static void getUnicode(GLFWwindow* w, uint unicode)
-     * {
-     *     staticUnicode = unicode;
-     * }
-     *
-     * extern(C) static void getKey(GLFWwindow* w, int key, int scancode, int action, int mods)
-     * {
-     *     if(action != GLFW_PRESS) { return; }
-     *     if(key == GLFW_KEY_ENTER)          { staticUnicode = 0x0D; }
-     *     else if(key == GLFW_KEY_BACKSPACE) { staticUnicode = 0x08; }
-     * }
-     *
-     * void init()
-     * {
-     *     GLFWwindow* window;
-     *
-     *     // ... init the window here ...
-     *
-     *     // Not really needed, but makes it obvious what we're doing
-     *     textEntered = textInputBuffer[0 .. 0];
-     *     glfwSetCharCallback(window, &getUnicode);
-     *     glfwSetKeyCallback(window, &getKey);
-     * }
-     *
-     * void frame()
-     * {
-     *     // These should be defined somewhere
-     *     int mouseX, mouseY, mouseScroll;
-     *     ubyte mousebutton;
-     *
-     *     // .. code here ..
-     *
-     *     // Pass text input to imgui
-     *     imguiBeginFrame(cast(int)mouseX, cast(int)mouseY, mousebutton, mouseScroll, staticUnicode);
-     *     // reset staticUnicode for the next frame
-     *
-     *     staticUnicode = 0;
-     *
-     *     if(imguiTextInput("Text input:", textInputBuffer, textEntered))
-     *     {
-     *         import std.stdio;
-     *         writeln("Entered text is: ", textEntered);
-     *         // Reset entered text for next input (use e.g. textEntered.dup if you need a copy).
-     *         textEntered = textInputBuffer[0 .. 0];
-     *     }
-     *
-     *     // .. more code here ..
-     * }
-     * --------------------
-     */
     public bool textInput(string label, ref string buffer, bool forceInputable = false,
             const ref ColorScheme colorScheme = defaultColorScheme)
     {
@@ -1301,6 +1316,89 @@ class ImGui(T)
                 TextAlign.left, buffer, state.isIdInputable(id)
                 ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
 
+        state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
+        return res;
+    }
+
+    public bool textEdit(string label, ref Editor editor, bool forceInputable = false,
+            const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        // Label
+        state.widgetId++;
+        uint id = (state.areaId << 16) | state.widgetId;
+        int x = state.widgetX;
+        int y = state.widgetY - Sizes.LINE_HEIGHT;
+        commands.addText(x, y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+                TextAlign.left, label, colorScheme.textInput.label);
+
+        bool res = false;
+        // Handle control input if any (Backspace to erase characters, Enter to confirm).
+        // Backspace
+        if (state.isIdInputable(id))
+        {
+            if (state.unicode == 0x08 && state.unicode != state.lastUnicode)
+            {
+                if (!editor.buffer.empty)
+                {
+                    editor.backspace();
+                }
+                state.unicode = 0;
+            }
+            // Pressing Enter "confirms" the input.
+            else if (state.unicode == 0x0D && state.unicode != state.lastUnicode)
+            {
+                state.inputable = 0;
+                res = true;
+                state.unicode = 0;
+            }
+            // Pressing Esc looses the focus without "confirming" the input.
+            else if (state.unicode == 0x27
+                    && state.unicode != state.lastUnicode)
+            {
+                state.inputable = 0;
+                res = false;
+                state.unicode = 0;
+            }
+            // cursor left
+            else if (state.unicode == 0x107 && state.unicode != state.lastUnicode)
+            {
+                editor.moveLeft();
+                state.unicode = 0;
+            }
+            // cursor right
+            else if (state.unicode == 0x106 && state.unicode != state.lastUnicode)
+            {
+                editor.moveRight();
+                state.unicode = 0;
+            }
+            else if (state.unicode != 0 && state.unicode != state.lastUnicode)
+            {
+                editor.insert(state.unicode);
+                state.unicode = 0;
+            }
+        }
+        // Draw buffer data
+        uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
+        x += labelLen;
+        int w = state.widgetW - labelLen - Sizes.DEFAULT_SPACING * 2;
+        int h = Sizes.LINE_HEIGHT;
+        bool over = state.inRect(x, y, w, h, state.inScroll);
+        state.textInputLogic(id, over, forceInputable);
+        commands.addRoundedRect(x + Sizes.DEFAULT_SPACING, y, w, h, 10,
+                state.isIdInputable(id) ? colorScheme.textInput.back
+                : colorScheme.textInput.backDisabled);
+        commands.addText(x + Sizes.DEFAULT_SPACING * 2,
+                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+                TextAlign.left, editor.buffer, state.isIdInputable(id)
+                ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
+        if (state.isIdInputable(id))
+        {
+            auto cursorOffset = cast(int)editor.getPixelOffset();
+            commands.addRect(x + Sizes.DEFAULT_SPACING*2 + cursorOffset,
+                             y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
+                             3, Sizes.TEXT_HEIGHT,
+                             colorScheme.textInput.label);
+        }
         state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
         return res;
     }

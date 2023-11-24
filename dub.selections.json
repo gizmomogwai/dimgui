@@ -4,6 +4,7 @@
 		"bindbc-glfw": "1.0.3",
 		"bindbc-loader": "1.0.3",
 		"bindbc-opengl": "1.0.5",
-		"deetween": "~main"
+		"deetween": "0.0.6",
+		"unit-threaded": "2.1.7"
 	}
 }

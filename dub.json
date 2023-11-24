@@ -29,23 +29,20 @@
         "deetween": "~>0.0.6"
     },
 
-    "libs-linux": [
-        "GL",
-        "Xrandr",
-        "Xext",
-        "Xxf86vm",
-        "Xi",
-        "Xcursor",
-        "Xinerama",
-        "X11"
-    ],
-
-    "libs-windows": ["glfw3dll"],
-
-    "lflags-windows-x86": ["/LIBPATH:$PACKAGE_DIR\\lib\\x86"],
-    "lflags-windows-x86_64": ["/LIBPATH:$PACKAGE_DIR\\lib\\x86-64"],
-
     "subPackages": [ "examples/demo", "renderer/opengl33" ],
 
-    "versions": ["GL_33"]
+    "versions": ["GL_33"],
+    "configurations":[
+        {
+            "name": "library",
+            "excludedSourceFiles": ["src/imgui/testsuite.d"]
+        },
+        {
+            "name": "unittest",
+            "targetType": "executable",
+            "dependencies": {
+                "unit-threaded":"~>2.1.7"
+            }
+        }
+    ]
 }

@@ -154,7 +154,7 @@ void getBakedQuad(stbtt_bakedchar* chardata, int pw, int ph, int char_index,
  +/
 public class Opengl33
 {
-    private enum uint FONT_TEXTURE_SIZE = 1024;
+    enum uint FONT_TEXTURE_SIZE = 1024;
 
     private GLuint program = 0;
     private GLuint programViewportLocation = 0;
@@ -516,7 +516,7 @@ void main(void)
 
         // The cast(string) is only there for UTF-8 decoding.
         //foreach (ubyte c; cast(ubyte[])text)
-        foreach (dchar c; cast(string) text)
+        foreach (dchar c; text)
         {
             if (c == '\t')
             {

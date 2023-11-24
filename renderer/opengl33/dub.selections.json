@@ -5,6 +5,7 @@
 		"bindbc-loader": "1.0.3",
 		"bindbc-opengl": "1.0.5",
 		"deetween": "0.0.6",
-		"dimgui": "1.0.3+commit.63.ga54d664"
+		"dimgui": "1.0.3+commit.63.ga54d664",
+		"unit-threaded": "2.1.7"
 	}
 }
