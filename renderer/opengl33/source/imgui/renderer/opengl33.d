@@ -154,7 +154,6 @@ void getBakedQuad(stbtt_bakedchar* chardata, int pw, int ph, int char_index,
  +/
 public class Opengl33
 {
-
     private enum uint FONT_TEXTURE_SIZE = 1024;
 
     private GLuint program = 0;
@@ -175,7 +174,7 @@ public class Opengl33
     private float[TEMP_COORD_COUNT * 12 + (TEMP_COORD_COUNT - 2) * 6] tempTextureCoords;
     private float[TEMP_COORD_COUNT * 24 + (TEMP_COORD_COUNT - 2) * 12] tempColors;
 
-    this(const(char)[] fontpath, const uint fontTextureSize)
+    this(string fontpath, const uint fontTextureSize)
     {
         {
             const result = loadOpenGL();
@@ -192,6 +191,7 @@ public class Opengl33
         ubyte[] ttfBuffer = cast(ubyte[]) fontpath.read;
         ubyte[] bmap = new ubyte[FONT_TEXTURE_SIZE * FONT_TEXTURE_SIZE];
 
+        // TODO move to font
         const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, Sizes.TEXT_HEIGHT, bmap.ptr, FONT_TEXTURE_SIZE,
                 FONT_TEXTURE_SIZE, FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
         // If result is negative, we baked less than max characters so update the max
@@ -491,7 +491,7 @@ void main(void)
         drawPolygon(verts, fth, col);
     }
 
-    private void drawText(float x, float y, const(char)[] text, int align_, uint color)
+    private void drawText(float x, float y, string text, int align_, uint color)
     {
         if (!fontTexture)
             return;

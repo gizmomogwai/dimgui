@@ -15,13 +15,13 @@ uint maxCharacterCount() @trusted nothrow @nogc
     return g_max_character_count;
 }
 
-float getTextLength(stbtt_bakedchar* chardata, const(char)[] text)
+float getTextLength(stbtt_bakedchar* chardata, string text)
 {
     float xpos = 0;
     float len = 0;
 
     // The cast(string) is only there for UTF-8 decoding.
-    foreach (dchar c; cast(string) text)
+    foreach (dchar c; text)
     {
         if (c == '\t')
         {
@@ -47,7 +47,7 @@ float getTextLength(stbtt_bakedchar* chardata, const(char)[] text)
     return len;
 }
 
-float getTextLength(const(char)[] text)
+float getTextLength(string text)
 {
     return getTextLength(g_cdata.ptr, text);
 }

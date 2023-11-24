@@ -55,7 +55,7 @@ struct Vector2f
 struct Text
 {
     int x, y, align_;
-    const(char[]) text;
+    string text;
 }
 
 struct Line
@@ -331,7 +331,7 @@ public:
     }
 
     // Separate from gl3_renderer.getTextLength so api doesn't directly call renderer.
-    float getTextLength(const(char)[] text)
+    float getTextLength(string text)
     {
         import imgui.fonts : getTextLength;
 

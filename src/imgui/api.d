@@ -314,7 +314,7 @@ void addGlobalAlpha(Commands commands, float alpha)
     commands.put(cmd);
 }
 
-void addText(Commands commands, int x, int y, int alignment, const(char)[] text, RGBA color)
+void addText(Commands commands, int x, int y, int alignment, string text, RGBA color)
 {
     // dfmt off
     Command cmd =
@@ -1268,6 +1268,7 @@ class ImGui(T)
             res = true;
             state.unicode = 0;
         }
+        // Pressing Esc looses the focus without "confirming" the input.
         else if (state.isIdInputable(id) && state.unicode == 0x27
                 && state.unicode != state.lastUnicode)
         {
@@ -1282,7 +1283,6 @@ class ImGui(T)
 
             char[4] codePoints;
             const codePointCount = std.utf.encode(codePoints, state.unicode);
-            // Only add the character into the buffer if we can fit it there.
             buffer ~= codePoints[0 .. codePointCount];
             state.unicode = 0;
         }
