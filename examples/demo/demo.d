@@ -29,7 +29,7 @@ class GUI(T)
     }
 
     string lastInfo;
-    string input;
+    Editor input;
 
     void render(dchar unicode)
     {
@@ -238,6 +238,12 @@ int main(string[] args)
             break;
         case GLFW_KEY_ESCAPE:
             unicode = 0x27;
+            break;
+        case GLFW_KEY_RIGHT:
+            unicode = 262;
+            break;
+        case GLFW_KEY_LEFT:
+            unicode = 263;
             break;
         default:
             break;

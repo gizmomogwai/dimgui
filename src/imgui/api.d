@@ -1253,75 +1253,8 @@ class ImGui(T)
         return res || valChanged;
     }
 
-    public bool textInput(string label, ref string buffer, bool forceInputable = false,
-            const ref ColorScheme colorScheme = defaultColorScheme)
-    {
-        // Label
-        state.widgetId++;
-        uint id = (state.areaId << 16) | state.widgetId;
-        int x = state.widgetX;
-        int y = state.widgetY - Sizes.LINE_HEIGHT;
-        commands.addText(x, y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                TextAlign.left, label, colorScheme.textInput.label);
-
-        bool res = false;
-        // Handle control input if any (Backspace to erase characters, Enter to confirm).
-        // Backspace
-        if (state.isIdInputable(id) && state.unicode == 0x08 && state.unicode != state.lastUnicode)
-        {
-            if (!buffer.empty)
-            {
-                buffer = buffer.byCodePoint.array[0 .. $ - 1].text;
-            }
-            state.unicode = 0;
-        }
-        // Pressing Enter "confirms" the input.
-        else if (state.isIdInputable(id) && state.unicode == 0x0D
-                && state.unicode != state.lastUnicode)
-        {
-            state.inputable = 0;
-            res = true;
-            state.unicode = 0;
-        }
-        // Pressing Esc looses the focus without "confirming" the input.
-        else if (state.isIdInputable(id) && state.unicode == 0x27
-                && state.unicode != state.lastUnicode)
-        {
-            state.inputable = 0;
-            res = false;
-            state.unicode = 0;
-        }
-        else if (state.isIdInputable(id) && state.unicode != 0 && state.unicode != state
-                .lastUnicode)
-        {
-            import std.utf;
-
-            char[4] codePoints;
-            const codePointCount = std.utf.encode(codePoints, state.unicode);
-            buffer ~= codePoints[0 .. codePointCount];
-            state.unicode = 0;
-        }
-        // Draw buffer data
-        uint labelLen = cast(uint)(state.getTextLength(label) + 0.5f);
-        x += labelLen;
-        int w = state.widgetW - labelLen - Sizes.DEFAULT_SPACING * 2;
-        int h = Sizes.LINE_HEIGHT;
-        bool over = state.inRect(x, y, w, h, state.inScroll);
-        state.textInputLogic(id, over, forceInputable);
-        commands.addRoundedRect(x + Sizes.DEFAULT_SPACING, y, w, h, 10,
-                state.isIdInputable(id) ? colorScheme.textInput.back
-                : colorScheme.textInput.backDisabled);
-        commands.addText(x + Sizes.DEFAULT_SPACING * 2,
-                y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                TextAlign.left, buffer, state.isIdInputable(id)
-                ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
-
-        state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
-        return res;
-    }
-
-    public bool textEdit(string label, ref Editor editor, bool forceInputable = false,
-            const ref ColorScheme colorScheme = defaultColorScheme)
+    public bool textInput(string label, ref Editor editor, bool forceInputable = false,
+                          const ref ColorScheme colorScheme = defaultColorScheme)
     {
         // Label
         state.widgetId++;

@@ -1,0 +1,12 @@
+* DImgUI
+
+Fork of [[https://github.com/d-gamedev-team/dimgui][https://github.com/d-gamedev-team/dimgui]] which is itself a
+fork of the abandoned [[https://github.com/AdrienHerubel/imgui][https://github.com/AdrienHerubel/imgui]].
+
+I would like to upstream my changes again, but I think it's too far
+digressed. I am very thankful for the original dimgui port, as it
+showed to be very hack- and adjustable to my needs!
+
+** Demo
+run =dub run :demo=
+cd 

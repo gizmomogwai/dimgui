@@ -1,6 +1,5 @@
 name "opengl33"
 
-
 dependency "bindbc-opengl" version="~>1.0.0"
 dependency "bindbc-glfw" version="~>1.0.0"
 dependency "dimgui" version="*"
