@@ -1,14 +1,15 @@
 module demo;
 
 import std.file : thisExePath;
-import std.path : dirName, buildPath;
+import std.path : buildPath, dirName;
 import std.stdio : writeln;
 import std.string : format;
 
-import bindbc.opengl;
 import bindbc.glfw;
+import bindbc.opengl;
 
 import imgui;
+import imgui.colorscheme : ColorScheme, defaultColorScheme, zenburnColorScheme;
 import imgui.renderer.opengl33 : Opengl33;
 
 import window;
@@ -30,10 +31,18 @@ class GUI(T)
 
     string lastInfo;
     Editor input;
+    bool zenburn;
 
     void render(dchar unicode)
     {
-        glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+        if (zenburn)
+        {
+            glClearColor(0.247f, 0.247f, 0.247f, 1.0f); // Zenburn bg #3F3F3F
+        }
+        else
+        {
+            glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+        }
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -170,6 +179,10 @@ class GUI(T)
             gui.scrollArea(scrollArea2, x, BORDER, scrollArea2W, window.height - 2 * BORDER, () {
                 gui.label("scrollArea2");
             }, () {
+                if (gui.checkbox("Zenburn", &zenburn))
+                {
+                    defaultColorScheme = zenburn ? zenburnColorScheme : ColorScheme.init;
+                }
                 static bool collapsed = false;
                 gui.collapse("Test1", "Test2", &collapsed);
                 if (!collapsed)

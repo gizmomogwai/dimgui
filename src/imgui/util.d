@@ -14,9 +14,13 @@ module imgui.util;
 auto ref fieldRange(S, T)(auto ref T sym)
 {
     static if (is(T == struct) && !is(T == S))
+    {
         return fieldRange!S(sym.tupleof);
+    }
     else
+    {
         return only(sym);
+    }
 }
 
 auto ref fieldRange(S, T...)(auto ref T syms) if (T.length > 1)
@@ -27,9 +31,13 @@ auto ref fieldRange(S, T...)(auto ref T syms) if (T.length > 1)
 auto addrFieldRange(S, T)(ref T sym)
 {
     static if (is(T == struct) && !is(T == S))
+    {
         return addrFieldRange!S(sym.tupleof);
+    }
     else
+    {
         return only(&sym);
+    }
 }
 
 auto addrFieldRange(S, T...)(ref T syms) if (T.length > 1)

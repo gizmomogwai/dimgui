@@ -17,7 +17,7 @@
  */
 module imgui.renderer.opengl33;
 
-import bindbc.opengl : loadOpenGL, GLSupport;
+import bindbc.opengl : GLSupport, loadOpenGL;
 import bindbc.opengl : GLint, GLuint, glBindTexture, glBindVertexArray,
     glBindBuffer, glBufferData, glDrawArrays, loadOpenGL,
     GL_TEXTURE_2D, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_TRIANGLES, GLSupport,
@@ -34,21 +34,21 @@ import bindbc.opengl : GLint, GLuint, glBindTexture, glBindVertexArray,
     GL_LINK_STATUS, glGetError, GLenum, GL_NO_ERROR, GL_INVALID_ENUM,
     GL_INVALID_VALUE, GL_INVALID_OPERATION, GL_OUT_OF_MEMORY,
     glGetIntegerv, glGetShaderiv, GLchar, GLsizei, glGetShaderInfoLog, GL_COMPILE_STATUS, GLfloat;
-import std.string : format;
-import std.array : join;
 import core.stdc.string : memset;
-import imgui.api : TextAlign, Sizes;
+import imgui.api : Sizes, TextAlign;
+import std.array : join;
+import std.string : format;
 import imgui.fonts : MAX_CHARACTER_COUNT, g_max_character_count,
     maxCharacterCount, FIRST_CHARACTER, g_cdata, getTextLength, g_tabStops;
 import imgui.stdb_truetype : stbtt_bakedchar, stbtt_aligned_quad,
     stbtt_BakeFontBitmap, STBTT_ifloor;
 import imgui.colorscheme : RGBA;
 import imgui.engine : Command, Type;
-import std.exception : enforce;
-import std.file : read;
-import std.math : sqrt, PI, cos, sin;
 import std.algorithm : min;
 import std.conv : to;
+import std.exception : enforce;
+import std.file : read;
+import std.math : cos, PI, sin, sqrt;
 
 private:
 // Draw up to 65536 unicode glyphs.  What this will actually do is draw *only glyphs the
@@ -424,7 +424,9 @@ void main(void)
         r *= 0.5f;
 
         if (r < 0.01f)
+        {
             r = 0.01f;
+        }
         dx *= r;
         dy *= r;
         nx *= r;
@@ -495,15 +497,23 @@ void main(void)
             const(uint)[] characterColors = null)
     {
         if (!fontTexture)
+        {
             return;
+        }
 
         if (!text)
+        {
             return;
+        }
 
         if (align_ == TextAlign.center)
+        {
             x -= getTextLength(g_cdata.ptr, text) / 2;
+        }
         else if (align_ == TextAlign.right)
+        {
             x -= getTextLength(g_cdata.ptr, text);
+        }
 
         // assume orthographic projection with units = screen pixels, origin at top left
         glBindTexture(GL_TEXTURE_2D, fontTexture);
@@ -515,8 +525,7 @@ void main(void)
         size_t characterIndex;
         foreach (dchar c; text)
         {
-            auto glyphColor = characterColors.length == 0 ? color :
-                characterColors[characterIndex];
+            auto glyphColor = characterColors.length == 0 ? color : characterColors[characterIndex];
             ++characterIndex;
             if (c == '\t')
             {

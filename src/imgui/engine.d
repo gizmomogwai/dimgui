@@ -261,12 +261,16 @@ public:
         if (isIdActive(id))
         {
             if (over)
+            {
                 setHot(id);
+            }
 
             if (leftReleased)
             {
                 if (isIdHot(id))
+                {
                     res = true;
+                }
                 clearActive();
             }
         }

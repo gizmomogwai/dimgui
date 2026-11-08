@@ -1,4 +1,4 @@
-/build
+./build
 /bin/*
 /examples/bin/*
 /data
@@ -27,3 +27,4 @@
 .dub
 *.lst
 /renderer/opengl33/opengl33-test-library
+.direnv

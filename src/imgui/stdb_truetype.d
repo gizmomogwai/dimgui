@@ -526,16 +526,24 @@ int stbtt__isfont(const(stbtt_uint8)* font)
 {
     // check the version number
     if (stbtt_tag4(font, '1', 0, 0, 0))
+    {
         return 1; // TrueType 1
+    }
 
     if (stbtt_tag(font, "typ1"))
+    {
         return 1; // TrueType with type 1 font -- we don't support this!
+    }
 
     if (stbtt_tag(font, "OTTO"))
+    {
         return 1; // OpenType with CFF
+    }
 
     if (stbtt_tag4(font, 0, 1, 0, 0))
+    {
         return 1; // OpenType 1.0
+    }
     return 0;
 }
 
@@ -551,7 +559,9 @@ stbtt_uint32 stbtt__find_table(stbtt_uint8* data, stbtt_uint32 fontstart, const(
         stbtt_uint32 loc = tabledir + 16 * i;
 
         if (stbtt_tag(data + loc + 0, tag))
+        {
             return ttULONG(data + loc + 8);
+        }
     }
 
     return 0;
@@ -561,7 +571,9 @@ int stbtt_GetFontOffsetForIndex(const(ubyte)* font_collection, int index)
 {
     // if it's just a font, there's only one valid index
     if (stbtt__isfont(font_collection))
+    {
         return index == 0 ? 0 : -1;
+    }
 
     // check if it's a TTC
     if (stbtt_tag(font_collection, "ttcf"))
@@ -572,7 +584,9 @@ int stbtt_GetFontOffsetForIndex(const(ubyte)* font_collection, int index)
             stbtt_int32 n = ttLONG(font_collection + 8);
 
             if (index >= n)
+            {
                 return -1;
+            }
             return ttULONG(font_collection + 12 + index * 14);
         }
     }
@@ -597,14 +611,20 @@ int stbtt_InitFont(stbtt_fontinfo* info, const(ubyte)* data2, int fontstart)
     info.kern = stbtt__find_table(data, fontstart, "kern"); // not required
 
     if (!cmap || !info.loca || !info.head || !info.glyf || !info.hhea || !info.hmtx)
+    {
         return 0;
+    }
 
     t = stbtt__find_table(data, fontstart, "maxp");
 
     if (t)
+    {
         info.numGlyphs = ttUSHORT(data + t + 4);
+    }
     else
+    {
         info.numGlyphs = 0xffff;
+    }
 
     // find a cmap encoding table we understand *now* to avoid searching
     // later. (todo: could make this installable)
@@ -640,7 +660,9 @@ int stbtt_InitFont(stbtt_fontinfo* info, const(ubyte)* data2, int fontstart)
     }
 
     if (info.index_map == 0)
+    {
         return 0;
+    }
 
     info.indexToLocFormat = ttUSHORT(data + info.head + 50);
     return 1;
@@ -658,7 +680,9 @@ int stbtt_FindGlyphIndex(const(stbtt_fontinfo)* info, int unicode_codepoint)
         stbtt_int32 bytes = ttUSHORT(data + index_map + 2);
 
         if (unicode_codepoint < bytes - 6)
+        {
             return ttBYTE(data + index_map + 6 + unicode_codepoint);
+        }
         return 0;
     }
     else if (format == 6)
@@ -668,7 +692,9 @@ int stbtt_FindGlyphIndex(const(stbtt_fontinfo)* info, int unicode_codepoint)
 
         if (cast(stbtt_uint32) unicode_codepoint >= first
                 && cast(stbtt_uint32) unicode_codepoint < first + count)
+        {
             return ttUSHORT(data + index_map + 10 + (unicode_codepoint - first) * 2);
+        }
         return 0;
     }
     else if (format == 2)
@@ -689,12 +715,16 @@ int stbtt_FindGlyphIndex(const(stbtt_fontinfo)* info, int unicode_codepoint)
         stbtt_uint32 search = endCount;
 
         if (unicode_codepoint > 0xffff)
+        {
             return 0;
+        }
 
         // they lie from endCount .. endCount + segCount
         // but searchRange is the nearest power of two, so...
         if (unicode_codepoint >= ttUSHORT(data + search + rangeShift * 2))
+        {
             search += rangeShift * 2;
+        }
 
         // now decrement to bias correctly to find smallest
         search -= 2;
@@ -709,7 +739,9 @@ int stbtt_FindGlyphIndex(const(stbtt_fontinfo)* info, int unicode_codepoint)
             end2 = ttUSHORT(data + search + searchRange * 2);
 
             if (unicode_codepoint > end2)
+            {
                 search += searchRange * 2;
+            }
             --entrySelector;
         }
 
@@ -722,13 +754,17 @@ int stbtt_FindGlyphIndex(const(stbtt_fontinfo)* info, int unicode_codepoint)
         end = ttUSHORT(data + index_map + 14 + 2 + 2 * item);
 
         if (unicode_codepoint < start)
+        {
             return 0;
+        }
 
         offset = ttUSHORT(data + index_map + 14 + segcount * 6 + 2 + 2 * item);
 
         if (offset == 0)
+        {
             return cast(stbtt_uint16)(unicode_codepoint + ttSHORT(
                     data + index_map + 14 + segcount * 4 + 2 + 2 * item));
+        }
 
         return ttUSHORT(data + offset + (
                 unicode_codepoint - start) * 2 + index_map + 14 + segcount * 6 + 2 + 2 * item);
@@ -748,17 +784,25 @@ int stbtt_FindGlyphIndex(const(stbtt_fontinfo)* info, int unicode_codepoint)
             stbtt_uint32 end_char = ttULONG(data + index_map + 16 + mid * 12 + 4);
 
             if (cast(stbtt_uint32) unicode_codepoint < start_char)
+            {
                 high = mid;
+            }
             else if (cast(stbtt_uint32) unicode_codepoint > end_char)
+            {
                 low = mid + 1;
+            }
             else
             {
                 stbtt_uint32 start_glyph = ttULONG(data + index_map + 16 + mid * 12 + 8);
 
                 if (format == 12)
+                {
                     return start_glyph + unicode_codepoint - start_char;
+                }
                 else // format == 13
+                {
                     return start_glyph;
+                }
             }
         }
 
@@ -791,10 +835,14 @@ int stbtt__GetGlyfOffset(const(stbtt_fontinfo)* info, int glyph_index)
     int g1, g2;
 
     if (glyph_index >= info.numGlyphs)
+    {
         return -1; // glyph index out of range
+    }
 
     if (info.indexToLocFormat >= 2)
+    {
         return -1; // unknown index.glyph map format
+    }
 
     if (info.indexToLocFormat == 0)
     {
@@ -816,19 +864,29 @@ int stbtt_GetGlyphBox(const(stbtt_fontinfo)* info, int glyph_index, int* x0,
     int g = stbtt__GetGlyfOffset(info, glyph_index);
 
     if (g < 0)
+    {
         return 0;
+    }
 
     if (x0)
+    {
         *x0 = ttSHORT(info.data + g + 2);
+    }
 
     if (y0)
+    {
         *y0 = ttSHORT(info.data + g + 4);
+    }
 
     if (x1)
+    {
         *x1 = ttSHORT(info.data + g + 6);
+    }
 
     if (y1)
+    {
         *y1 = ttSHORT(info.data + g + 8);
+    }
     return 1;
 }
 
@@ -844,7 +902,9 @@ int stbtt_IsGlyphEmpty(const(stbtt_fontinfo)* info, int glyph_index)
     int g = stbtt__GetGlyfOffset(info, glyph_index);
 
     if (g < 0)
+    {
         return 1;
+    }
     numberOfContours = ttSHORT(info.data + g);
     return numberOfContours == 0;
 }
@@ -856,16 +916,22 @@ int stbtt__close_shape(stbtt_vertex* vertices, int num_vertices, int was_off, in
     if (start_off)
     {
         if (was_off)
+        {
             stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve,
                     (cx + scx) >> 1, (cy + scy) >> 1, cx, cy);
+        }
         stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, sx, sy, scx, scy);
     }
     else
     {
         if (was_off)
+        {
             stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, sx, sy, cx, cy);
+        }
         else
+        {
             stbtt_setvertex(&vertices[num_vertices++], STBTT_vline, sx, sy, 0, 0);
+        }
     }
     return num_vertices;
 }
@@ -882,7 +948,9 @@ int stbtt_GetGlyphShape(const(stbtt_fontinfo)* info, int glyph_index, stbtt_vert
     *pvertices = null;
 
     if (g < 0)
+    {
         return 0;
+    }
 
     numberOfContours = ttSHORT(data + g);
 
@@ -903,7 +971,9 @@ int stbtt_GetGlyphShape(const(stbtt_fontinfo)* info, int glyph_index, stbtt_vert
                 .sizeof, cast(void*) info.userdata);
 
         if (vertices is null)
+        {
             return 0;
+        }
 
         next_move = 0;
         flagcount = 0;
@@ -923,10 +993,14 @@ int stbtt_GetGlyphShape(const(stbtt_fontinfo)* info, int glyph_index, stbtt_vert
                 flags = *points++;
 
                 if (flags & 8)
+                {
                     flagcount = *points++;
+                }
             }
             else
+            {
                 --flagcount;
+            }
             vertices[off + i].type = flags;
         }
 
@@ -989,8 +1063,10 @@ int stbtt_GetGlyphShape(const(stbtt_fontinfo)* info, int glyph_index, stbtt_vert
             if (next_move == i)
             {
                 if (i != 0)
+                {
                     num_vertices = stbtt__close_shape(vertices, num_vertices,
                             was_off, start_off, sx, sy, scx, scy, cx, cy);
+                }
 
                 // now start the new one
                 start_off = !(flags & 1);
@@ -1031,8 +1107,10 @@ int stbtt_GetGlyphShape(const(stbtt_fontinfo)* info, int glyph_index, stbtt_vert
                 if (!(flags & 1)) // if it's a curve
                 {
                     if (was_off) // two off-curve control points in a row means interpolate an on-curve midpoint
+                    {
                         stbtt_setvertex(&vertices[num_vertices++],
                                 STBTT_vcurve, (cx + x) >> 1, (cy + y) >> 1, cx, cy);
+                    }
                     cx = x;
                     cy = y;
                     was_off = 1;
@@ -1040,9 +1118,13 @@ int stbtt_GetGlyphShape(const(stbtt_fontinfo)* info, int glyph_index, stbtt_vert
                 else
                 {
                     if (was_off)
+                    {
                         stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, x, y, cx, cy);
+                    }
                     else
+                    {
                         stbtt_setvertex(&vertices[num_vertices++], STBTT_vline, x, y, 0, 0);
+                    }
                     was_off = 0;
                 }
             }
@@ -1153,19 +1235,27 @@ int stbtt_GetGlyphShape(const(stbtt_fontinfo)* info, int glyph_index, stbtt_vert
                 if (!tmp)
                 {
                     if (vertices)
+                    {
                         STBTT_free(vertices, cast(void*) info.userdata);
+                    }
 
                     if (comp_verts)
+                    {
                         STBTT_free(comp_verts, cast(void*) info.userdata);
+                    }
                     return 0;
                 }
 
                 if (num_vertices > 0)
+                {
                     memcpy(tmp, vertices, num_vertices * stbtt_vertex.sizeof);
+                }
                 memcpy(tmp + num_vertices, comp_verts, comp_num_verts * stbtt_vertex.sizeof);
 
                 if (vertices)
+                {
                     STBTT_free(vertices, cast(void*) info.userdata);
+                }
                 vertices = tmp;
                 STBTT_free(comp_verts, cast(void*) info.userdata);
                 num_vertices += comp_num_verts;
@@ -1197,19 +1287,27 @@ void stbtt_GetGlyphHMetrics(const(stbtt_fontinfo)* info, int glyph_index,
     if (glyph_index < numOfLongHorMetrics)
     {
         if (advanceWidth)
+        {
             *advanceWidth = ttSHORT(info.data + info.hmtx + 4 * glyph_index);
+        }
 
         if (leftSideBearing)
+        {
             *leftSideBearing = ttSHORT(info.data + info.hmtx + 4 * glyph_index + 2);
+        }
     }
     else
     {
         if (advanceWidth)
+        {
             *advanceWidth = ttSHORT(info.data + info.hmtx + 4 * (numOfLongHorMetrics - 1));
+        }
 
         if (leftSideBearing)
+        {
             *leftSideBearing = ttSHORT(info.data + info.hmtx + 4 * numOfLongHorMetrics + 2 * (
                     glyph_index - numOfLongHorMetrics));
+        }
     }
 }
 
@@ -1221,13 +1319,19 @@ int stbtt_GetGlyphKernAdvance(const(stbtt_fontinfo)* info, int glyph1, int glyph
 
     // we only look at the first table. it must be 'horizontal' and format 0.
     if (!info.kern)
+    {
         return 0;
+    }
 
     if (ttUSHORT(data + 2) < 1) // number of tables, need at least 1
+    {
         return 0;
+    }
 
     if (ttUSHORT(data + 8) != 1) // horizontal flag must be set in format
+    {
         return 0;
+    }
 
     l = 0;
     r = ttUSHORT(data + 10) - 1;
@@ -1239,11 +1343,17 @@ int stbtt_GetGlyphKernAdvance(const(stbtt_fontinfo)* info, int glyph1, int glyph
         straw = ttULONG(data + 18 + (m * 6)); // note: unaligned read
 
         if (needle < straw)
+        {
             r = m - 1;
+        }
         else if (needle > straw)
+        {
             l = m + 1;
+        }
         else
+        {
             return ttSHORT(data + 22 + (m * 6));
+        }
     }
 
     return 0;
@@ -1252,7 +1362,9 @@ int stbtt_GetGlyphKernAdvance(const(stbtt_fontinfo)* info, int glyph1, int glyph
 int stbtt_GetCodepointKernAdvance(const(stbtt_fontinfo)* info, int ch1, int ch2)
 {
     if (!info.kern) // if no kerning table, don't waste time looking up both codepoint.glyphs
+    {
         return 0;
+    }
     return stbtt_GetGlyphKernAdvance(info, stbtt_FindGlyphIndex(info, ch1),
             stbtt_FindGlyphIndex(info, ch2));
 }
@@ -1267,13 +1379,19 @@ void stbtt_GetCodepointHMetrics(const(stbtt_fontinfo)* info, int codepoint,
 void stbtt_GetFontVMetrics(const(stbtt_fontinfo)* info, int* ascent, int* descent, int* lineGap)
 {
     if (ascent)
+    {
         *ascent = ttSHORT(info.data + info.hhea + 4);
+    }
 
     if (descent)
+    {
         *descent = ttSHORT(info.data + info.hhea + 6);
+    }
 
     if (lineGap)
+    {
         *lineGap = ttSHORT(info.data + info.hhea + 8);
+    }
 }
 
 void stbtt_GetFontBoundingBox(const(stbtt_fontinfo)* info, int* x0, int* y0, int* x1, int* y1)
@@ -1313,20 +1431,30 @@ void stbtt_GetGlyphBitmapBoxSubpixel(const(stbtt_fontinfo)* font, int glyph,
     int x0, y0, x1, y1;
 
     if (!stbtt_GetGlyphBox(font, glyph, &x0, &y0, &x1, &y1))
+    {
         x0 = y0 = x1 = y1 = 0; // e.g. space character
+    }
 
     // now move to integral bboxes (treating pixels as little squares, what pixels get touched)?
     if (ix0)
+    {
         *ix0 = STBTT_ifloor(x0 * scale_x + shift_x);
+    }
 
     if (iy0)
+    {
         *iy0 = -STBTT_iceil(y1 * scale_y + shift_y);
+    }
 
     if (ix1)
+    {
         *ix1 = STBTT_iceil(x1 * scale_x + shift_x);
+    }
 
     if (iy1)
+    {
         *iy1 = -STBTT_ifloor(y0 * scale_y + shift_y);
+    }
 }
 
 void stbtt_GetGlyphBitmapBox(const(stbtt_fontinfo)* font, int glyph,
@@ -1376,13 +1504,19 @@ stbtt__active_edge* new_active(stbtt__edge* e, int off_x, float start_point, voi
     STBTT_assert(e.y0 <= start_point);
 
     if (!z)
+    {
         return z;
+    }
 
     // round dx down to avoid going too far
     if (dxdy < 0)
+    {
         z.dx = -STBTT_ifloor(FIX * -dxdy);
+    }
     else
+    {
         z.dx = STBTT_ifloor(FIX * dxdy);
+    }
     z.x = STBTT_ifloor(FIX * (e.x0 + dxdy * (start_point - e.y0)));
     z.x -= off_x * FIX;
     z.ey = e.y1;
@@ -1429,19 +1563,29 @@ void stbtt__fill_active_edges(ubyte* scanline, int len, stbtt__active_edge* e, i
                     else
                     {
                         if (i >= 0) // add antialiasing for x0
+                        {
                             scanline[i] = cast(ubyte)(scanline[i] + cast(stbtt_uint8)(
                                     ((FIX - (x0 & FIXMASK)) * max_weight) >> FIXSHIFT));
+                        }
                         else
+                        {
                             i = -1; // clip
+                        }
 
                         if (j < len) // add antialiasing for x1
+                        {
                             scanline[j] = cast(ubyte)(scanline[j] + cast(
                                     stbtt_uint8)(((x1 & FIXMASK) * max_weight) >> FIXSHIFT));
+                        }
                         else
+                        {
                             j = len; // clip
+                        }
 
                         for (++i; i < j; ++i) // fill pixels between x0 and x1
+                        {
                             scanline[i] = cast(ubyte)(scanline[i] + cast(stbtt_uint8) max_weight);
+                        }
                     }
                 }
             }
@@ -1462,9 +1606,13 @@ void stbtt__rasterize_sorted_edges(stbtt__bitmap* result, stbtt__edge* e, int n,
     ubyte* scanline;
 
     if (result.w > 512)
+    {
         scanline = cast(ubyte*) STBTT_malloc(result.w, userdata);
+    }
     else
+    {
         scanline = scanline_data.ptr;
+    }
 
     y = off_y * vsubsample;
     e[n].y0 = (off_y + result.h) * cast(float) vsubsample + 1;
@@ -1521,7 +1669,9 @@ void stbtt__rasterize_sorted_edges(stbtt__bitmap* result, stbtt__edge* e, int n,
                 }
 
                 if (!changed)
+                {
                     break;
+                }
             }
 
             // insert all edges that start before the center of this scanline -- omit ones that also end on this scanline
@@ -1533,7 +1683,9 @@ void stbtt__rasterize_sorted_edges(stbtt__bitmap* result, stbtt__edge* e, int n,
 
                     // find insertion point
                     if (active == null)
+                    {
                         active = z;
+                    }
                     else if (z.x < active.x)
                     {
                         // insert at front
@@ -1546,7 +1698,9 @@ void stbtt__rasterize_sorted_edges(stbtt__bitmap* result, stbtt__edge* e, int n,
                         stbtt__active_edge* p = active;
 
                         while (p.next && p.next.x < z.x)
+                        {
                             p = p.next;
+                        }
 
                         // at this point, p.next.x is NOT < z.x
                         z.next = p.next;
@@ -1558,7 +1712,9 @@ void stbtt__rasterize_sorted_edges(stbtt__bitmap* result, stbtt__edge* e, int n,
 
             // now process all active edges in XOR fashion
             if (active)
+            {
                 stbtt__fill_active_edges(scanline, result.w, active, max_weight);
+            }
 
             ++y;
         }
@@ -1575,7 +1731,9 @@ void stbtt__rasterize_sorted_edges(stbtt__bitmap* result, stbtt__edge* e, int n,
     }
 
     if (scanline != scanline_data.ptr)
+    {
         STBTT_free(scanline, userdata);
+    }
 }
 
 extern (C) int stbtt__edge_compare(scope const void* p, scope const void* q)
@@ -1584,10 +1742,14 @@ extern (C) int stbtt__edge_compare(scope const void* p, scope const void* q)
     stbtt__edge* b = cast(stbtt__edge*) q;
 
     if (a.y0 < b.y0)
+    {
         return -1;
+    }
 
     if (a.y0 > b.y0)
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -1611,12 +1773,16 @@ void stbtt__rasterize(stbtt__bitmap* result, stbtt__point* pts, int* wcount,
     n = 0;
 
     for (i = 0; i < windings; ++i)
+    {
         n += wcount[i];
+    }
 
     e = cast(stbtt__edge*) STBTT_malloc(stbtt__edge.sizeof * (n + 1), userdata); // add an extra one as a sentinel
 
     if (e is null)
+    {
         return;
+    }
 
     n = 0;
 
@@ -1634,7 +1800,9 @@ void stbtt__rasterize(stbtt__bitmap* result, stbtt__point* pts, int* wcount,
 
             // skip the edge if horizontal
             if (p[j].y == p[k].y)
+            {
                 continue;
+            }
 
             // add edge from j to k to the list
             e[n].invert = 0;
@@ -1664,7 +1832,9 @@ void stbtt__rasterize(stbtt__bitmap* result, stbtt__point* pts, int* wcount,
 void stbtt__add_point(stbtt__point* points, int n, float x, float y)
 {
     if (!points)
+    {
         return; // during first pass, it's unallocated
+    }
     points[n].x = x;
     points[n].y = y;
 }
@@ -1682,7 +1852,9 @@ int stbtt__tesselate_curve(stbtt__point* points, int* num_points, float x0, floa
     float dy = (y0 + y2) / 2 - my;
 
     if (n > 16) // 65536 segments on one curve better be enough!
+    {
         return 1;
+    }
 
     if (dx * dx + dy * dy > objspace_flatness_squared) // half-pixel error allowed... need to be smaller if AA
     {
@@ -1711,13 +1883,19 @@ stbtt__point* stbtt_FlattenCurves(stbtt_vertex* vertices, int num_verts,
 
     // count how many "moves" there are to get the contour count
     for (i = 0; i < num_verts; ++i)
+    {
         if (vertices[i].type == STBTT_vmove)
+        {
             ++n;
+        }
+    }
 
     *num_contours = n;
 
     if (n == 0)
+    {
         return null;
+    }
 
     *contour_lengths = cast(int*) STBTT_malloc(int.sizeof * n, userdata);
 
@@ -1737,7 +1915,9 @@ stbtt__point* stbtt_FlattenCurves(stbtt_vertex* vertices, int num_verts,
             points = cast(stbtt__point*) STBTT_malloc(num_points * stbtt__point.sizeof, userdata);
 
             if (points == null)
+            {
                 goto error;
+            }
         }
         num_points = 0;
         n = -1;
@@ -1750,7 +1930,9 @@ stbtt__point* stbtt_FlattenCurves(stbtt_vertex* vertices, int num_verts,
 
                 // start the next contour
                 if (n >= 0)
+                {
                     (*contour_lengths)[n] = num_points - start;
+                }
                 ++n;
                 start = num_points;
 
@@ -1820,12 +2002,16 @@ ubyte* stbtt_GetGlyphBitmapSubpixel(const(stbtt_fontinfo)* info, float scale_x,
     int num_verts = stbtt_GetGlyphShape(info, glyph, &vertices);
 
     if (scale_x == 0)
+    {
         scale_x = scale_y;
+    }
 
     if (scale_y == 0)
     {
         if (scale_x == 0)
+        {
             return null;
+        }
         scale_y = scale_x;
     }
 
@@ -1837,16 +2023,24 @@ ubyte* stbtt_GetGlyphBitmapSubpixel(const(stbtt_fontinfo)* info, float scale_x,
     gbm.pixels = null; // in case we error
 
     if (width)
+    {
         *width = gbm.w;
+    }
 
     if (height)
+    {
         *height = gbm.h;
+    }
 
     if (xoff)
+    {
         *xoff = ix0;
+    }
 
     if (yoff)
+    {
         *yoff = iy0;
+    }
 
     if (gbm.w && gbm.h)
     {
@@ -1888,8 +2082,10 @@ void stbtt_MakeGlyphBitmapSubpixel(const(stbtt_fontinfo)* info, ubyte* output, i
     gbm.stride = out_stride;
 
     if (gbm.w && gbm.h)
+    {
         stbtt_Rasterize(&gbm, 0.35f, vertices, num_verts, scale_x, scale_y,
                 shift_x, shift_y, ix0, iy0, 1, cast(void*) info.userdata);
+    }
 
     STBTT_free(vertices, cast(void*) info.userdata);
 }
@@ -1975,10 +2171,14 @@ int stbtt_BakeFontBitmap(const(ubyte)* data, int offset, // font location (use o
         gh = y1 - y0;
 
         if (x + gw + 1 >= pw)
+        {
             y = bottom_y, x = 1; // advance to next row
+        }
 
         if (y + gh + 1 >= ph) // check if it fits vertically AFTER potentially moving to next row
+        {
             return -i;
+        }
         STBTT_assert(x + gw < pw);
         STBTT_assert(y + gh < ph);
         stbtt_MakeGlyphBitmap(&f, pixels + x + y * pw, gw, gh, pw, scale, scale, g);
@@ -1997,7 +2197,9 @@ int stbtt_BakeFontBitmap(const(ubyte)* data, int offset, // font location (use o
         x = x + gw + 2;
 
         if (y + gh + 2 > bottom_y)
+        {
             bottom_y = y + gh + 2;
+        }
     }
 
     return bottom_y;
@@ -2044,21 +2246,31 @@ stbtt_int32 stbtt__CompareUTF8toUTF16_bigendian_prefix(const(stbtt_uint8)* s1,
         if (ch < 0x80)
         {
             if (i >= len1)
+            {
                 return -1;
+            }
 
             if (s1[i++] != ch)
+            {
                 return -1;
+            }
         }
         else if (ch < 0x800)
         {
             if (i + 1 >= len1)
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0xc0 + (ch >> 6))
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0x80 + (ch & 0x3f))
+            {
                 return -1;
+            }
         }
         else if (ch >= 0xd800 && ch < 0xdc00)
         {
@@ -2066,20 +2278,30 @@ stbtt_int32 stbtt__CompareUTF8toUTF16_bigendian_prefix(const(stbtt_uint8)* s1,
             stbtt_uint16 ch2 = s2[2] * 256 + s2[3];
 
             if (i + 3 >= len1)
+            {
                 return -1;
+            }
             c = ((ch - 0xd800) << 10) + (ch2 - 0xdc00) + 0x10000;
 
             if (s1[i++] != 0xf0 + (c >> 18))
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0x80 + ((c >> 12) & 0x3f))
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0x80 + ((c >> 6) & 0x3f))
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0x80 + ((c) & 0x3f))
+            {
                 return -1;
+            }
             s2 += 2; // plus another 2 below
             len2 -= 2;
         }
@@ -2090,16 +2312,24 @@ stbtt_int32 stbtt__CompareUTF8toUTF16_bigendian_prefix(const(stbtt_uint8)* s1,
         else
         {
             if (i + 2 >= len1)
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0xe0 + (ch >> 12))
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0x80 + ((ch >> 6) & 0x3f))
+            {
                 return -1;
+            }
 
             if (s1[i++] != 0x80 + ((ch) & 0x3f))
+            {
                 return -1;
+            }
         }
         s2 += 2;
         len2 -= 2;
@@ -2125,7 +2355,9 @@ const(char)* stbtt_GetFontNameString(const(stbtt_fontinfo)* font, int* length,
     stbtt_uint32 nm = stbtt__find_table(fc, offset, "name");
 
     if (!nm)
+    {
         return null;
+    }
 
     count = ttUSHORT(fc + nm + 2);
     stringOffset = nm + ttUSHORT(fc + nm + 4);
@@ -2187,7 +2419,9 @@ int stbtt__matchpair(stbtt_uint8* fc, stbtt_uint32 nm, stbtt_uint8* name,
                         if (slen2 == 0)
                         {
                             if (matchlen == nlen)
+                            {
                                 return 1;
+                            }
                         }
                         else if (matchlen < nlen && name[matchlen] == ' ')
                         {
@@ -2195,14 +2429,18 @@ int stbtt__matchpair(stbtt_uint8* fc, stbtt_uint32 nm, stbtt_uint8* name,
 
                             if (stbtt_CompareUTF8toUTF16_bigendian(cast(char*)(name + matchlen),
                                     nlen - matchlen, cast(char*)(fc + stringOffset + off2), slen2))
+                            {
                                 return 1;
+                            }
                         }
                     }
                     else
                     {
                         // if nothing immediately following
                         if (matchlen == nlen)
+                        {
                             return 1;
+                        }
                     }
                 }
             }
@@ -2220,7 +2458,9 @@ int stbtt__matches(stbtt_uint8* fc, stbtt_uint32 offset, stbtt_uint8* name, stbt
     stbtt_uint32 nm, hd;
 
     if (!stbtt__isfont(fc + offset))
+    {
         return 0;
+    }
 
     // check italics/bold/underline flags in macStyle...
     if (flags)
@@ -2228,36 +2468,52 @@ int stbtt__matches(stbtt_uint8* fc, stbtt_uint32 offset, stbtt_uint8* name, stbt
         hd = stbtt__find_table(fc, offset, "head");
 
         if ((ttUSHORT(fc + hd + 44) & 7) != (flags & 7))
+        {
             return 0;
+        }
     }
 
     nm = stbtt__find_table(fc, offset, "name");
 
     if (!nm)
+    {
         return 0;
+    }
 
     if (flags)
     {
         // if we checked the macStyle flags, then just check the family and ignore the subfamily
         if (stbtt__matchpair(fc, nm, name, nlen, 16, -1))
+        {
             return 1;
+        }
 
         if (stbtt__matchpair(fc, nm, name, nlen, 1, -1))
+        {
             return 1;
+        }
 
         if (stbtt__matchpair(fc, nm, name, nlen, 3, -1))
+        {
             return 1;
+        }
     }
     else
     {
         if (stbtt__matchpair(fc, nm, name, nlen, 16, 17))
+        {
             return 1;
+        }
 
         if (stbtt__matchpair(fc, nm, name, nlen, 1, 2))
+        {
             return 1;
+        }
 
         if (stbtt__matchpair(fc, nm, name, nlen, 3, -1))
+        {
             return 1;
+        }
     }
 
     return 0;
@@ -2272,10 +2528,14 @@ int stbtt_FindMatchingFont(const(ubyte)* font_collection, const(char)* name_utf8
         stbtt_int32 off = stbtt_GetFontOffsetForIndex(font_collection, i);
 
         if (off < 0)
+        {
             return off;
+        }
 
         if (stbtt__matches(cast(stbtt_uint8*) font_collection, off,
                 cast(stbtt_uint8*) name_utf8, flags))
+        {
             return off;
+        }
     }
 }

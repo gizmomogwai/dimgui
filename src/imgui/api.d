@@ -30,31 +30,37 @@ module imgui.api;
     |
    0,0--3,0->
 +/
-import std.algorithm : max, min, map;
+import imgui.engine : Command, GlobalAlpha, GuiState, Line, Rect, Text, Type, Vector2i;
+import std.algorithm : map, max, min;
 import std.array : join;
-import std.math : floor, ceil, log10;
-import std.string : sformat;
+import std.conv : text, to;
 import std.format : format;
+import std.math : ceil, floor, log10;
 import std.range : Appender, appender, empty, walkLength;
-import std.conv : to, text;
-import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i, GlobalAlpha;
+import std.string : sformat;
 
 //import imgui.gl3_renderer : imguiRenderGLInit, imguiRenderGLDestroy, toPackedRGBA, renderGLDraw;
-import std.typecons : tuple;
-import imgui.colorscheme : RGBA, ColorScheme, defaultColorScheme;
-import std.exception : enforce;
-import std.datetime.systime : SysTime, Clock;
-import deetween : Tween, easeLinear, TweenMode;
-import std.uni : byCodePoint;
+import deetween : easeLinear, Tween, TweenMode;
+import imgui.colorscheme : ColorScheme, defaultColorScheme, RGBA;
 import std.array : array;
+import std.datetime.systime : Clock, SysTime;
+import std.exception : enforce;
+import std.typecons : tuple;
+import std.uni : byCodePoint;
 
 version (unittest)
 {
     import unit_threaded : should;
+
     private class ItemTestRenderer
     {
-        this(string fontPath, uint fontTextureSize) {}
-        void render(Command[] commands, int width, int height) {}
+        this(string fontPath, uint fontTextureSize)
+        {
+        }
+
+        void render(Command[] commands, int width, int height)
+        {
+        }
     }
 }
 struct Sizes
@@ -98,7 +104,10 @@ struct TextSpan
     gui.state.widgetY = 200;
     gui.state.widgetW = 300;
     gui.pushLayout(new LineLayout);
-    scope(exit) gui.popLayout();
+    scope (exit)
+    {
+        gui.popLayout();
+    }
     gui.item("Aé\t B");
     auto plain = gui.commands[][$ - 1];
     auto nextY = gui.state.widgetY;
@@ -107,17 +116,21 @@ struct TextSpan
     gui.state.widgetY = 200;
     auto normalColor = RGBA(220, 220, 220);
     auto matchColor = RGBA(255, 200, 90);
-    auto spans = [TextSpan("A", normalColor), TextSpan("é", matchColor),
-        TextSpan("\t B", normalColor)];
+    auto spans = [
+        TextSpan("A", normalColor), TextSpan("é", matchColor),
+        TextSpan("\t B", normalColor)
+    ];
     gui.item(spans);
     auto styled = gui.commands[][$ - 1];
     assert(styled.type == Type.TEXT && styled.text.text == plain.text.text);
     assert(styled.text.x == plain.text.x && styled.text.y == plain.text.y);
     assert(styled.text.align_ == plain.text.align_);
     assert(gui.state.widgetY == nextY && gui.state.widgetId == nextId + 1);
-    assert(styled.text.characterColors == [normalColor.toPackedRGBA(),
-        matchColor.toPackedRGBA(), normalColor.toPackedRGBA(),
-        normalColor.toPackedRGBA(), normalColor.toPackedRGBA()]);
+    assert(styled.text.characterColors == [
+        normalColor.toPackedRGBA(), matchColor.toPackedRGBA(),
+        normalColor.toPackedRGBA(), normalColor.toPackedRGBA(),
+        normalColor.toPackedRGBA()
+    ]);
     gui.item(spans, Enabled.no);
     auto disabled = gui.commands[][$ - 1];
     assert(disabled.text.characterColors.empty);
@@ -130,8 +143,9 @@ struct TextSpan
     gui.item(spans);
     assert(gui.commands[].length == commandCount);
     import std.exception : assertThrown;
-    assertThrown!Exception(gui.commands.addText(0, 0, TextAlign.left, "Aé", normalColor,
-        [normalColor.toPackedRGBA()]));
+
+    assertThrown!Exception(gui.commands.addText(0, 0, TextAlign.left, "Aé",
+            normalColor, [normalColor.toPackedRGBA()]));
 }
 
 /** The possible mouse buttons. These can be used as bitflags. */
@@ -262,7 +276,8 @@ struct ScrollAreaContext
     RevealInfo reveal;
 }
 
-struct Editor {
+struct Editor
+{
     string buffer;
     dchar[] codePoints;
     ulong cursor; // index for insert backspace delete operations into codepoints
@@ -278,11 +293,12 @@ struct Editor {
 
     auto insert(dchar unicode)
     {
-        codePoints = codePoints[0..cursor] ~ unicode ~ codePoints[cursor..codePoints.length];
+        codePoints = codePoints[0 .. cursor] ~ unicode ~ codePoints[cursor .. codePoints.length];
         cursor++;
         buffer = codePoints.text;
         return this;
     }
+
     auto backspace()
     {
         // abcC -> abC
@@ -293,22 +309,23 @@ struct Editor {
             return this;
         }
 
-        codePoints = codePoints[0..cursor-1] ~ codePoints[cursor..$];
+        codePoints = codePoints[0 .. cursor - 1] ~ codePoints[cursor .. $];
         cursor--;
         buffer = codePoints.text;
 
         return this;
     }
+
     auto getPixelOffset()
     {
-        import imgui.fonts : g_max_character_count, FIRST_CHARACTER, g_cdata;
+        import imgui.fonts : FIRST_CHARACTER, g_cdata, g_max_character_count;
 
         // TODO copy from opengl33
         enum uint FONT_TEXTURE_SIZE = 1024;
 
         // TODO copy from opengl33
         float result = 0;
-        foreach (dchar c; codePoints[0..cursor])
+        foreach (dchar c; codePoints[0 .. cursor])
         {
             if (c >= FIRST_CHARACTER && c < FIRST_CHARACTER + g_max_character_count)
             {
@@ -317,6 +334,7 @@ struct Editor {
         }
         return result;
     }
+
     void moveLeft()
     {
         if (cursor == 0)
@@ -325,6 +343,7 @@ struct Editor {
         }
         cursor--;
     }
+
     void moveRight()
     {
         cursor = min(codePoints.length, cursor + 1);
@@ -342,7 +361,7 @@ struct Editor {
 @("Editor insert") unittest
 {
     Editor editor = Editor.from("test");
-    editor.insert(cast(dchar)'1');
+    editor.insert(cast(dchar) '1');
     editor.buffer.should == "test1";
 }
 
@@ -461,7 +480,7 @@ void addText(Commands commands, int x, int y, int alignment, string text, RGBA c
         const(uint)[] characterColors = null)
 {
     enforce(characterColors.empty || characterColors.length == text.byCodePoint.walkLength,
-        "Text colors must match the Unicode code point count");
+            "Text colors must match the Unicode code point count");
     // dfmt off
     Command cmd =
         {
@@ -1089,8 +1108,8 @@ class ImGui(T)
         return itemLabel(label.data, characterColors.data, enabled, colorScheme);
     }
 
-    private bool itemLabel(string label, const(uint)[] characterColors, Enabled enabled,
-            const ref ColorScheme colorScheme)
+    private bool itemLabel(string label, const(uint)[] characterColors,
+            Enabled enabled, const ref ColorScheme colorScheme)
     {
         state.widgetId++;
         const uint id = (state.areaId << 16) | state.widgetId;
@@ -1339,7 +1358,7 @@ class ImGui(T)
     }
 
     public bool textInput(string label, ref Editor editor, bool forceInputable = false,
-                          const ref ColorScheme colorScheme = defaultColorScheme)
+            const ref ColorScheme colorScheme = defaultColorScheme)
     {
         // Label
         state.widgetId++;
@@ -1363,28 +1382,27 @@ class ImGui(T)
                 state.unicode = 0;
             }
             // Pressing Enter "confirms" the input.
-            else if (state.unicode == 0x0D && state.unicode != state.lastUnicode)
+        else if (state.unicode == 0x0D && state.unicode != state.lastUnicode)
             {
                 state.inputable = 0;
                 res = true;
                 state.unicode = 0;
             }
             // Pressing Esc looses the focus without "confirming" the input.
-            else if (state.unicode == 0x27
-                    && state.unicode != state.lastUnicode)
+        else if (state.unicode == 0x27 && state.unicode != state.lastUnicode)
             {
                 state.inputable = 0;
                 res = false;
                 state.unicode = 0;
             }
             // cursor left
-            else if (state.unicode == 0x107 && state.unicode != state.lastUnicode)
+        else if (state.unicode == 0x107 && state.unicode != state.lastUnicode)
             {
                 editor.moveLeft();
                 state.unicode = 0;
             }
             // cursor right
-            else if (state.unicode == 0x106 && state.unicode != state.lastUnicode)
+        else if (state.unicode == 0x106 && state.unicode != state.lastUnicode)
             {
                 editor.moveRight();
                 state.unicode = 0;
@@ -1405,17 +1423,19 @@ class ImGui(T)
         commands.addRoundedRect(x + Sizes.DEFAULT_SPACING, y, w, h, 10,
                 state.isIdInputable(id) ? colorScheme.textInput.back
                 : colorScheme.textInput.backDisabled);
-        commands.addText(x + Sizes.DEFAULT_SPACING * 2,
+        // Same text inset as buttons and items so the columns line up.
+        commands.addText(x + Sizes.LINE_HEIGHT / 2,
                 y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, editor.buffer, state.isIdInputable(id)
                 ? colorScheme.textInput.text : colorScheme.textInput.textDisabled);
         if (state.isIdInputable(id))
         {
-            auto cursorOffset = cast(int)editor.getPixelOffset();
-            commands.addRect(x + Sizes.DEFAULT_SPACING*2 + cursorOffset,
-                             y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
-                             3, Sizes.TEXT_HEIGHT,
-                             colorScheme.textInput.label);
+            auto cursorOffset = cast(int) editor.getPixelOffset();
+            // Center the cursor in the line: the font's TEXT_HEIGHT spans descent to
+            // ascent, so starting at the baseline would put the cursor too high.
+            commands.addRect(x + Sizes.LINE_HEIGHT / 2 + cursorOffset,
+                    y + (Sizes.LINE_HEIGHT - Sizes.TEXT_HEIGHT) / 2, 3,
+                    Sizes.TEXT_HEIGHT, colorScheme.textInput.label);
         }
         state.widgetY -= Sizes.LINE_HEIGHT + Sizes.DEFAULT_SPACING;
         return res;
