@@ -10,3 +10,28 @@ showed to be very hack- and adjustable to my needs!
 ** Demo
 run =dub run :demo=
 cd 
+
+** Colored item labels
+
+=item= accepts colored text spans as well as a plain string. This is one
+immediate-mode item, with normal layout, hover, clicks and disabled styling.
+The OpenGL renderer keeps one glyph pen across spans, including spaces and tabs;
+callers do not calculate drawing coordinates or font widths.
+
+#+begin_src d
+import imgui : TextSpan;
+import imgui.colorscheme : RGBA, defaultColorScheme;
+
+if (gui.item([
+    TextSpan("bl", RGBA(255, 200, 90)),
+    TextSpan("ender", defaultColorScheme.item.text)]))
+{
+    // Choose the row.
+}
+#+end_src
+
+Spans contain complete UTF-8 strings and foreground colors. Disabled items
+ignore span colors and use the color scheme's disabled text color. Text is
+copied into the frame's draw command, so span arrays need not survive the frame.
+Plain =item(string)= callers remain unchanged. Search and matching are still
+application responsibilities.

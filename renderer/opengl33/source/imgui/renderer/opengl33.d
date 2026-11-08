@@ -387,7 +387,7 @@ void main(void)
                 break;
             case Type.TEXT:
                 drawText(cmd.text.x, cmd.text.y, cmd.text.text,
-                        cmd.text.align_, cmd.color);
+                        cmd.text.align_, cmd.color, cmd.text.characterColors);
                 break;
             case Type.SCISSOR:
                 glEnable(GL_SCISSOR_TEST);
@@ -491,7 +491,8 @@ void main(void)
         drawPolygon(verts, fth, col);
     }
 
-    private void drawText(float x, float y, string text, int align_, uint color)
+    private void drawText(float x, float y, string text, int align_, uint color,
+            const(uint)[] characterColors = null)
     {
         if (!fontTexture)
             return;
@@ -504,11 +505,6 @@ void main(void)
         else if (align_ == TextAlign.right)
             x -= getTextLength(g_cdata.ptr, text);
 
-        const r = (color & 0xff) / 255.0f;
-        const g = ((color >> 8) & 0xff) / 255.0f;
-        const b = ((color >> 16) & 0xff) / 255.0f;
-        const a = ((color >> 24) & 0xff) / 255.0f;
-
         // assume orthographic projection with units = screen pixels, origin at top left
         glBindTexture(GL_TEXTURE_2D, fontTexture);
 
@@ -516,8 +512,12 @@ void main(void)
 
         // The cast(string) is only there for UTF-8 decoding.
         //foreach (ubyte c; cast(ubyte[])text)
+        size_t characterIndex;
         foreach (dchar c; text)
         {
+            auto glyphColor = characterColors.length == 0 ? color :
+                characterColors[characterIndex];
+            ++characterIndex;
             if (c == '\t')
             {
                 for (int i = 0; i < 4; ++i)
@@ -531,6 +531,10 @@ void main(void)
             }
             else if (c >= FIRST_CHARACTER && c < FIRST_CHARACTER + g_max_character_count)
             {
+                const r = (glyphColor & 0xff) / 255.0f;
+                const g = ((glyphColor >> 8) & 0xff) / 255.0f;
+                const b = ((glyphColor >> 16) & 0xff) / 255.0f;
+                const a = ((glyphColor >> 24) & 0xff) / 255.0f;
                 stbtt_aligned_quad q;
                 getBakedQuad(g_cdata.ptr, FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE,
                         c - FIRST_CHARACTER, &x, &y, &q);

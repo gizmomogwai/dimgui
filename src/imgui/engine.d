@@ -56,6 +56,8 @@ struct Text
 {
     int x, y, align_;
     string text;
+    // Empty uses Command.color; otherwise one color per Unicode code point.
+    const(uint)[] characterColors;
 }
 
 struct Line

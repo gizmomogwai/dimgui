@@ -35,7 +35,7 @@ import std.array : join;
 import std.math : floor, ceil, log10;
 import std.string : sformat;
 import std.format : format;
-import std.range : Appender, appender, empty;
+import std.range : Appender, appender, empty, walkLength;
 import std.conv : to, text;
 import imgui.engine : GuiState, Command, Type, Rect, Line, Text, Vector2i, GlobalAlpha;
 
@@ -51,6 +51,11 @@ import std.array : array;
 version (unittest)
 {
     import unit_threaded : should;
+    private class ItemTestRenderer
+    {
+        this(string fontPath, uint fontTextureSize) {}
+        void render(Command[] commands, int width, int height) {}
+    }
 }
 struct Sizes
 {
@@ -77,6 +82,56 @@ enum TextAlign
     left,
     center,
     right,
+}
+
+/// A UTF-8 text run with one foreground color.
+struct TextSpan
+{
+    string text;
+    RGBA color;
+}
+
+@("Styled items preserve plain item layout") unittest
+{
+    auto gui = new ImGui!ItemTestRenderer("");
+    gui.state.height = 300;
+    gui.state.widgetY = 200;
+    gui.state.widgetW = 300;
+    gui.pushLayout(new LineLayout);
+    scope(exit) gui.popLayout();
+    gui.item("Aé\t B");
+    auto plain = gui.commands[][$ - 1];
+    auto nextY = gui.state.widgetY;
+    auto nextId = gui.state.widgetId;
+    gui.commands.clear();
+    gui.state.widgetY = 200;
+    auto normalColor = RGBA(220, 220, 220);
+    auto matchColor = RGBA(255, 200, 90);
+    auto spans = [TextSpan("A", normalColor), TextSpan("é", matchColor),
+        TextSpan("\t B", normalColor)];
+    gui.item(spans);
+    auto styled = gui.commands[][$ - 1];
+    assert(styled.type == Type.TEXT && styled.text.text == plain.text.text);
+    assert(styled.text.x == plain.text.x && styled.text.y == plain.text.y);
+    assert(styled.text.align_ == plain.text.align_);
+    assert(gui.state.widgetY == nextY && gui.state.widgetId == nextId + 1);
+    assert(styled.text.characterColors == [normalColor.toPackedRGBA(),
+        matchColor.toPackedRGBA(), normalColor.toPackedRGBA(),
+        normalColor.toPackedRGBA(), normalColor.toPackedRGBA()]);
+    gui.item(spans, Enabled.no);
+    auto disabled = gui.commands[][$ - 1];
+    assert(disabled.text.characterColors.empty);
+    assert(disabled.color == defaultColorScheme.item.textDisabled.toPackedRGBA());
+    const(TextSpan)[] emptySpans;
+    gui.item(emptySpans);
+    assert(gui.commands[][$ - 1].text.text.empty);
+    gui.state.widgetY = -100;
+    auto commandCount = gui.commands[].length;
+    gui.item(spans);
+    assert(gui.commands[].length == commandCount);
+    import std.exception : assertThrown;
+    assertThrown!Exception(gui.commands.addText(0, 0, TextAlign.left, "Aé", normalColor,
+        [normalColor.toPackedRGBA()]));
 }
 
 /** The possible mouse buttons. These can be used as bitflags. */
@@ -402,14 +457,17 @@ void addGlobalAlpha(Commands commands, float alpha)
     commands.put(cmd);
 }
 
-void addText(Commands commands, int x, int y, int alignment, string text, RGBA color)
+void addText(Commands commands, int x, int y, int alignment, string text, RGBA color,
+        const(uint)[] characterColors = null)
 {
+    enforce(characterColors.empty || characterColors.length == text.byCodePoint.walkLength,
+        "Text colors must match the Unicode code point count");
     // dfmt off
     Command cmd =
         {
             type: Type.TEXT,
             color: color.toPackedRGBA(),
-            text: Text(x, y, alignment, text),
+            text: Text(x, y, alignment, text, characterColors),
         };
     // dfmt on
     commands.put(cmd);
@@ -1007,6 +1065,33 @@ class ImGui(T)
     public bool item(string label, Enabled enabled = Enabled.yes,
             const ref ColorScheme colorScheme = defaultColorScheme)
     {
+        return itemLabel(label, null, enabled, colorScheme);
+    }
+
+    /**
+       Define one item with colored text spans. Spans share the same baseline,
+       glyph advances and tab stops. Layout and interaction are identical to
+       a plain item. Disabled items use the color scheme's disabled text color.
+    */
+    public bool item(const(TextSpan)[] spans, Enabled enabled = Enabled.yes,
+            const ref ColorScheme colorScheme = defaultColorScheme)
+    {
+        auto label = appender!string();
+        auto characterColors = appender!(uint[])();
+        foreach (span; spans)
+        {
+            label.put(span.text);
+            foreach (dchar character; span.text)
+            {
+                characterColors.put(span.color.toPackedRGBA());
+            }
+        }
+        return itemLabel(label.data, characterColors.data, enabled, colorScheme);
+    }
+
+    private bool itemLabel(string label, const(uint)[] characterColors, Enabled enabled,
+            const ref ColorScheme colorScheme)
+    {
         state.widgetId++;
         const uint id = (state.areaId << 16) | state.widgetId;
 
@@ -1033,7 +1118,7 @@ class ImGui(T)
         commands.addText(x + Sizes.LINE_HEIGHT / 2,
                 y + Sizes.LINE_HEIGHT / 2 - Sizes.TEXT_HEIGHT / 2 + Sizes.TEXT_BASELINE,
                 TextAlign.left, label, enabled ? colorScheme.item.text
-                : colorScheme.item.textDisabled);
+                : colorScheme.item.textDisabled, enabled ? characterColors : null);
 
         return res;
     }
