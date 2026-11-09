@@ -321,9 +321,6 @@ struct Editor
         import imgui.fonts : FIRST_CHARACTER, g_cdata, g_max_character_count;
 
         // TODO copy from opengl33
-        enum uint FONT_TEXTURE_SIZE = 1024;
-
-        // TODO copy from opengl33
         float result = 0;
         foreach (dchar c; codePoints[0 .. cursor])
         {
@@ -619,7 +616,7 @@ class ImGui(T)
     Commands commands;
 
     T implementation;
-    this(string fontPath, uint fontTextureSize = 1024)
+    this(string fontPath, uint fontTextureSize = 2048)
     {
         commands = appender!(Command[]);
         commands.reserve(512);

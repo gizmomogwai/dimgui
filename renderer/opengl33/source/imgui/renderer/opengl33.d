@@ -154,7 +154,7 @@ void getBakedQuad(stbtt_bakedchar* chardata, int pw, int ph, int char_index,
  +/
 public class Opengl33
 {
-    enum uint FONT_TEXTURE_SIZE = 1024;
+    private uint fontTextureSize;
 
     private GLuint program = 0;
     private GLuint programViewportLocation = 0;
@@ -176,6 +176,7 @@ public class Opengl33
 
     this(string fontpath, const uint fontTextureSize)
     {
+        this.fontTextureSize = fontTextureSize;
         {
             const result = loadOpenGL();
             (result == GLSupport.gl33).enforce("need opengl 3.3 support");
@@ -189,11 +190,11 @@ public class Opengl33
 
         // Load font.
         ubyte[] ttfBuffer = cast(ubyte[]) fontpath.read;
-        ubyte[] bmap = new ubyte[FONT_TEXTURE_SIZE * FONT_TEXTURE_SIZE];
+        ubyte[] bmap = new ubyte[fontTextureSize * fontTextureSize];
 
         // TODO move to font
-        const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, Sizes.TEXT_HEIGHT, bmap.ptr, FONT_TEXTURE_SIZE,
-                FONT_TEXTURE_SIZE, FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
+        const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, Sizes.TEXT_HEIGHT, bmap.ptr, fontTextureSize,
+                fontTextureSize, FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
         // If result is negative, we baked less than max characters so update the max
         // character count.
         if (result < 0)
@@ -204,8 +205,8 @@ public class Opengl33
         // can free ttf_buffer at this point
         glGenTextures(1, &fontTexture);
         glBindTexture(GL_TEXTURE_2D, fontTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FONT_TEXTURE_SIZE,
-                FONT_TEXTURE_SIZE, 0, GL_RED, GL_UNSIGNED_BYTE, bmap.ptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, fontTextureSize,
+                fontTextureSize, 0, GL_RED, GL_UNSIGNED_BYTE, bmap.ptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -545,7 +546,7 @@ void main(void)
                 const b = ((glyphColor >> 16) & 0xff) / 255.0f;
                 const a = ((glyphColor >> 24) & 0xff) / 255.0f;
                 stbtt_aligned_quad q;
-                getBakedQuad(g_cdata.ptr, FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE,
+                getBakedQuad(g_cdata.ptr, fontTextureSize, fontTextureSize,
                         c - FIRST_CHARACTER, &x, &y, &q);
 
                 float[12] v = [
