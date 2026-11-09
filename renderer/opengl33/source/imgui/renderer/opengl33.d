@@ -62,7 +62,8 @@ private:
 // at the moment is 20 * 65536 or 1.25 MiB.
 
 // A 1024x1024 font texture takes 1MiB of memory, and should be enough for thousands of
-// glyphs (at the fixed 15.0f size imgui uses).
+// glyphs at 15 px, where the examples below were measured. Larger Sizes.fontSize values
+// fit fewer glyphs.
 //
 // Some examples:
 //
@@ -193,7 +194,7 @@ public class Opengl33
         ubyte[] bmap = new ubyte[fontTextureSize * fontTextureSize];
 
         // TODO move to font
-        const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, Sizes.TEXT_HEIGHT, bmap.ptr, fontTextureSize,
+        const result = stbtt_BakeFontBitmap(ttfBuffer.ptr, 0, Sizes.fontSize, bmap.ptr, fontTextureSize,
                 fontTextureSize, FIRST_CHARACTER, g_max_character_count, g_cdata.ptr);
         // If result is negative, we baked less than max characters so update the max
         // character count.
